@@ -9,4 +9,4 @@ Create a folder in the enviroment labelled `data` or wherever you want and chang
 If you are in pain reading this code just copy it and improve it. I don't care about licencing; Just do whatever you want. Go wild.
 
 ## What libraries do I need?
-Nothing. Just a C++ compiler. All of the libraries used are built in like <string>, <vector>, and <map>.
+Nothing. Just a C++ compiler. All of the libraries used are built in like `<string>`, `<vector>`, and `<map>`.
