@@ -94,8 +94,8 @@ struct timeap : public time24 {
     }
 };
 
-struct tripSegment {
-    int trip_id;
+struct tripSegment { // params from stop_times
+    long trip_id;
     time24 arrival_time;
     time24 departure_time;
     int stop_id;
@@ -111,14 +111,14 @@ std::vector<string> parseDataCSV(const string& input);
 std::map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
 
-std::vector<tripSegment> getDayTimesAtStop(const int &month, const int &day, const unsigned short int& id);
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id) ;
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
 
 
 int main(int argc, char* argv[]) {
-    getDayTimesAtStop(1,2,6769);
+    getDayTimesAtStop(mon, 6769);
 }
 
 time24 parseFormattedTime(string input) {
