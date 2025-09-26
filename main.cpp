@@ -375,12 +375,24 @@ std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& i
         if (parsedData[stopNumberIndex] == id_str) {
             int tripID = stoi(parsedData[0]);
             allTripIDs.push_back(tripID);
+
+            tripSegment localVar;
+
+            // required fields
+            localVar.trip_id = tripID;
+            localVar.arrival_time = parseFormattedTime(parsedData[1]);
+            localVar.departure_time = parseFormattedTime(parsedData[2]);
+            localVar.stop_id = stoi(parsedData[3]);
+            localVar.stop_sequence = stoi(parsedData[4]);
+
+            localVar.stop_headsign = ((refs["stop_headsign"] != 0) && (parsedData[refs["stop_headsign"]] != "" && parsedData[refs["stop_headsign"]] != " ")) ? stoi(parsedData[refs["stop_headsign"]]) : 0;
+            localVar.pickup_type = ((refs["pickup_type"] != 0) && (parsedData[refs["pickup_type"]] != "" && parsedData[refs["pickup_type"]] != " ")) ? stoi(parsedData[refs["pickup_type"]]) : 0;
+            localVar.drop_off_type = ((refs["drop_off_type"] != 0) && (parsedData[refs["drop_off_type"]] != "" && parsedData[refs["drop_off_type"]] != " ")) ? stoi(parsedData[refs["drop_off_type"]]) : 0;
+            localVar.shape_dist_traveled = ((refs["shape_dist_traveled"] != 0) && (parsedData[refs["shape_dist_traveled"]] != "" && parsedData[refs["shape_dist_traveled"]] != " ")) ? stoi(parsedData[refs["shape_dist_traveled"]]) : 0;
+            localVar.timepoint = ((refs["timepoint"] != 0) && (parsedData[refs["timepoint"]] != "" && parsedData[refs["timepoint"]] != " ")) ? stoi(parsedData[refs["timepoint"]]) : 0;
         }
     }
 
-    for (int i = 0; i < allTripIDs.size(); i++) {
-        cout << allTripIDs[i] << " ";
-    }
 
     return output;
 }
