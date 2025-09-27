@@ -10,10 +10,13 @@ typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 
-string stopPath = "data/yrt_archive/stops.txt";
-string routePath = "data/yrt_archive/routes.txt";
-string tripsPath = "data/yrt_archive/trips.txt";
-string stopTimesPath = "data/yrt_archive/stop_times.txt";
+const string stopPath = "data/yrt_archive/stops.txt";
+const string routePath = "data/yrt_archive/routes.txt";
+const string tripsPath = "data/yrt_archive/trips.txt";
+const string stopTimesPath = "data/yrt_archive/stop_times.txt";
+const string tripPath = "data/yrt_archive/trips.txt";
+const string calendarPath = "data/yrt_archive/calendar.txt";
+const string calendarDatesPath = "data/yrt_archive/calendar_dates.txt";
 
 struct busLine {
     int route_id;
@@ -82,6 +85,9 @@ struct time24 {
         cout << "m: " << m << std::endl;
         cout << "s: " << s << std::endl;
     }
+    virtual string formattedTime() {
+        return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(s);
+    }
 };
 
 struct timeap : public time24 {
@@ -105,11 +111,18 @@ struct tripSegment { // params from stop_times
     int drop_off_type;
     int shape_dist_traveled;
     int timepoint;
+
+    void printInfo() {
+        cout << "trip_id: " << trip_id << std::endl;
+        cout << "arrival_time" << arrival_time.formattedTime() << std::endl;
+        cout << "departure_time" << departure_time.formattedTime() << std::endl;
+    }
 };
 
 std::vector<string> parseDataCSV(const string& input);
 std::map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
+bool isValid(int tripID, week day);
 
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id) ;
 busLine getRouteInfo(const unsigned short int& id);
@@ -118,7 +131,90 @@ stop getStopInfo(const unsigned short int& id, const stopType& type);
 
 
 int main(int argc, char* argv[]) {
-    getDayTimesAtStop(mon, 6769);
+    // std::vector<tripSegment> hello = getDayTimesAtStop(mon, 6769);
+    // for (int i = 0; i < hello.size(); i++) {
+    //     hello[i].printInfo();
+    // }
+
+    cout << isValid(1909054, mon);
+
+}
+
+bool isValid(int tripID, week day) {
+    ifstream trip(tripPath);
+    string currentLine;
+
+    std::vector<string> parsedLine;
+
+    string serviceID;
+
+    string tidString = std::to_string(tripID);
+
+    while (getline(trip, currentLine)) {
+        parsedLine = parseDataCSV(currentLine);
+        if (parsedLine[2] == tidString) {
+            serviceID = parsedLine[1];
+            break;
+        }
+    }
+
+    trip.close();
+
+    ifstream calendar(calendarPath);
+
+    while (getline(calendar, currentLine)) {
+        parsedLine = parseDataCSV(currentLine);
+
+        if (parsedLine[0] == serviceID) break;
+    }
+
+    switch (day) {
+        case mon:
+            if (stoi(parsedLine[1]) == 1) return true;
+            else return false;
+            break;
+        
+        case tue:
+            if (stoi(parsedLine[2]) == 1) return true;
+            else return false;
+            break;
+        
+        case wed:
+            if (stoi(parsedLine[3]) == 1) return true;
+            else return false;
+            break;
+        
+        case thu:
+            if (stoi(parsedLine[4]) == 1) return true;
+            else return false;
+            break;
+
+        case fri:
+            if (stoi(parsedLine[5]) == 1) return true;
+            else return false;
+            break;
+
+        case sat:
+            if (stoi(parsedLine[6]) == 1) return true;
+            else return false;
+            break;
+        
+        case sun:
+            if (stoi(parsedLine[7]) == 1) return true;
+            else return false;
+            break;
+        
+        default:
+            cout << "what kind of sorcery is this bro";
+            return false;
+        
+    }
+
+    calendar.close()
+
+
+
+
 }
 
 time24 parseFormattedTime(string input) {
@@ -390,6 +486,8 @@ std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& i
             localVar.drop_off_type = ((refs["drop_off_type"] != 0) && (parsedData[refs["drop_off_type"]] != "" && parsedData[refs["drop_off_type"]] != " ")) ? stoi(parsedData[refs["drop_off_type"]]) : 0;
             localVar.shape_dist_traveled = ((refs["shape_dist_traveled"] != 0) && (parsedData[refs["shape_dist_traveled"]] != "" && parsedData[refs["shape_dist_traveled"]] != " ")) ? stoi(parsedData[refs["shape_dist_traveled"]]) : 0;
             localVar.timepoint = ((refs["timepoint"] != 0) && (parsedData[refs["timepoint"]] != "" && parsedData[refs["timepoint"]] != " ")) ? stoi(parsedData[refs["timepoint"]]) : 0;
+
+            output.push_back(localVar);
         }
     }
 

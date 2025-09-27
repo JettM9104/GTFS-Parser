@@ -23,6 +23,11 @@ string convertDatesToWords(const bool &mon, const bool &tue, const bool &wed, co
                 return days[i] + " Only";
             }
         } 
+    } else if ((mon + tue + wed + thu + fri + sat + sun) == 2) {
+        bool days[7] = {0};
+        for (int i = 0; i < 7; i++) {
+            days[i] = 0;
+        } 
     }
     return "Never";
 }
