@@ -161,57 +161,67 @@ bool isValid(int tripID, week day) {
     trip.close();
 
     ifstream calendar(calendarPath);
+    bool found = false;
 
     while (getline(calendar, currentLine)) {
         parsedLine = parseDataCSV(currentLine);
 
-        if (parsedLine[0] == serviceID) break;
+        if (parsedLine[0] == serviceID) {
+            found = true;
+            break;
+        }
     }
+    if (found) {
+        switch (day) {
+            case mon:
+                if (stoi(parsedLine[1]) == 1) return true;
+                else return false;
+                break;
+            
+            case tue:
+                if (stoi(parsedLine[2]) == 1) return true;
+                else return false;
+                break;
+            
+            case wed:
+                if (stoi(parsedLine[3]) == 1) return true;
+                else return false;
+                break;
+            
+            case thu:
+                if (stoi(parsedLine[4]) == 1) return true;
+                else return false;
+                break;
 
-    switch (day) {
-        case mon:
-            if (stoi(parsedLine[1]) == 1) return true;
-            else return false;
-            break;
-        
-        case tue:
-            if (stoi(parsedLine[2]) == 1) return true;
-            else return false;
-            break;
-        
-        case wed:
-            if (stoi(parsedLine[3]) == 1) return true;
-            else return false;
-            break;
-        
-        case thu:
-            if (stoi(parsedLine[4]) == 1) return true;
-            else return false;
-            break;
+            case fri:
+                if (stoi(parsedLine[5]) == 1) return true;
+                else return false;
+                break;
 
-        case fri:
-            if (stoi(parsedLine[5]) == 1) return true;
-            else return false;
-            break;
+            case sat:
+                if (stoi(parsedLine[6]) == 1) return true;
+                else return false;
+                break;
+            
+            case sun:
+                if (stoi(parsedLine[7]) == 1) return true;
+                else return false;
+                break;
+            
+            default:
+                cout << "what kind of sorcery is this bro";
+                return false;
+            
+        }
 
-        case sat:
-            if (stoi(parsedLine[6]) == 1) return true;
-            else return false;
-            break;
-        
-        case sun:
-            if (stoi(parsedLine[7]) == 1) return true;
-            else return false;
-            break;
-        
-        default:
-            cout << "what kind of sorcery is this bro";
-            return false;
+        calendar.close();
+    }
+    else {
+        cout << "this is special :O";
+        ifstream dates(calendarDatesPath);
         
     }
-
-    calendar.close()
-
+    
 
 
 
