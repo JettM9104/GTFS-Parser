@@ -13,3 +13,6 @@ Nothing. Just a C++ compiler. All of the libraries used are built in like `<stri
 
 ## What are the other files from the root?
 There are some other random files that I use to create and test functions, structs, and classes from. You might see some snippets from those files into the `main.cpp` code but all you need to run it is the `main.cpp` code.
+
+## What are my goals for the future?
+Just try and implement *Live GTFS* Data including schedules and bus locations.
