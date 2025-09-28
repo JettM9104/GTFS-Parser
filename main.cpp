@@ -129,6 +129,15 @@ struct agency {
     string agency_phone;
     string agency_fare_url;
     string agency_email;
+
+    void printInfo() {
+        cout << "agency_id: " << agency_id << std::endl;
+        cout << "agency_name: " << agency_name << std::endl;
+    }
+
+    static void whatdidthefoxsay() {
+        cout << "wowowowoowwowoowooooowowoowow\n";
+    }
 };
 
 std::vector<string> parseDataCSV(const string& input);
@@ -142,13 +151,12 @@ std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& i
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
+agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> hello = getDayTimesAtStop(mon, 1498);
-    for (int i = 0; i < hello.size(); i++) {
-        hello[i].printInfo();
-    }
+    agency hello = getAgencyInfo();
+    hello.printInfo();
 }
 
 week convertDateToWeek(int year, int month, int day) {
