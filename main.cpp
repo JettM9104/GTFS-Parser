@@ -125,7 +125,8 @@ time24 parseFormattedTime(string input);
 bool isValid(int tripID, int year, int month, int date);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id) ;
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id);
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
@@ -137,7 +138,7 @@ int main(int argc, char* argv[]) {
     //     hello[i].printInfo();
     // }
 
-    cout << isValid(1909054, 2025, 9, 30);
+    cout << isValid(1909054, mon);
 
 }
 
@@ -282,6 +283,7 @@ bool isValid(int tripID, int year, int month, int date) {
             if (parsedLine[1] == serviceID && parsedLine[2] == "1") return true;
         }
     }
+    return 0;
 }
 
 bool isValid(int tripID, week day) {
@@ -360,6 +362,7 @@ bool isValid(int tripID, week day) {
 
         calendar.close();
     }
+    return 0;
 }
 
 time24 parseFormattedTime(string input) {
@@ -636,6 +639,80 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
         }
     }
 
+    for (int i = 0; i < output.size(); i++) {
+        if (isValid(output[i].trip_id, year, month, day)) continue;
+        else output.erase(output.begin() + i);
+    }
+
+    return output;
+}
+
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id) {
+    ifstream tripsFile(tripsPath);
+    ifstream timeFile(stopTimesPath);
+
+    string id_str = std::to_string(id);
+
+    std::vector<tripSegment> output;
+    std::vector<string> parsedData;
+
+    std::vector<long> allTripIDs;
+
+    std::map<string, int> refs;
+
+    string currentLine;
+    int lineNumber = 0;
+    int stopNumberIndex = -1;
+
+    while (getline(timeFile, currentLine)) {
+        lineNumber++;
+        if (lineNumber == 1) [[unlikely]] {
+            parsedData = parseDataCSV(currentLine);
+            for (int i = 0; i < parsedData.size(); i++) {
+                refs[parsedData[i]] = i;
+                if (parsedData[i] == "stop_id") { stopNumberIndex = i;}
+            }
+            break;
+        }
+        if (lineNumber == 2) {
+            stopNumberIndex = 0;
+            cout << "stop index not found";
+            break;
+        }
+    }
+    tripsFile.close();
+
+    ifstream timeReviewFile(stopTimesPath);
+
+    while (getline(timeReviewFile, currentLine)) {
+        parsedData = parseDataCSV(currentLine);
+        if (parsedData[stopNumberIndex] == id_str) {
+            int tripID = stoi(parsedData[0]);
+            allTripIDs.push_back(tripID);
+
+            tripSegment localVar;
+
+            // required fields
+            localVar.trip_id = tripID;
+            localVar.arrival_time = parseFormattedTime(parsedData[1]);
+            localVar.departure_time = parseFormattedTime(parsedData[2]);
+            localVar.stop_id = stoi(parsedData[3]);
+            localVar.stop_sequence = stoi(parsedData[4]);
+
+            localVar.stop_headsign = ((refs["stop_headsign"] != 0) && (parsedData[refs["stop_headsign"]] != "" && parsedData[refs["stop_headsign"]] != " ")) ? stoi(parsedData[refs["stop_headsign"]]) : 0;
+            localVar.pickup_type = ((refs["pickup_type"] != 0) && (parsedData[refs["pickup_type"]] != "" && parsedData[refs["pickup_type"]] != " ")) ? stoi(parsedData[refs["pickup_type"]]) : 0;
+            localVar.drop_off_type = ((refs["drop_off_type"] != 0) && (parsedData[refs["drop_off_type"]] != "" && parsedData[refs["drop_off_type"]] != " ")) ? stoi(parsedData[refs["drop_off_type"]]) : 0;
+            localVar.shape_dist_traveled = ((refs["shape_dist_traveled"] != 0) && (parsedData[refs["shape_dist_traveled"]] != "" && parsedData[refs["shape_dist_traveled"]] != " ")) ? stoi(parsedData[refs["shape_dist_traveled"]]) : 0;
+            localVar.timepoint = ((refs["timepoint"] != 0) && (parsedData[refs["timepoint"]] != "" && parsedData[refs["timepoint"]] != " ")) ? stoi(parsedData[refs["timepoint"]]) : 0;
+
+            output.push_back(localVar);
+        }
+    }
+
+    for (int i = 0; i < output.size(); i++) {
+        if (isValid(output[i].trip_id, day)) continue;
+        else output.erase(output.begin() + i);
+    }
 
     return output;
 }
