@@ -133,12 +133,11 @@ stop getStopInfo(const unsigned short int& id, const stopType& type);
 
 
 int main(int argc, char* argv[]) {
-    // std::vector<tripSegment> hello = getDayTimesAtStop(mon, 6769);
-    // for (int i = 0; i < hello.size(); i++) {
-    //     hello[i].printInfo();
-    // }
+    std::vector<tripSegment> hello = getDayTimesAtStop(mon, 1498);
+    for (int i = 0; i < hello.size(); i++) {
+        hello[i].printInfo();
+    }
 
-    cout << isValid(1909054, mon);
 
 }
 
