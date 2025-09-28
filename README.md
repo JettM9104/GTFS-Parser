@@ -15,4 +15,25 @@ Nothing. Just a C++ compiler. All of the libraries used are built in like `<stri
 There are some other random files that I use to create and test functions, structs, and classes from. You might see some snippets from those files into the `main.cpp` code but all you need to run it is the `main.cpp` code.
 
 ## What are my goals for the future?
-Just try and implement *Live GTFS* Data including schedules and bus locations.
+Just trying to implement *Live GTFS* Data including schedules and bus locations. I already created a .bd file converter in ./convertLIVEgtfs/convert.cpp
+
+# About this Repo
+
+## File Tree System Thing
+
+```
+.
+├── convertLIVEgtfs
+│   └── convert.cpp
+├── data
+│   ├── (your data goes here)
+│   └── tes-archive-1
+│       └── stop_ordering.txt
+├── .gitignore
+├── externalFNS.cpp
+├── main.cpp
+├── readme.md
+├── testing.cpp
+└── todo.txt
+```
+#### (Thanks to `tree.nathanfriend` for the tree diagram)
