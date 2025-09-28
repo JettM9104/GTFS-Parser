@@ -1,0 +1,4 @@
+LIVE RELEASE v1.2 - Last Updated Sep 27, 2025 at 20:42
+
+Release Notes:
+    Added Functionality to lookup stop times and bus routes
