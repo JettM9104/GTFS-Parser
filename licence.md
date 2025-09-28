@@ -1,4 +1,4 @@
-# The Jett Licence 
+# the apache licence but condensed
 
 ## (C) JETT MU 2025
 ## there are 3 rules
