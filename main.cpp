@@ -122,9 +122,10 @@ struct tripSegment { // params from stop_times
 std::vector<string> parseDataCSV(const string& input);
 std::map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
-bool isValid(int tripID, week day);
+bool isValid(int tripID, int year, int month, int date);
+bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 
-std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id) ;
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id) ;
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
@@ -136,8 +137,151 @@ int main(int argc, char* argv[]) {
     //     hello[i].printInfo();
     // }
 
-    cout << isValid(1909054, mon);
+    cout << isValid(1909054, 2025, 9, 30);
 
+}
+
+week convertDateToWeek(int year, int month, int day) {
+    if (month < 3) {
+        month += 12;
+        year -= 1;
+    }
+
+    int K = year % 100;
+    int J = year / 100;
+
+    int h = (day + 13*(month + 1)/5 + K + K/4 + J/4 + 5*J) % 7;
+
+    int dayIndex;
+    switch(h) {
+        case 0: dayIndex = sat; break;
+        case 1: dayIndex = sun; break;
+        case 2: dayIndex = mon; break;
+        case 3: dayIndex = tue; break;
+        case 4: dayIndex = wed; break;
+        case 5: dayIndex = thu; break;
+        case 6: dayIndex = fri; break;
+    }
+
+    return static_cast<week>(dayIndex);
+}
+
+bool isValid(int tripID, int year, int month, int date) {
+    week day = convertDateToWeek(year, month, date);
+    ifstream trip(tripPath);
+    string currentLine;
+
+    std::vector<string> parsedLine;
+
+    string serviceID;
+
+    string tidString = std::to_string(tripID);
+
+    while (getline(trip, currentLine)) {
+        parsedLine = parseDataCSV(currentLine);
+        if (parsedLine[2] == tidString) {
+            serviceID = parsedLine[1];
+            break;
+        }
+    }
+
+    trip.close();
+
+    ifstream calendar(calendarPath);
+    bool found = false;
+
+    while (getline(calendar, currentLine)) {
+        parsedLine = parseDataCSV(currentLine);
+
+        if (parsedLine[0] == serviceID) {
+            found = true;
+            break;
+        }
+    }
+    if (found) {
+        ifstream dates(calendarDatesPath);
+
+        string combined = std::to_string(year);
+
+        string mo = std::to_string(month);
+
+        string da = std::to_string(date);
+
+        if (mo.length() <= 1) mo = "0" + mo;
+        if (da.length() <= 1) mo = "0" + da;
+
+        combined += mo;
+        combined += da;
+
+        while (getline(dates, currentLine)) {
+            parsedLine = parseDataCSV(currentLine);
+            if (parsedLine[1] == serviceID && parsedLine[2] == "2") return false;
+        }
+        switch (day) {
+            case mon:
+                if (stoi(parsedLine[1]) == 1) return true;
+                else return false;
+                break;
+            
+            case tue:
+                if (stoi(parsedLine[2]) == 1) return true;
+                else return false;
+                break;
+            
+            case wed:
+                if (stoi(parsedLine[3]) == 1) return true;
+                else return false;
+                break;
+            
+            case thu:
+                if (stoi(parsedLine[4]) == 1) return true;
+                else return false;
+                break;
+
+            case fri:
+                if (stoi(parsedLine[5]) == 1) return true;
+                else return false;
+                break;
+
+            case sat:
+                if (stoi(parsedLine[6]) == 1) return true;
+                else return false;
+                break;
+            
+            case sun:
+                if (stoi(parsedLine[7]) == 1) return true;
+                else return false;
+                break;
+            
+            default:
+                cout << "what kind of sorcery is this bro";
+                return false;
+            
+        }
+
+        calendar.close();
+    }
+    else {
+        cout << "this is special :O";
+        ifstream dates(calendarDatesPath);
+
+        string combined = std::to_string(year);
+
+        string mo = std::to_string(month);
+
+        string da = std::to_string(date);
+
+        if (mo.length() <= 1) mo = "0" + mo;
+        if (da.length() <= 1) mo = "0" + da;
+
+        combined += mo;
+        combined += da;
+
+        while (getline(dates, currentLine)) {
+            parsedLine = parseDataCSV(currentLine);
+            if (parsedLine[1] == serviceID && parsedLine[2] == "1") return true;
+        }
+    }
 }
 
 bool isValid(int tripID, week day) {
@@ -216,15 +360,6 @@ bool isValid(int tripID, week day) {
 
         calendar.close();
     }
-    else {
-        cout << "this is special :O";
-        ifstream dates(calendarDatesPath);
-        
-    }
-    
-
-
-
 }
 
 time24 parseFormattedTime(string input) {
@@ -439,7 +574,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
     return busStop;
 }
 
-std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id) {
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id) {
     ifstream tripsFile(tripsPath);
     ifstream timeFile(stopTimesPath);
 
