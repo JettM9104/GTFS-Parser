@@ -17,6 +17,7 @@ const string stopTimesPath = "data/yrt_archive/stop_times.txt";
 const string tripPath = "data/yrt_archive/trips.txt";
 const string calendarPath = "data/yrt_archive/calendar.txt";
 const string calendarDatesPath = "data/yrt_archive/calendar_dates.txt";
+const string agencyPath = "data/yrt_archive/agency.txt";
 
 struct busLine {
     int route_id;
@@ -119,6 +120,17 @@ struct tripSegment { // params from stop_times
     }
 };
 
+struct agency {
+    string agency_id;
+    string agency_name;
+    string agency_url;
+    string agency_timezone;
+    string agency_lang;
+    string agency_phone;
+    string agency_fare_url;
+    string agency_email;
+};
+
 std::vector<string> parseDataCSV(const string& input);
 std::map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
@@ -137,8 +149,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < hello.size(); i++) {
         hello[i].printInfo();
     }
-
-
 }
 
 week convertDateToWeek(int year, int month, int day) {
@@ -713,5 +723,37 @@ std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& i
         else output.erase(output.begin() + i);
     }
 
+    return output;
+}
+
+agency getAgencyInfo() {
+    agency output;
+    ifstream agencyFile(agencyPath);
+    string line;
+    std::vector<string> parsedLine;
+    std::map<string, int> refs;
+    short lineNumber = 0;
+
+    while (getline(agencyFile, line)) {
+        lineNumber++;
+        parsedLine = parseDataCSV(line);
+        if (lineNumber == 1) {
+            for (int i = 0; i < parsedLine.size(); i++) {
+                refs[parsedLine[i]] = i;
+            }
+        } else if (lineNumber == 2) {
+            output.agency_id = parsedLine[0];
+            output.agency_name = parsedLine[1];
+            output.agency_url = parsedLine[2];
+            output.agency_timezone = parsedLine[3];
+            output.agency_lang = (refs["agency_lang"] == 0 || parsedLine[refs["agency_lang"]] == "" || parsedLine[refs["agency_lang"]] == " ") ? "undef" : parsedLine[refs["agency_lang"]];
+            output.agency_phone = (refs["agency_phone"] == 0 || parsedLine[refs["agency_phone"]] == "" || parsedLine[refs["agency_phone"]] == " ") ? "undef" : parsedLine[refs["agency_phone"]];
+            output.agency_fare_url = (refs["agency_fare_url"] == 0 || parsedLine[refs["agency_fare_url"]] == "" || parsedLine[refs["agency_fare_url"]] == " ") ? "undef" : parsedLine[refs["agency_fare_url"]];
+            output.agency_email = (refs["agency_email"] == 0 || parsedLine[refs["agency_email"]] == "" || parsedLine[refs["agency_email"]] == " ") ? "undef" : parsedLine[refs["agency_email"]];
+        } else {
+            cout << "unavaliavle";
+        }
+        
+    }
     return output;
 }
