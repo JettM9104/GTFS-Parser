@@ -116,8 +116,9 @@ struct tripSegment { // params from stop_times plus routeid
 
     void printInfo() {
         cout << "trip_id: " << trip_id << std::endl;
-        cout << "arrival_time" << arrival_time.formattedTime() << std::endl;
-        cout << "departure_time" << departure_time.formattedTime() << std::endl;
+        cout << "arrival_time: " << arrival_time.formattedTime() << std::endl;
+        cout << "departure_time: " << departure_time.formattedTime() << std::endl;
+        cout << "route_id: " << route_id << std::endl;
     }
 };
 
@@ -160,6 +161,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < testing.size(); i++) {
         testing[i].printInfo();
+        cout << std::endl;
     }
 
 }
@@ -682,9 +684,7 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
     }
 
     // for (int i = 0; i < output.size(); i++) {
-    //     if (isValid(output[i].trip_id, year, month, day)) continue;
-    //     else output.erase(output.begin() + i);
-    // }
+    
 
     return output;
 }
