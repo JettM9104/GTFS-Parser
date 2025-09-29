@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
@@ -143,7 +144,7 @@ struct agency {
 };
 
 std::vector<string> parseDataCSV(const string& input);
-std::map<string, int> createMapFromVector(std::vector<string> param);
+std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
 bool isValid(int tripID, int year, int month, int date);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
@@ -442,9 +443,9 @@ std::vector<string> parseDataCSV(const string& input) {
     return output;
 }
 
-std::map<string, int> createMapFromVector(std::vector<string> param) {
+std::unordered_map<string, int> createMapFromVector(std::vector<string> param) {
     int length = param.size();
-    std::map<string, int> output;
+    std::unordered_map<string, int> output;
     for (int i = 0; i < length; i++) {
         if (param[i] == "" || param[i] == " ") {
             continue;
@@ -538,7 +539,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
             parsedCurrentLine = parseDataCSV(currentLine);
             if (parsedCurrentLine[0] == std::to_string(busStop.stop_id)) break;
         }
-        std::map<string, int> setupMap = createMapFromVector(dataVector);
+        std::unordered_map<string, int> setupMap = createMapFromVector(dataVector);
         if (parsedCurrentLine[0] != "0") {
             busStop.stop_id = stoi(parsedCurrentLine[setupMap["stop_id"]]);
             busStop.stop_code = stoi(parsedCurrentLine[setupMap["stop_code"]]);
@@ -573,7 +574,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
             parsedCurrentLine = parseDataCSV(currentLine);
             if (parsedCurrentLine[1] == std::to_string(busStop.stop_code)) break;
         }
-        std::map<string, int> setupMap = createMapFromVector(dataVector);
+        std::unordered_map<string, int> setupMap = createMapFromVector(dataVector);
 
         if (parsedCurrentLine[0] != "0") {
             busStop.stop_id = stoi(parsedCurrentLine[setupMap["stop_id"]]);
@@ -611,7 +612,7 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
 
     std::vector<long> allTripIDs;
 
-    std::map<string, int> refs;
+    std::unordered_map<string, int> refs;
 
     string currentLine;
     int lineNumber = 0;
@@ -700,7 +701,7 @@ std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& i
 
     std::vector<long> allTripIDs;
 
-    std::map<string, int> refs;
+    std::unordered_map<string, int> refs;
 
     string currentLine;
     int lineNumber = 0;
@@ -764,7 +765,7 @@ agency getAgencyInfo() {
     ifstream agencyFile(agencyPath);
     string line;
     std::vector<string> parsedLine;
-    std::map<string, int> refs;
+    std::unordered_map<string, int> refs;
     short lineNumber = 0;
 
     while (getline(agencyFile, line)) {
