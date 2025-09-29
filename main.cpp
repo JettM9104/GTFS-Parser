@@ -101,7 +101,7 @@ struct timeap : public time24 {
     }
 };
 
-struct tripSegment { // params from stop_times
+struct tripSegment { // params from stop_times plus routeid
     long trip_id;
     time24 arrival_time;
     time24 departure_time;
@@ -112,6 +112,7 @@ struct tripSegment { // params from stop_times
     int drop_off_type;
     int shape_dist_traveled;
     int timepoint;
+    int route_id;
 
     void printInfo() {
         cout << "trip_id: " << trip_id << std::endl;
@@ -155,8 +156,12 @@ agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    agency hello = getAgencyInfo();
-    hello.printInfo();
+    std::vector<tripSegment> testing = getDayTimesAtStop(2025, 9, 29, 6769);
+
+    for (int i = 0; i < testing.size(); i++) {
+        testing[i].printInfo();
+    }
+
 }
 
 week convertDateToWeek(int year, int month, int day) {
@@ -595,7 +600,6 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
 }
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id) {
-    ifstream tripsFile(tripsPath);
     ifstream timeFile(stopTimesPath);
 
     string id_str = std::to_string(id);
@@ -627,7 +631,7 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
             break;
         }
     }
-    tripsFile.close();
+    timeFile.close();
 
     ifstream timeReviewFile(stopTimesPath);
 
@@ -655,11 +659,32 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
             output.push_back(localVar);
         }
     }
+    lineNumber = 0;
+    timeReviewFile.close();
 
-    for (int i = 0; i < output.size(); i++) {
-        if (isValid(output[i].trip_id, year, month, day)) continue;
-        else output.erase(output.begin() + i);
+    ifstream tripsFile(tripPath);
+
+    while (getline(tripsFile, currentLine)) {
+        lineNumber++;
+        parsedData = parseDataCSV(currentLine);
+        if (lineNumber == 1) {
+            refs.clear();
+            for (int i = 0; i < parsedData.size(); i++) {
+                refs[parsedData[i]] = i;
+            }
+        }
+        for (int i = 0; i < output.size(); i++) {
+            if (std::to_string(output[i].trip_id) == parsedData[refs["trip_id"]]) {
+                output[i].route_id = stoi(parsedData[refs["route_id"]]);
+            }
+        }        
+        
     }
+
+    // for (int i = 0; i < output.size(); i++) {
+    //     if (isValid(output[i].trip_id, year, month, day)) continue;
+    //     else output.erase(output.begin() + i);
+    // }
 
     return output;
 }
