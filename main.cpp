@@ -11,14 +11,16 @@ typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 
-const string stopPath = "data/yrt_archive/stops.txt";
-const string routePath = "data/yrt_archive/routes.txt";
-const string tripsPath = "data/yrt_archive/trips.txt";
-const string stopTimesPath = "data/yrt_archive/stop_times.txt";
-const string tripPath = "data/yrt_archive/trips.txt";
-const string calendarPath = "data/yrt_archive/calendar.txt";
-const string calendarDatesPath = "data/yrt_archive/calendar_dates.txt";
-const string agencyPath = "data/yrt_archive/agency.txt";
+const string root = "data/yrt_archive/";
+
+const string stopPath = root + "stops.txt";
+const string routePath = root + "routes.txt";
+const string tripsPath = root + "trips.txt";
+const string stopTimesPath = root + "stop_times.txt";
+const string tripPath = root + "trips.txt";
+const string calendarPath = root + "calendar.txt";
+const string calendarDatesPath = root + "calendar_dates.txt";
+const string agencyPath = root + "agency.txt";
 
 struct busLine {
     int route_id;
@@ -148,6 +150,7 @@ std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
 bool isValid(int tripID, int year, int month, int date);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
+week convertDateToWeek(int year, int month, int day);
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id);
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id);
@@ -158,7 +161,7 @@ agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    isValid(1909102, 2025, 9, 13);
+    cout << static_cast<int>((convertDateToWeek(2025, 10, 1)));
 
 }
 
