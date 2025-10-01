@@ -158,12 +158,7 @@ agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> testing = getDayTimesAtStop(2025, 9, 29, 6769);
-
-    for (int i = 0; i < testing.size(); i++) {
-        testing[i].printInfo();
-        cout << std::endl;
-    }
+    isValid(1909102, 2025, 9, 13);
 
 }
 
@@ -224,8 +219,10 @@ bool isValid(int tripID, int year, int month, int date) {
             break;
         }
     }
+    cout << "yay\n";
     if (found) {
-        ifstream dates(calendarDatesPath);
+        cout << "found\n";
+        ifstream dates(calendarPath);
 
         string combined = std::to_string(year);
 
@@ -239,10 +236,13 @@ bool isValid(int tripID, int year, int month, int date) {
         combined += mo;
         combined += da;
 
+        cout << combined << std::endl;
+
         while (getline(dates, currentLine)) {
             parsedLine = parseDataCSV(currentLine);
-            if (parsedLine[1] == serviceID && parsedLine[2] == "2") return false;
+            if (parsedLine[0] == serviceID) break;
         }
+        cout << "b4 switch\n" << parsedLine[1] << std::endl << std::endl;
         switch (day) {
             case mon:
                 if (stoi(parsedLine[1]) == 1) return true;
@@ -284,6 +284,7 @@ bool isValid(int tripID, int year, int month, int date) {
                 return false;
             
         }
+        cout << "after switch\n";
 
         calendar.close();
     }
@@ -308,7 +309,7 @@ bool isValid(int tripID, int year, int month, int date) {
             if (parsedLine[1] == serviceID && parsedLine[2] == "1") return true;
         }
     }
-    return 0;
+    return false;
 }
 
 bool isValid(int tripID, week day) {
