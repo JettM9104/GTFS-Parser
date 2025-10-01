@@ -161,8 +161,11 @@ agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    cout << static_cast<int>((convertDateToWeek(2025, 10, 1)));
-
+    std::vector<tripSegment> ohio = getDayTimesAtStop(2025, 10, 1, 6769);
+    for (int i = 0; i < ohio.size(); i++) {
+        ohio[i].printInfo();
+        cout << "\n\n";
+    }
 }
 
 week convertDateToWeek(int year, int month, int day) {
@@ -688,7 +691,11 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
         
     }
 
-    // for (int i = 0; i < output.size(); i++) {
+    for (int i = 0; i < output.size(); i++) {
+        if (!isValid(output[i].trip_id, year, month, day)) {
+            output.erase(output.begin() + i);
+        }
+    }
     
 
     return output;
