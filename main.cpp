@@ -161,7 +161,7 @@ agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> ohio = getDayTimesAtStop(2025, 10, 1, 6769);
+    std::vector<tripSegment> ohio = getDayTimesAtStop(2025, 10, 1, 32766);
     for (int i = 0; i < ohio.size(); i++) {
         ohio[i].printInfo();
         cout << "\n\n";
