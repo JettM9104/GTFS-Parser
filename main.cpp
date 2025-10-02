@@ -763,11 +763,6 @@ std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& i
         }
     }
 
-    for (int i = 0; i < output.size(); i++) {
-        if (isValid(output[i].trip_id, day)) continue;
-        else output.erase(output.begin() + i);
-    }
-
     return output;
 }
 
