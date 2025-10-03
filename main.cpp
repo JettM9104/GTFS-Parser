@@ -21,6 +21,7 @@ const string tripPath = root + "trips.txt";
 const string calendarPath = root + "calendar.txt";
 const string calendarDatesPath = root + "calendar_dates.txt";
 const string agencyPath = root + "agency.txt";
+const string shapePath = root + "shapes.txt";
 
 struct busLine {
     int route_id;
@@ -145,9 +146,20 @@ struct agency {
     }
 };
 
-struct fare {
-    
-}
+struct shape {
+    int shape_id;
+    double shape_pt_lat;
+    double shape_pt_lon;
+    int shape_pt_sequence;
+    double shape_dist_traveled;
+
+    shape(int id) {
+        id = shape_id;
+    }
+
+    shape() = default;
+};
+
 std::vector<string> parseDataCSV(const string& input);
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
@@ -164,11 +176,9 @@ agency getAgencyInfo();
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> ohio = getDayTimesAtStop(2025, 10, 1, 6769);
-    for (int i = 0; i < ohio.size(); i++) {
-        ohio[i].printInfo();
-        cout << "\n\n";
-    }
+    stop asfd = getStopInfo(3292, code);
+
+    asfd.printInfo();
 }
 
 week convertDateToWeek(int year, int month, int day) {
@@ -797,6 +807,42 @@ agency getAgencyInfo() {
             cout << "unavaliavle";
         }
         
+    }
+    return output;
+}
+
+std::vector<shape> getShapeInfo(int shapeID) {
+    ifstream shapeFile(shapePath);
+
+    std::vector<shape> output(shapeID);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::map<string, int> refs;
+
+    int lineNumber = 0;
+
+    while (getline(shapeFile, currentLine)) {
+        lineNumber++;
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (lineNumber == 1) [[unlikely]] {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        }
+        else {
+            shape localShape;
+
+            localShape.shape_id = stoi(parsedCurrentLine[refs["shape_id"]]);
+            localShape.shape_pt_lat = stoi(parsedCurrentLine[refs["shape_pt_lat"]]);
+            localShape.shape_pt_lon = stoi(parsedCurrentLine[refs["shape_pt_lon"]]);
+            localShape.shape_pt_sequence = stoi(parsedCurrentLine[refs["shape_pt_sequence"]]);
+
+            if (refs["shape_dist_traveled"] != 0 && parsedCurrentLine[refs["shape_dist_traveled"]] != "" && parsedCurrentLine[refs["shape_dist_traveled"]] != " ") {
+                localShape.shape_pt_sequence = stoi(parsedCurrentLine[refs["shape_dist_traveled"]]);
+            }
+        }
+
     }
     return output;
 }
