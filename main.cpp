@@ -145,6 +145,9 @@ struct agency {
     }
 };
 
+struct fare {
+    
+}
 std::vector<string> parseDataCSV(const string& input);
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
