@@ -718,6 +718,7 @@ std::vector<tripSegment> getDayTimesAtStop(int& year, int& month, int& day, cons
             output.erase(output.begin() + i);
         }
     }
+    tripsFile.close();
     
 
     return output;
@@ -784,6 +785,7 @@ std::vector<tripSegment> getDayTimesAtStop(week& day, const unsigned short int& 
             output.push_back(localVar);
         }
     }
+    timeReviewFile.close();
 
     return output;
 }
@@ -817,7 +819,19 @@ agency getAgencyInfo() {
         }
         
     }
+    agencyFile.close();
     return output;
+}
+
+tripSegment getTripInfo(const int& id) {
+    ifstream tripFile(tripPath);
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+
+    while(getline(tripFile, currentLine)) {
+    
+    }
+
 }
 
 std::vector<shape> getShapeInfo(const int& shapeID) {
@@ -855,5 +869,6 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
         }
 
     }
+    shapeFile.close();
     return output;
 }
