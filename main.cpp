@@ -158,6 +158,11 @@ struct shape {
     }
 
     shape() = default;
+
+    void printCoords() {
+        cout << "shape_pt_lat: " << shape_pt_lat << std::endl;
+        cout << "shape_pt_lon: " << shape_pt_lon << std::endl;
+    }
 };
 
 std::vector<string> parseDataCSV(const string& input);
@@ -167,18 +172,22 @@ bool isValid(int tripID, int year, int month, int date);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
 
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id);
-std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id);
+std::vector<tripSegment> getDayTimesAtStop(int& year, int& month, int& day, const unsigned short int& id);
+std::vector<tripSegment> getDayTimesAtStop(week& day, const unsigned short int& id);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
+std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    stop asfd = getStopInfo(3292, code);
+    std::vector<shape> yes = getShapeInfo(81011);
 
-    asfd.printInfo();
+    for (int i = 0 ; i < yes.size(); i++) {
+        yes[i].printCoords();
+        cout << std::endl;
+    }
 }
 
 week convertDateToWeek(int year, int month, int day) {
@@ -622,7 +631,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
     return busStop;
 }
 
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int& id) {
+std::vector<tripSegment> getDayTimesAtStop(int& year, int& month, int& day, const unsigned short int& id) {
     ifstream timeFile(stopTimesPath);
 
     string id_str = std::to_string(id);
@@ -714,7 +723,7 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
     return output;
 }
 
-std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int& id) {
+std::vector<tripSegment> getDayTimesAtStop(week& day, const unsigned short int& id) {
     ifstream tripsFile(tripsPath);
     ifstream timeFile(stopTimesPath);
 
@@ -811,7 +820,7 @@ agency getAgencyInfo() {
     return output;
 }
 
-std::vector<shape> getShapeInfo(int shapeID) {
+std::vector<shape> getShapeInfo(const int& shapeID) {
     ifstream shapeFile(shapePath);
 
     std::vector<shape> output(shapeID);
@@ -841,6 +850,8 @@ std::vector<shape> getShapeInfo(int shapeID) {
             if (refs["shape_dist_traveled"] != 0 && parsedCurrentLine[refs["shape_dist_traveled"]] != "" && parsedCurrentLine[refs["shape_dist_traveled"]] != " ") {
                 localShape.shape_pt_sequence = stoi(parsedCurrentLine[refs["shape_dist_traveled"]]);
             }
+
+            output.push_back(localShape);
         }
 
     }
