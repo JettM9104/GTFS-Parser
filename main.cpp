@@ -827,11 +827,28 @@ tripSegment getTripInfo(const int& id) {
     ifstream tripFile(tripPath);
     string currentLine;
     std::vector<string> parsedCurrentLine;
+    tripSegment output;
+    output.trip_id = id;
+    std::map<string, int> refs;
+    int lineNumber = 0;
 
-    while(getline(tripFile, currentLine)) {
-    
+    string idStr = std::to_string(id);
+
+    while (getline(tripFile, currentLine)) {
+        lineNumber++;
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (lineNumber == 1) [[unlikely]] {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["trip_id"]] == idStr) {
+            // set all values to the return tripsegment and close then break
+        }
     }
-
 }
 
 std::vector<shape> getShapeInfo(const int& shapeID) {
