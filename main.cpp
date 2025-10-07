@@ -7,7 +7,10 @@
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
-typedef enum {ident, code} stopType;
+typedef enum 
+{ident, code}
+stopType;
+
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 
@@ -162,6 +165,17 @@ struct shape {
     void printCoords() {
         cout << "shape_pt_lat: " << shape_pt_lat << std::endl;
         cout << "shape_pt_lon: " << shape_pt_lon << std::endl;
+    }
+};
+
+class bus {
+public:
+    string licencePlate;
+    short int busID;
+    busLine route;
+
+    bus(busLine route) {
+        this->route = route;
     }
 };
 
@@ -874,8 +888,8 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
             shape localShape;
 
             localShape.shape_id = stoi(parsedCurrentLine[refs["shape_id"]]);
-            localShape.shape_pt_lat = stoi(parsedCurrentLine[refs["shape_pt_lat"]]);
-            localShape.shape_pt_lon = stoi(parsedCurrentLine[refs["shape_pt_lon"]]);
+            localShape.shape_pt_lat = std::stod(parsedCurrentLine[refs["shape_pt_lat"]]);
+            localShape.shape_pt_lon = std::stod(parsedCurrentLine[refs["shape_pt_lon"]]);
             localShape.shape_pt_sequence = stoi(parsedCurrentLine[refs["shape_pt_sequence"]]);
 
             if (refs["shape_dist_traveled"] != 0 && parsedCurrentLine[refs["shape_dist_traveled"]] != "" && parsedCurrentLine[refs["shape_dist_traveled"]] != " ") {
