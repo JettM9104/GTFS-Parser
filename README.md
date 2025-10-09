@@ -9,7 +9,7 @@ Create a folder in the folder labelled `data` or wherever you want and change th
 If you are in pain reading this code just copy it and improve it. I don't care about licencing; Just do whatever you want with it. Go wild. (read [`licence.md`](licence.md))
 
 ## What libraries do I need?
-Nothing. Just a C++ compiler. All of the libraries used are built in like `<string>`, `<vector>`, and `<map>` (with the exception of the GTFS-RT converter, read more below on [How do I use the GTFS-RT Converter?](#How do I use the GTFS-RT Converter?)
+Nothing. Just a C++ compiler. All of the libraries used are built in like `<string>`, `<vector>`, and `<map>` (with the exception of the GTFS-RT converter, read more below on [How do I use the GTFS-RT Converter?](#How-do-I-use-the-GTFS-RT-Converter?)
 
 ## What are the other files from the root?
 There are some other random files that I use to create and test functions, structs, and classes from. You might see some snippets from those files into the `main.cpp` code but all you need to run it is the `main.cpp` code.
