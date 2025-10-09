@@ -18,10 +18,8 @@ data/yrt_archive/stop_times.txt
 data/yrt_archive/stops.txt
 data/yrt_archive/transfers.txt
 data/yrt_archive/trips.txt
-testing
 main
 externalFNS
-testing
 .DS_Store
 .DS_Store
 convertLIVEgtfs/TripUpdates.pb
