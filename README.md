@@ -40,7 +40,7 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 #### (Thanks to `tree.nathanfriend` for the tree diagram)
 
 # How do I use the GTFS-RT Converter?
-All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it. (Half of the steps you only have to do once.\)
+All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it. (Most of the steps you only have to do once if you use the same computer and OS).
 
 **Step 1**: Download the  [`gtfs-realtime.proto`](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto) file from the `google/transit` repository and put these in the same folder as your parser code. 
 
@@ -84,11 +84,12 @@ clang++ -std=c++17 main.cpp gtfs-realtime.pb.cc \
 
 `./parseGTFS`
 
-(sometimes run) `./parseGTFS.exe`
+(sometimes run `./parseGTFS.exe`)
 
+After compiling it you don't need to ever compile it again unless you change the code, update/switch your OS, or switch computers with a different processor.
 
 Wasn't that bad, wasn't it?
 
-*DISCLAMER: ALL COMMANDS WILL WERE TESTED AND WORKING ON MACOS 26 (TAHOE) AND WINDOWS 11.*
+*DISCLAMER: ALL COMMANDS WILL WERE TESTED AND WORKING ON MACOS 26 AND WINDOWS 11.*
 
 
