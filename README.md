@@ -23,19 +23,27 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 
 ```
 .
+├── .github
+│   └── workflows
+│       └── c-cpp.yml
+├── .vscode
+│   ├── launch.json
+│   └── tasks.json
 ├── convertLIVEgtfs
-│   └── main.cpp
+│   ├── main.cpp
+│   └── (read README.md on how to use)
 ├── data
-│   ├── (your data goes here)
-│   └── tes-archive-1
-│       └── stop_ordering.txt
+│   ├── (put your own data here, read README.md on how to use)
+│   └── tes_archive-1
+├── testing
+│   ├── externalFNS.cpp
+│   └── testing.cpp
 ├── .gitignore
-├── externalFNS.cpp
 ├── licence.md
-├── main.cpp
-├── readme.md
-├── testing.cpp
-└── todo.txt
+├── README.md
+├── todo.txt
+├── version.txt
+└── main.cpp
 ```
 #### (Thanks to `tree.nathanfriend` for the tree diagram)
 
