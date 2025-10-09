@@ -42,5 +42,5 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 # How do I use the GTFS-RT Converter?
 All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it.
 
-**Step 1: **  Download the  [`gtfs-realtime.proto` file](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto).
+**Step 1**: Download the  [`gtfs-realtime.proto` file](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto).
 
