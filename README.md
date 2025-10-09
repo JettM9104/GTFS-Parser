@@ -3,7 +3,7 @@
 This code is programmed in **C++** and is one big file in `main.cpp` and is used to parse general *GTFS Static Data*. 
 
 ## How do I use it?
-Create a folder in the enviroment labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto Github.
+Create a folder in the folder labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto GitHub. 
 
 ## If you are in pain reading this code
 If you are in pain reading this code just copy it and improve it. I don't care about licencing; Just do whatever you want with it. Go wild. (read [`licence.md`](licence.md))
