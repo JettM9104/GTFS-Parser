@@ -1,4 +1,10 @@
-LIVE RELEASE v1.2 - Last Updated Sep 27, 2025 at 20:42
+CURRENT LIVE RELEASE v1.4 - Last Update Oct 9, 2025 at 15:17
+    Added lots of new functions like getAgencyInfo() and new structs like agency to complement getAgencyInfo().
 
-Release Notes:
+
+
+
+
+Past Releases:
+RELEASE v1.2 - Last Updated Sep 27, 2025 at 20:42
     Added Functionality to lookup stop times and bus routes

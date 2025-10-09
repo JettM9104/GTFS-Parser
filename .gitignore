@@ -27,6 +27,6 @@ convertLIVEgtfs/convert
 convertLIVEgtfs/gtfs-realtime.pb.cc
 convertLIVEgtfs/gtfs-realtime.pb.h
 convertLIVEgtfs/gtfs-realtime.proto
-.DS_Store
 convertLIVEgtfs/parseGTFS
 convertLIVEgtfs/decoded_gtfs.txt
+testing/externalFNS
