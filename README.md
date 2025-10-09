@@ -47,6 +47,8 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 ```
 #### (Thanks to `tree.nathanfriend` for the tree diagram)
 
+---
+
 # How do I use the GTFS-RT Converter?
 All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it. (Most of the steps you only have to do once if you use the same computer and OS).
 
