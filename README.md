@@ -3,43 +3,51 @@
 This code is programmed in **C++** and is one big file in `main.cpp` and is used to parse general *GTFS Static Data*. 
 
 ## How do I use it?
-Create a folder in the enviroment labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto Github.
+Create a folder in the folder labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto GitHub. 
 
 ## If you are in pain reading this code
 If you are in pain reading this code just copy it and improve it. I don't care about licencing; Just do whatever you want with it. Go wild. (read [`licence.md`](licence.md))
 
 ## What libraries do I need?
-Nothing. Just a C++ compiler. All of the libraries used are built in like `<string>`, `<vector>`, and `<map>`.
+Nothing. Just a C++ compiler. All of the libraries used are built in like `<string>`, `<vector>`, and `<map>` (with the exception of the GTFS-RT converter, read more below on [How do I use the GTFS-RT Converter?](#How-do-I-use-the-GTFS-RT-Converter)
 
 ## What are the other files from the root?
 There are some other random files that I use to create and test functions, structs, and classes from. You might see some snippets from those files into the `main.cpp` code but all you need to run it is the `main.cpp` code.
 
 ## What are my goals for the future?
-Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including schedules and bus locations. I already created a .bd file converter in ./convertLIVEgtfs/convert.cpp
+Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including schedules and bus locations. I already created a .bd file converter in ./convertLIVEgtfs/main.cpp
 
-# About this Repo
-
-## File Tree System Thing
+## File System
 
 ```
 .
+├── .github
+│   └── workflows
+│       └── c-cpp.yml
+├── .vscode
+│   ├── launch.json
+│   └── tasks.json
 ├── convertLIVEgtfs
-│   └── main.cpp
+│   ├── main.cpp
+│   └── (read README.md on how to use)
 ├── data
-│   ├── (your data goes here)
-│   └── tes-archive-1
-│       └── stop_ordering.txt
+│   ├── (put your own data here, read README.md on how to use)
+│   └── tes_archive-1
+├── testing
+│   ├── externalFNS.cpp
+│   └── testing.cpp
 ├── .gitignore
-├── externalFNS.cpp
 ├── licence.md
-├── main.cpp
-├── readme.md
-├── testing.cpp
-└── todo.txt
+├── README.md
+├── todo.txt
+├── version.txt
+└── main.cpp
 ```
 #### (Thanks to `tree.nathanfriend` for the tree diagram)
 
-# How do I use the GTFS-RT Converter?
+---
+
+## How do I use the GTFS-RT Converter?
 All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it. (Most of the steps you only have to do once if you use the same computer and OS).
 
 **Step 1**: Download the  [`gtfs-realtime.proto`](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto) file from the `google/transit` repository and put these in the same folder as your parser code. 
@@ -55,7 +63,7 @@ If you are on Windows, open the Start menu, Search `“Environment Variables”`
 (On Mac) First run  `brew --prefix protobuf@21`. It should output something like `/opt/homebrew/opt/protobuf@21`. If not, don't worry. Remember to add the text `/bin/protoc` at the end of it. For example, `/opt/homebrew/opt/protobuf@21/bin/protoc`. Navigate to the working directory by ether using `cd` or right-clicking the folder then pressing "Open in Terminal". Use the path with `/bin/protoc` to generate your files, for example, `/opt/homebrew/opt/protobuf@21/bin/protoc --cpp_out=. gtfs-realtime.proto`.
 
 
-**Step 4**: Congratulations on making it this far! Time to compile the code. Download a `.pb` GTFS-RT File from the internet or from your local transit agency and paste it in the same directory as your `main.cpp`.
+**Step 4**: Congratulations on making it this far! Time to compile the code. Download a `.pb` GTFS-RT File from the internet or from your local transit agency and paste it in the same directory as your `main.cpp`. Name it `TripUpdates.pb` and the output file will be `decoded_gtfs.txt`.
 
 On Windows:
 ```powershell
