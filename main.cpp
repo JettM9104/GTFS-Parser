@@ -168,6 +168,37 @@ struct shape {
     }
 };
 
+struct trip {
+    int route_id;
+    string service_id;
+    int trip_id;
+    string trip_headsign;
+    string trip_short_name;
+    short direction_id;
+    int block_id;
+    int shape_id;
+    short wheelchair_accessible;
+    short bikes_allowed;
+    short cars_allowed;
+
+    bool resetAllValues(bool a) {
+        if (!a) return 0;
+        route_id = 0;
+        service_id = "";
+        trip_id = 0;
+        trip_headsign = "";
+        trip_short_name = "";
+        direction_id = 0;
+        block_id = 0;
+        shape_id = 0;
+        wheelchair_accessible = 0;
+        bikes_allowed = 0;
+        cars_allowed = 0;
+
+        return 1;
+    }
+};
+
 class bus {
 public:
     string licencePlate;
@@ -837,14 +868,15 @@ agency getAgencyInfo() {
     return output;
 }
 
-tripSegment getTripInfo(const int& id) {
+trip getTripInfo(const int& id) {
     ifstream tripFile(tripPath);
     string currentLine;
     std::vector<string> parsedCurrentLine;
-    tripSegment output;
+    trip output;
     output.trip_id = id;
     std::map<string, int> refs;
     int lineNumber = 0;
+    bool found;
 
     string idStr = std::to_string(id);
 
@@ -860,9 +892,24 @@ tripSegment getTripInfo(const int& id) {
         }
 
         if (parsedCurrentLine[refs["trip_id"]] == idStr) {
-            // set all values to the return tripsegment and close then break
+            output.route_id = stoi(parsedCurrentLine[refs["route_id"]]);
+            output.service_id = parsedCurrentLine[refs["service_id"]];
+            output.trip_id = stoi(parsedCurrentLine[refs["trip_id"]]);
+            output.trip_headsign = (parsedCurrentLine[refs["trip_id"]] != "" && parsedCurrentLine[refs["trip_id"]] != " " && refs["trip_id"] != 0) ? (parsedCurrentLine[refs["trip_id"]]) : (""); // for strings
+            output.trip_short_name = (parsedCurrentLine[refs["trip_short_name"]] != "" && parsedCurrentLine[refs["trip_short_name"]] != " " && refs["trip_short_name"] != 0) ? (parsedCurrentLine[refs["trip_short_name"]]) : (""); // for strings
+            output.direction_id = (parsedCurrentLine[refs["direction_id"]] != "" && parsedCurrentLine[refs["direction_id"]] != " " && refs["direction_id"] != 0) ? (stoi(parsedCurrentLine[refs["direction_id"]])) : (0); // for integers
+            output.block_id = (parsedCurrentLine[refs["block_id"]] != "" && parsedCurrentLine[refs["block_id"]] != " " && refs["block_id"] != 0) ? (stoi(parsedCurrentLine[refs["block_id"]])) : (0); // for integers
+            output.shape_id = (parsedCurrentLine[refs["shape_id"]] != "" && parsedCurrentLine[refs["shape_id"]] != " " && refs["shape_id"] != 0) ? (stoi(parsedCurrentLine[refs["shape_id"]])) : (0); // for integers
+            output.wheelchair_accessible = (parsedCurrentLine[refs["wheelchair_accessible"]] != "" && parsedCurrentLine[refs["wheelchair_accessible"]] != " " && refs["wheelchair_accessible"] != 0) ? (stoi(parsedCurrentLine[refs["wheelchair_accessible"]])) : (0); // for integers
+            output.bikes_allowed = (parsedCurrentLine[refs["bikes_allowed"]] != "" && parsedCurrentLine[refs["bikes_allowed"]] != " " && refs["bikes_allowed"] != 0) ? (stoi(parsedCurrentLine[refs["bikes_allowed"]])) : (0); // for integers
+            output.cars_allowed = (parsedCurrentLine[refs["cars_allowed"]] != "" && parsedCurrentLine[refs["cars_allowed"]] != " " && refs["cars_allowed"] != 0) ? (stoi(parsedCurrentLine[refs["cars_allowed"]])) : (0); // for integers
+            found = true;
+            break;
         }
     }
+    if (!found) output.resetAllValues(1);
+    tripFile.close();
+    return output;
 }
 
 std::vector<shape> getShapeInfo(const int& shapeID) {
