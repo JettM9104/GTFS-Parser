@@ -58,20 +58,23 @@ If you are on Windows, open the Start menu, Search `“Environment Variables”`
 **Step 4**: Congratulations on making it this far! Time to compile the code. Download a `.pb` GTFS-RT File from the internet or from your local transit agency and paste it in the same directory as your `main.cpp`.
 
 On Windows:
-```g++ -std=c++17 main.cpp gtfs-realtime.pb.cc ^
+```powershell
+g++ -std=c++17 main.cpp gtfs-realtime.pb.cc ^
 -I C:\protobuf-21.1\include ^
 -L C:\protobuf-21.1\lib -lprotobuf -o parseGTFS.exe
 ```
 
 On Mac:
 First run  `brew --prefix protobuf@21` in Terminal. It should output something like `/opt/homebrew/opt/protobuf@21`. I will call that the path. 
-```clang++ -std=c++17 main.cpp gtfs-realtime.pb.cc \
+```bash
+clang++ -std=c++17 main.cpp gtfs-realtime.pb.cc \
 -I[path]/include \
 -L[path]/lib \
 -lprotobuf -o parseGTFS
 ```
 For example, if your path is `/opt/homebrew/opt/protobuf@21`:
-```clang++ -std=c++17 main.cpp gtfs-realtime.pb.cc \
+```bash
+clang++ -std=c++17 main.cpp gtfs-realtime.pb.cc \
 -I/opt/homebrew/opt/protobuf@21/include \
 -L/opt/homebrew/opt/protobuf@21/lib \
 -lprotobuf -o parseGTFS
