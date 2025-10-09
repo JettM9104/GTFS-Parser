@@ -55,7 +55,7 @@ If you are on Windows, open the Start menu, Search `“Environment Variables”`
 (On Mac) First run  `brew --prefix protobuf@21`. It should output something like `/opt/homebrew/opt/protobuf@21`. If not, don't worry. Remember to add the text `/bin/protoc` at the end of it. For example, `/opt/homebrew/opt/protobuf@21/bin/protoc`. Navigate to the working directory by ether using `cd` or right-clicking the folder then pressing "Open in Terminal". Use the path with `/bin/protoc` to generate your files, for example, `/opt/homebrew/opt/protobuf@21/bin/protoc --cpp_out=. gtfs-realtime.proto`.
 
 
-**Step 4**: Congratulations on making it this far! Time to compile the code. Download a `.pb` GTFS-RT File from the internet or from your local transit agency and paste it in the same directory as your `main.cpp`.
+**Step 4**: Congratulations on making it this far! Time to compile the code. Download a `.pb` GTFS-RT File from the internet or from your local transit agency and paste it in the same directory as your `main.cpp`. Name it `TripUpdates.pb` and the output file will be `decoded_gtfs.txt`.
 
 On Windows:
 ```powershell
