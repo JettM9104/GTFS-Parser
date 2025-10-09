@@ -24,7 +24,7 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 ```
 .
 ├── convertLIVEgtfs
-│   └── convert.cpp
+│   └── main.cpp
 ├── data
 │   ├── (your data goes here)
 │   └── tes-archive-1
@@ -42,5 +42,13 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 # How do I use the GTFS-RT Converter?
 All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it.
 
-**Step 1**: Download the  [`gtfs-realtime.proto`](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto) file from the `google-transit` repository.
+**Step 1**: Download the  [`gtfs-realtime.proto`](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto) file from the `google/transit` repository and put these in the same folder as your parser code. 
+
+**Step 2**: (On Mac Command Line) Install `protoc@21` with `brew install protoc@21`. If you have the latest version, first uninstall it with `brew uninstall protoc`. If you don't even have homebrew install it with `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`. 
+
+(On all platforms) Go to the downloads page of `Protocol Buffers` at [`https://github.com/protocolbuffers/protobuf/releases`](https://github.com/protocolbuffers/protobuf/releases), scroll down to `Protocol Buffers v31.1` and at the bottom of the click `assets` and download the one matching your operating system.
+
+If you are on Windows, open the Start menu, Search `“Environment Variables”`, click on `Edit system environment variables`, then click on  `Environment Variables`
+**Step 2**: Convert the `.proto` file into two files with `protoc`
+
 
