@@ -17,9 +17,7 @@ There are some other random files that I use to create and test functions, struc
 ## What are my goals for the future?
 Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including schedules and bus locations. I already created a .bd file converter in ./convertLIVEgtfs/main.cpp
 
-# About this Repo
-
-## File Tree System Thing
+## File System
 
 ```
 .
@@ -49,7 +47,7 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 
 ---
 
-# How do I use the GTFS-RT Converter?
+## How do I use the GTFS-RT Converter?
 All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it. (Most of the steps you only have to do once if you use the same computer and OS).
 
 **Step 1**: Download the  [`gtfs-realtime.proto`](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto) file from the `google/transit` repository and put these in the same folder as your parser code. 
