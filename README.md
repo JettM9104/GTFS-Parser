@@ -54,7 +54,7 @@ All I gave was the code. It's a big pain for you to get ready, but if you have t
 
 **Step 2**: (On Mac) Install `protoc@21` with `brew install protoc@21`. If you have the latest version, first uninstall it with `brew uninstall protoc`. If you don't even have homebrew install it with `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`. 
 
-(On Windows) Go to the downloads page of `Protocol Buffers` at [`https://github.com/protocolbuffers/protobuf/releases`](https://github.com/protocolbuffers/protobuf/releases), scroll down to `Protocol Buffers v31.1` and at the bottom of the click `assets` and download the one matching your operating system. Download it at `C:/probuf-21.1/`.
+(On Windows) Go to the downloads page of `Protocol Buffers` at [`https://github.com/protocolbuffers/protobuf/releases`](https://github.com/protocolbuffers/protobuf/releases), scroll down to `Protocol Buffers v31.1` and at the bottom of the click `assets` and download the one matching your operating system. Download it into the path `C:/probuf-21.1/` (create a folder if needed).
 
 If you are on Windows, open the Start menu, Search `“Environment Variables”`, click on `Edit system environment variables`, then click on  `Environment Variables` at the bottom right. Click `PATH` on the top section, then `Edit...`, then `New...`. Paste in `C:\protobuf-21.1\bin`. 
 
