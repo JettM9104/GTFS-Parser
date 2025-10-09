@@ -208,6 +208,16 @@ public:
     bus(busLine route) {
         this->route = route;
     }
+    bus(short int busID) {
+        this->busID = busID;
+    }
+    bus(busLine route, short int busID) {
+        this->route = route;
+        this->busID = busID;
+    }
+    bus() = default;
+
+
 };
 
 std::vector<string> parseDataCSV(const string& input);
