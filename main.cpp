@@ -245,9 +245,9 @@ bool isValid(int tripID, week day); // more basic version; does not include cale
 week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
 
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id);
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); // make a caledar date
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time);
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time); // make a calendar date
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
@@ -321,9 +321,7 @@ bool isValid(int tripID, int year, int month, int date) {
             break;
         }
     }
-    cout << "yay\n";
     if (found) {
-        cout << "found\n";
         ifstream dates(calendarPath);
 
         string combined = std::to_string(year);
@@ -344,7 +342,6 @@ bool isValid(int tripID, int year, int month, int date) {
             parsedLine = parseDataCSV(currentLine);
             if (parsedLine[0] == serviceID) break;
         }
-        cout << "b4 switch\n" << parsedLine[1] << std::endl << std::endl;
         switch (day) {
             case mon:
                 if (stoi(parsedLine[1]) == 1) return true;
@@ -386,12 +383,10 @@ bool isValid(int tripID, int year, int month, int date) {
                 return false;
             
         }
-        cout << "after switch\n";
 
         calendar.close();
     }
     else {
-        cout << "this is special :O";
         ifstream dates(calendarDatesPath);
 
         string combined = std::to_string(year);
@@ -450,9 +445,7 @@ bool isValid(int tripID, calendarDate calendarDay) {
             break;
         }
     }
-    cout << "yay\n";
     if (found) {
-        cout << "found\n";
         ifstream dates(calendarPath);
 
         string combined = std::to_string(year);
@@ -473,7 +466,6 @@ bool isValid(int tripID, calendarDate calendarDay) {
             parsedLine = parseDataCSV(currentLine);
             if (parsedLine[0] == serviceID) break;
         }
-        cout << "b4 switch\n" << parsedLine[1] << std::endl << std::endl;
         switch (day) {
             case mon:
                 if (stoi(parsedLine[1]) == 1) return true;
@@ -515,12 +507,9 @@ bool isValid(int tripID, calendarDate calendarDay) {
                 return false;
             
         }
-        cout << "after switch\n";
-
         calendar.close();
     }
     else {
-        cout << "this is special :O";
         ifstream dates(calendarDatesPath);
 
         string combined = std::to_string(year);
