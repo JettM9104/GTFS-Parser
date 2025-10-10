@@ -7,10 +7,7 @@
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
-typedef enum 
-{ident, code}
-stopType;
-
+typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 
@@ -105,6 +102,19 @@ struct timeap : public time24 {
         cout << "m: " << m << std::endl;
         cout << "s: " << s << std::endl;
         cout << ((timeOfDay == am) ? "am" : "pm") << std::endl;
+    }
+
+    void convertFrom24(time24 input) {
+        m = input.m;
+        s = input.s;
+        if (input.h > 12) {
+            timeOfDay = pm;
+            h = (input.h - 12);
+        }
+        else {
+            timeOfDay = am;
+            h = input.h;
+        }
     }
 };
 
@@ -408,7 +418,7 @@ bool isValid(int tripID, calendarDate calendarDay) {
     int date = calendarDay.day;
     int month = calendarDay.month;
     int year = calendarDay.year;
-    
+
     week day = convertDateToWeek(year, month, date);
     ifstream trip(tripPath);
     string currentLine;
