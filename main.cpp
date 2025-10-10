@@ -245,10 +245,11 @@ bool isValid(int tripID, week day); // more basic version; does not include cale
 week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
 
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); // make a caledar date
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); 
 std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time); // make a calendar date
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time);
+std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, int hour, time24 time);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
@@ -1193,5 +1194,49 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
 
     }
     shapeFile.close();
+    return output;
+}
+
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time) {
+    std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
+
+    for (int i = 0; i < output.size(); i++) {
+        if (output[i].arrival_time.h < time.h) {
+            output.erase(output.begin() + i);
+            continue;
+        }
+        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
+            output.erase(output.begin() + i);
+            continue;
+        }
+        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
+            output.erase(output.begin() + i);
+            continue;
+        }
+    }
+    return output;
+}
+
+std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, int hour, time24 time) {
+    int year = calendarDay.year;
+    int month = calendarDay.month;
+    int day = calendarDay.day;
+    
+    std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
+
+    for (int i = 0; i < output.size(); i++) {
+        if (output[i].arrival_time.h < time.h) {
+            output.erase(output.begin() + i);
+            continue;
+        }
+        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
+            output.erase(output.begin() + i);
+            continue;
+        }
+        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
+            output.erase(output.begin() + i);
+            continue;
+        }
+    }
     return output;
 }
