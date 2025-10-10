@@ -246,6 +246,7 @@ week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); // make a caledar date
+std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time); // make a calendar date
 busLine getRouteInfo(const unsigned short int& id);
@@ -824,6 +825,103 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
 }
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id) {
+    ifstream timeFile(stopTimesPath);
+
+    string id_str = std::to_string(id);
+
+    std::vector<tripSegment> output;
+    std::vector<string> parsedData;
+
+    std::vector<long> allTripIDs;
+
+    std::unordered_map<string, int> refs;
+
+    string currentLine;
+    int lineNumber = 0;
+    int stopNumberIndex = -1;
+
+    while (getline(timeFile, currentLine)) {
+        lineNumber++;
+        if (lineNumber == 1) [[unlikely]] {
+            parsedData = parseDataCSV(currentLine);
+            for (int i = 0; i < parsedData.size(); i++) {
+                refs[parsedData[i]] = i;
+                if (parsedData[i] == "stop_id") { stopNumberIndex = i;}
+            }
+            break;
+        }
+        if (lineNumber == 2) {
+            stopNumberIndex = 0;
+            cout << "stop index not found";
+            break;
+        }
+    }
+    timeFile.close();
+
+    ifstream timeReviewFile(stopTimesPath);
+
+    while (getline(timeReviewFile, currentLine)) {
+        parsedData = parseDataCSV(currentLine);
+        if (parsedData[stopNumberIndex] == id_str) {
+            int tripID = stoi(parsedData[0]);
+            allTripIDs.push_back(tripID);
+
+            tripSegment localVar;
+
+            // required fields
+            localVar.trip_id = tripID;
+            localVar.arrival_time = parseFormattedTime(parsedData[1]);
+            localVar.departure_time = parseFormattedTime(parsedData[2]);
+            localVar.stop_id = stoi(parsedData[3]);
+            localVar.stop_sequence = stoi(parsedData[4]);
+
+            localVar.stop_headsign = ((refs["stop_headsign"] != 0) && (parsedData[refs["stop_headsign"]] != "" && parsedData[refs["stop_headsign"]] != " ")) ? stoi(parsedData[refs["stop_headsign"]]) : 0;
+            localVar.pickup_type = ((refs["pickup_type"] != 0) && (parsedData[refs["pickup_type"]] != "" && parsedData[refs["pickup_type"]] != " ")) ? stoi(parsedData[refs["pickup_type"]]) : 0;
+            localVar.drop_off_type = ((refs["drop_off_type"] != 0) && (parsedData[refs["drop_off_type"]] != "" && parsedData[refs["drop_off_type"]] != " ")) ? stoi(parsedData[refs["drop_off_type"]]) : 0;
+            localVar.shape_dist_traveled = ((refs["shape_dist_traveled"] != 0) && (parsedData[refs["shape_dist_traveled"]] != "" && parsedData[refs["shape_dist_traveled"]] != " ")) ? stoi(parsedData[refs["shape_dist_traveled"]]) : 0;
+            localVar.timepoint = ((refs["timepoint"] != 0) && (parsedData[refs["timepoint"]] != "" && parsedData[refs["timepoint"]] != " ")) ? stoi(parsedData[refs["timepoint"]]) : 0;
+
+            output.push_back(localVar);
+        }
+    }
+    lineNumber = 0;
+    timeReviewFile.close();
+
+    ifstream tripsFile(tripPath);
+
+    while (getline(tripsFile, currentLine)) {
+        lineNumber++;
+        parsedData = parseDataCSV(currentLine);
+        if (lineNumber == 1) {
+            refs.clear();
+            for (int i = 0; i < parsedData.size(); i++) {
+                refs[parsedData[i]] = i;
+            }
+        }
+        for (int i = 0; i < output.size(); i++) {
+            if (std::to_string(output[i].trip_id) == parsedData[refs["trip_id"]]) {
+                output[i].route_id = stoi(parsedData[refs["route_id"]]);
+            }
+        }        
+        
+    }
+
+    for (int i = 0; i < output.size(); i++) {
+        if (!isValid(output[i].trip_id, year, month, day)) {
+            output.erase(output.begin() + i);
+        }
+    }
+    tripsFile.close();
+    
+
+    return output;
+}
+
+std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id) {
+    int year = calendarDay.year;
+    int month = calendarDay.month;
+    int day = calendarDay.day;
+
     ifstream timeFile(stopTimesPath);
 
     string id_str = std::to_string(id);
