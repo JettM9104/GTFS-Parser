@@ -4,12 +4,17 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <ctime>
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
 typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
+
+float π = 3.14159;
+
+typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
 const string root = "data/yrt_archive/";
 
@@ -249,7 +254,7 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
 std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time);
-std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, int hour, time24 time);
+std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
@@ -264,6 +269,19 @@ int main(int argc, char* argv[]) {
         times[i].printInfo();
         cout << std::endl;
     }
+}
+
+time24 getCurrentTime() {
+    time24 output;
+    std::time_t currentTime = std::time(nullptr);
+
+    std::tm* localTime = std::localtime(&currentTime);
+
+    output.h = localTime->tm_hour;   // Hour (0-23)
+    output.m = localTime->tm_min; // Minute (0-59)
+    output.s = localTime->tm_sec; // Second (0-59)
+
+    return output;
 }
 
 week convertDateToWeek(int year, int month, int day) {
@@ -1217,11 +1235,11 @@ std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, cons
     return output;
 }
 
-std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, int hour, time24 time) {
+std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time) {
     int year = calendarDay.year;
     int month = calendarDay.month;
     int day = calendarDay.day;
-    
+
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
     for (int i = 0; i < output.size(); i++) {
