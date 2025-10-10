@@ -253,7 +253,7 @@ time24 getCurrentTime();
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); 
 std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time);
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time);
 std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
@@ -263,11 +263,10 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> times = getDayTimesAtStop(2025, 10, 10, 7114);
+    std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 10, 7114, getCurrentTime());
 
     for (int i = 0; i < times.size(); i++) {
-        times[i].printInfo();
-        cout << std::endl;
+        cout << times[i].departure_time.h << std::endl;
     }
 }
 
@@ -356,7 +355,6 @@ bool isValid(int tripID, int year, int month, int date) {
         combined += mo;
         combined += da;
 
-        cout << combined << std::endl;
 
         while (getline(dates, currentLine)) {
             parsedLine = parseDataCSV(currentLine);
@@ -479,8 +477,6 @@ bool isValid(int tripID, calendarDate calendarDay) {
 
         combined += mo;
         combined += da;
-
-        cout << combined << std::endl;
 
         while (getline(dates, currentLine)) {
             parsedLine = parseDataCSV(currentLine);
@@ -1215,22 +1211,29 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
     return output;
 }
 
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time) {
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time) {
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
     for (int i = 0; i < output.size(); i++) {
+        // cout << "arrival_time.h = " << output[i].arrival_time.h << std::endl;
+        // cout << "arrival_time.m = " << output[i].arrival_time.m << std::endl;
+        // cout << "arrival_time.s = " << output[i].arrival_time.s << std::endl;
+        // cout << std::endl;
+        // cout << "time.h = " << time.h << std::endl;
+        // cout << "time.m = " << time.m << std::endl;
+        // cout << "time.s = " << time.s << std::endl;
+        // cout << std::endl
+
         if (output[i].arrival_time.h < time.h) {
             output.erase(output.begin() + i);
-            continue;
         }
         else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
             output.erase(output.begin() + i);
-            continue;
         }
         else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
             output.erase(output.begin() + i);
-            continue;
         }
+        
     }
     return output;
 }
