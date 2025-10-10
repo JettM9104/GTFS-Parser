@@ -884,7 +884,7 @@ trip getTripInfo(const int& id) {
     std::vector<string> parsedCurrentLine;
     trip output;
     output.trip_id = id;
-    std::map<string, int> refs;
+    std::unordered_map<string, int> refs;
     int lineNumber = 0;
     bool found;
 
@@ -929,7 +929,7 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
 
     string currentLine;
     std::vector<string> parsedCurrentLine;
-    std::map<string, int> refs;
+    std::unordered_map<string, int> refs;
 
     int lineNumber = 0;
 
