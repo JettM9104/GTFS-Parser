@@ -227,8 +227,10 @@ bool isValid(int tripID, int year, int month, int date);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
 
-std::vector<tripSegment> getDayTimesAtStop(int& year, int& month, int& day, const unsigned short int& id);
-std::vector<tripSegment> getDayTimesAtStop(week& day, const unsigned short int& id);
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id);
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id);
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
@@ -237,10 +239,10 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    std::vector<shape> yes = getShapeInfo(81011);
+    std::vector<tripSegment> times = getDayTimesAtStop(2025, 10, 10, 7114);
 
-    for (int i = 0 ; i < yes.size(); i++) {
-        yes[i].printCoords();
+    for (int i = 0; i < times.size(); i++) {
+        times[i].printInfo();
         cout << std::endl;
     }
 }
@@ -686,7 +688,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
     return busStop;
 }
 
-std::vector<tripSegment> getDayTimesAtStop(int& year, int& month, int& day, const unsigned short int& id) {
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id) {
     ifstream timeFile(stopTimesPath);
 
     string id_str = std::to_string(id);
@@ -779,7 +781,7 @@ std::vector<tripSegment> getDayTimesAtStop(int& year, int& month, int& day, cons
     return output;
 }
 
-std::vector<tripSegment> getDayTimesAtStop(week& day, const unsigned short int& id) {
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id) {
     ifstream tripsFile(tripsPath);
     ifstream timeFile(stopTimesPath);
 
