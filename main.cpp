@@ -220,10 +220,17 @@ public:
 
 };
 
+struct calendarDate {
+    int year;
+    int month;
+    int day;
+};
+
 std::vector<string> parseDataCSV(const string& input);
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
 bool isValid(int tripID, int year, int month, int date);
+bool isValid(int tripID, calendarDate calendarDay);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
@@ -273,6 +280,135 @@ week convertDateToWeek(int year, int month, int day) {
 }
 
 bool isValid(int tripID, int year, int month, int date) {
+    week day = convertDateToWeek(year, month, date);
+    ifstream trip(tripPath);
+    string currentLine;
+
+    std::vector<string> parsedLine;
+
+    string serviceID;
+
+    string tidString = std::to_string(tripID);
+
+    while (getline(trip, currentLine)) {
+        parsedLine = parseDataCSV(currentLine);
+        if (parsedLine[2] == tidString) {
+            serviceID = parsedLine[1];
+            break;
+        }
+    }
+
+    trip.close();
+
+    ifstream calendar(calendarPath);
+    bool found = false;
+
+    while (getline(calendar, currentLine)) {
+        parsedLine = parseDataCSV(currentLine);
+
+        if (parsedLine[0] == serviceID) {
+            found = true;
+            break;
+        }
+    }
+    cout << "yay\n";
+    if (found) {
+        cout << "found\n";
+        ifstream dates(calendarPath);
+
+        string combined = std::to_string(year);
+
+        string mo = std::to_string(month);
+
+        string da = std::to_string(date);
+
+        if (mo.length() <= 1) mo = "0" + mo;
+        if (da.length() <= 1) mo = "0" + da;
+
+        combined += mo;
+        combined += da;
+
+        cout << combined << std::endl;
+
+        while (getline(dates, currentLine)) {
+            parsedLine = parseDataCSV(currentLine);
+            if (parsedLine[0] == serviceID) break;
+        }
+        cout << "b4 switch\n" << parsedLine[1] << std::endl << std::endl;
+        switch (day) {
+            case mon:
+                if (stoi(parsedLine[1]) == 1) return true;
+                else return false;
+                break;
+            
+            case tue:
+                if (stoi(parsedLine[2]) == 1) return true;
+                else return false;
+                break;
+            
+            case wed:
+                if (stoi(parsedLine[3]) == 1) return true;
+                else return false;
+                break;
+            
+            case thu:
+                if (stoi(parsedLine[4]) == 1) return true;
+                else return false;
+                break;
+
+            case fri:
+                if (stoi(parsedLine[5]) == 1) return true;
+                else return false;
+                break;
+
+            case sat:
+                if (stoi(parsedLine[6]) == 1) return true;
+                else return false;
+                break;
+            
+            case sun:
+                if (stoi(parsedLine[7]) == 1) return true;
+                else return false;
+                break;
+            
+            default:
+                cout << "what kind of sorcery is this bro";
+                return false;
+            
+        }
+        cout << "after switch\n";
+
+        calendar.close();
+    }
+    else {
+        cout << "this is special :O";
+        ifstream dates(calendarDatesPath);
+
+        string combined = std::to_string(year);
+
+        string mo = std::to_string(month);
+
+        string da = std::to_string(date);
+
+        if (mo.length() <= 1) mo = "0" + mo;
+        if (da.length() <= 1) mo = "0" + da;
+
+        combined += mo;
+        combined += da;
+
+        while (getline(dates, currentLine)) {
+            parsedLine = parseDataCSV(currentLine);
+            if (parsedLine[1] == serviceID && parsedLine[2] == "1") return true;
+        }
+    }
+    return false;
+}
+
+bool isValid(int tripID, calendarDate calendarDay) {
+    int date = calendarDay.day;
+    int month = calendarDay.month;
+    int year = calendarDay.year;
+    
     week day = convertDateToWeek(year, month, date);
     ifstream trip(tripPath);
     string currentLine;
