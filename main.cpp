@@ -226,10 +226,10 @@ time24 parseFormattedTime(string input);
 bool isValid(int tripID, int year, int month, int date);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
+time24 getCurrentTime();
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id);
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id);
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, int hour, time24 time);
 busLine getRouteInfo(const unsigned short int& id);
 busLine getRouteInfo(const string& id);
