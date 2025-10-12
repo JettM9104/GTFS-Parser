@@ -239,6 +239,13 @@ struct calendarDate {
     int year;
     int month;
     int day;
+
+    calendarDate() = default;
+    calendarDate(int year, int month, int day) {
+        this->year = year;
+        this->month = month;
+        this->day = day;
+    }
 };
 
 std::vector<string> parseDataCSV(const string& input);
