@@ -1,6 +1,6 @@
 # A GTFS Parser
 ## What is This?
-This code is programmed in **C++** and is one big file in `main.cpp` and is used to parse general *GTFS Static Data*. 
+This code is programmed in **C++** and is one big file in `main.cpp` and is used to parse general *GTFS Static Data*. Look into the path `static-gtfs/main.cpp`.
 
 ## How do I use it?
 Create a folder in the folder labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto GitHub. 
