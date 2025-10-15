@@ -27,6 +27,7 @@ const string calendarPath = root + "calendar.txt";
 const string calendarDatesPath = root + "calendar_dates.txt";
 const string agencyPath = root + "agency.txt";
 const string shapePath = root + "shapes.txt";
+const string feedInfoFile = root + "feed_info.txt";
 
 struct busLine {
     int route_id;
@@ -267,6 +268,7 @@ busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
+bool verifyGTFS();
 
 
 int main(int argc, char* argv[]) {
@@ -696,6 +698,24 @@ std::unordered_map<string, int> createMapFromVector(std::vector<string> param) {
         } else { output[param[i]] = i; }
     }    
     return output;
+}
+
+bool verifyGTFS(int year, int month, int day) { // create a calendarDate overload
+    ifstream feedInfo(feedInfoFile);
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+
+    int lineNumber = 0;
+    
+    std::unordered_map<string, int>;
+
+    while (getline(feedInfo, currentLine)) {
+        lineNumber++;
+
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+
+    }
 }
 
 
