@@ -36,7 +36,6 @@ gtfs-rt/convertLIVEgtfs/gtfs-realtime.pb.h
 gtfs-rt/convertLIVEgtfs/gtfs-realtime.proto
 gtfs-rt/convertLIVEgtfs/parseGTFS
 gtfs-rt/convertLIVEgtfs/TripUpdates.pb
-static-gtfs/data/tes_archive-1/stop_ordering.txt
 static-gtfs/data/ttc_archive/agency.txt
 static-gtfs/data/ttc_archive/calendar.txt
 static-gtfs/data/ttc_archive/calendar_dates.txt
