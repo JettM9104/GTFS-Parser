@@ -8,7 +8,6 @@ using namespace std;
 class base {
     string name;
     int level;
-    base parent;
     base(string name) {
         this->name = name;
         level = 0;

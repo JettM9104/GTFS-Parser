@@ -313,7 +313,6 @@ week convertDateToWeek(int year, int month, int day) {
         case 5: dayIndex = thu; break;
         case 6: dayIndex = fri; break;
     }
-
     return static_cast<week>(dayIndex);
 }
 
