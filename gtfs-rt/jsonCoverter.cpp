@@ -4,11 +4,11 @@
 
 using namespace std;
 
-typedef enum {ADDED = 0, SCHEDULED, UNSCHEDULED, CANCELLED, REPLACEMENT, DUPLICATED, NEW, DELETED} schedule_relationship;
 
 class base {
     string name;
     int level;
+    base parent;
     base(string name) {
         this->name = name;
         level = 0;
@@ -16,8 +16,9 @@ class base {
     virtual ~base() {}
 };
 
-class  {
-    ;
+class branch : public base {
+    base parent;
+
 };
 int main(int argc, char* argv[]) {
 
