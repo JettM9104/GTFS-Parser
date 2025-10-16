@@ -26,25 +26,28 @@ Just trying to implement *Live GTFS* (also known as GTFS-RT) Data including sche
 .
 ├── .github
 │   └── workflows
-│       └── c-cpp.yml
 ├── .vscode
 │   ├── launch.json
+│   ├── settings.json
 │   └── tasks.json
-├── convertLIVEgtfs
-│   ├── main.cpp
-│   └── (read README.md on how to use)
-├── data
-│   ├── (put your own data here, read README.md on how to use)
-│   └── tes_archive-1
-├── testing
-│   ├── externalFNS.cpp
-│   └── testing.cpp
+├── gtfs-rt
+│   ├── convertLIVEgtfs
+│   │   └── main.cpp
+│   ├── jsonConverter.cpp
+│   └── main.cpp
+├── static-gtfs
+│   ├── data
+│   │   ├── tes_archive-1
+│   │   └── (put your data here for the parser)
+│   ├── testing
+│   │   ├── externalFNS.cpp
+│   │   └── testing.cpp
+│   └── main.cpp
 ├── .gitignore
 ├── licence.md
 ├── README.md
 ├── todo.txt
-├── version.txt
-└── main.cpp
+└── version.txt
 ```
 #### (Thanks to `tree.nathanfriend` for the tree diagram)
 
