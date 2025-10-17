@@ -11,4 +11,4 @@ Like I just said above the data is given in a txt file in a csv format. Each val
 - stop_times.txt (expected times vehicles are to arrive at given stops)
 - shapes.txt (what path a vehicle takes along the route)
 
-There are way more that I didn't include but you can find all of them in the (GTFS Refrence Website)[https://gtfs.org/documentation/schedule/reference/]. As you can tell, for bigger transit agencies, the GTFS data can be a lot to handle. That;'s why I chose to code this in C++.
+There are way more that I didn't include but you can find all of them in the [GTFS Refrence Website](https://gtfs.org/documentation/schedule/reference). As you can tell, for bigger transit agencies, the GTFS data can be a lot to handle. That;'s why I chose to code this in C++.
