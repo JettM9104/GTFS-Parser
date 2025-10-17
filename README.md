@@ -9,7 +9,7 @@ This code is programmed in **C++** and is one big file in `main.cpp` and is used
 Create a folder in the folder labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto GitHub. 
 
 ## If you are in pain reading this code
-If you are in pain reading this code just copy it and improve it. I don't care about licencing; Just do whatever you want with it. Go wild. (read [`licence.md`](licence.md))
+If you are in pain reading this code just copy it and improve it. I don't care about licencing except for the 4 rules i have; Just do whatever you want with it. Go wild. (read [`licence.md`](licence.md))
 
 ## What libraries do I need?
 Nothing. Just a C++ compiler. All of the libraries used are built in like `<string>`, `<vector>`, and `<unorderd_map>`. In the static converter, there is a time library and some compilers do not come with that. It is only used in the getCurrentTime function and you can delete it if you need (with the exception of the GTFS-RT converter, read more below on [How do I use the GTFS-RT Converter?](#How-do-I-use-the-GTFS-RT-Converter)
