@@ -1,8 +1,6 @@
 #include <iostream>
 #include <string>
-#include <fstream>
 #include <vector>
-
 
 using namespace std;
 
@@ -17,11 +15,13 @@ public:
         children.push_back(child);
     }
 
-    void printTree(int depth = 0) const {
-        for (int i = 0; i < depth; i++) cout << "  ";
+    void printTree(const string& prefix = "", bool isLast = true) const {
+        cout << prefix;
+        cout << (isLast ? "└─ " : "├─ ");
         cout << value << endl;
-        for (const auto& child : children) {
-            child.printTree(depth + 1);
+
+        for (size_t i = 0; i < children.size(); ++i) {
+            children[i].printTree(prefix + (isLast ? "   " : "│  "), i == children.size() - 1);
         }
     }
 };
