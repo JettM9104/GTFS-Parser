@@ -5,19 +5,15 @@
 using namespace std;
 
 
-class base {
-    string name;
-    int level;
-    base(string name) {
-        this->name = name;
-        level = 0;
-    }
-    virtual ~base() {}
-};
+class tree {
+private:
+    //private data
 
-class branch : public base {
-    base parent;
+protected:
+    //protected data
 
+public:
+    //piblic data
 };
 int main(int argc, char* argv[]) {
 
