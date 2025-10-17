@@ -57,3 +57,5 @@ static-gtfs/data/yrt_archive/stops.txt
 static-gtfs/data/yrt_archive/transfers.txt
 static-gtfs/data/yrt_archive/trips.txt
 gtfs-rt/testing/tree
+gtfs-rt/testing/testParse
+gtfs-rt/testing/data/busTimes.txt
