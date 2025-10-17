@@ -1237,6 +1237,7 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
     return output;
 }
 
+// a note: check issue number 6
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time) {
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
