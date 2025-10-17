@@ -14,7 +14,7 @@ Like I just said above the data is given in a txt file in a csv format. Each val
 There are way more that I didn't include but you can find all of them in the [GTFS Refrence Website](https://gtfs.org/documentation/schedule/reference). As you can tell, for bigger transit agencies, the GTFS data can be a lot to handle. That's why I chose to code this in C++.
 
 ## How do I use this parser?
-All you have to do is to
-1. Clone this repository onto your machine
+All you have to do is to:
+1. Clone this repository onto your machine - `git clone https://github.com/JettM9104/GTFS-Parser/`
 2. Create a folder called data inside the `static-gtfs` folder
 3. Change the paths inside the code to match the paths of your data folder.
