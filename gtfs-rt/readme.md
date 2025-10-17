@@ -15,6 +15,8 @@ These are usually the 3 that a transit agency provides
 ## How do I use the GTFS-RT Converter?
 All I gave was the code. It's a big pain for you to get ready, but if you have too much spare time, go for it. (Most of the steps you only have to do once if you use the same computer and OS).
 
+**Step 0**: If you did steps 1-4 already skip to step 5.
+
 **Step 1**: Download the  [`gtfs-realtime.proto`](https://github.com/google/transit/blob/master/gtfs-realtime/proto/gtfs-realtime.proto) file from the `google/transit` repository and put these in the same folder as your parser code. 
 
 **Step 2**: (On Mac) Install `protoc@21` with `brew install protoc@21`. If you have the latest version, first uninstall it with `brew uninstall protoc`. If you don't even have homebrew install it with `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`. 
