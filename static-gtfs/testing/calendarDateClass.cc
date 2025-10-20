@@ -13,6 +13,12 @@ public:
         this->month = month;
         this->day = day;
     }
+
+    void printInfo() {
+        cout << "year: " << year << std::endl;
+        cout << "month: " << month << std::endl;
+        cout << "day: " << day << std::endl;
+    }
     bool operator< (const calendarDate& other) {
         if (other.year > this->year) {
             return true;
@@ -104,12 +110,25 @@ public:
     bool operator== (const calendarDate& other) {
         return (other.year == this->year && other.month == this->month && other.day == this->day);
     }
+
+    calendarDate operator+ (const calendarDate& other) {
+        calendarDate output;
+
+        int regularDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        int leapDays[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+        output.year = this->year + other.year;
+
+        return output;
+    }
 };
 
 int main() {
     calendarDate x(2025, 12, 03);
     calendarDate y(2025, 12, 02);
 
-    cout << (x<=y ? "yes" : "no") ;
+    calendarDate z = x + y;
+
+    z.printInfo();
     
 }
