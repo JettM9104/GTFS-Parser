@@ -122,12 +122,20 @@ public:
         output.day = this->month + other.month;
 
         if (output.month > 12) {
-            year++;
+            output.year += 1;
             output.month -= 12;
         }
 
         if ((output.year % 4 == 0 && output.year % 100 != 0 )|| output.year % 400 == 0) {
-            if (output.day > leapDays[output.month - 1])
+            if (output.day > leapDays[output.month - 1]) {
+                output.day -= leapDays[output.month - 1];
+                output.month++;
+            }
+        } else {
+            if (output.day > regularDays[output.month - 1]) {
+                output.day -= regularDays[output.month - 1];
+                output.month++;
+            }
         }
         return output;
     }
