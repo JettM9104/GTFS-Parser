@@ -236,7 +236,8 @@ public:
 
 };
 
-struct calendarDate {
+class calendarDate {
+public:
     int year;
     int month;
     int day;
@@ -247,6 +248,7 @@ struct calendarDate {
         this->month = month;
         this->day = day;
     }
+
 };
 
 std::vector<string> parseDataCSV(const string& input);
@@ -728,7 +730,7 @@ bool verifyGTFS(int year, int month, int day) { // create a calendarDate overloa
         }
 
         if (lineNumber == 2) {
-
+            
             break;
         }
 
