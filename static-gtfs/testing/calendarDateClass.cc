@@ -118,7 +118,17 @@ public:
         int leapDays[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
         output.year = this->year + other.year;
+        output.month = this->month + other.month;
+        output.day = this->month + other.month;
 
+        if (output.month > 12) {
+            year++;
+            output.month -= 12;
+        }
+
+        if ((output.year % 4 == 0 && output.year % 100 != 0 )|| output.year % 400 == 0) {
+            if (output.day > leapDays[output.month - 1])
+        }
         return output;
     }
 };
