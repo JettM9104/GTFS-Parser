@@ -119,7 +119,7 @@ public:
 
         output.year = this->year + other.year;
         output.month = this->month + other.month;
-        output.day = this->month + other.month;
+        output.day = this->day + other.day;
 
         if (output.month > 12) {
             output.year += 1;
@@ -142,8 +142,8 @@ public:
 };
 
 int main() {
-    calendarDate x(2025, 12, 03);
-    calendarDate y(2025, 12, 02);
+    calendarDate x(2025, 12, 3);
+    calendarDate y(0, 1, 1);
 
     calendarDate z = x + y;
 
