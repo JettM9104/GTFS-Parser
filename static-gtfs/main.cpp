@@ -257,6 +257,7 @@ bool isValid(int tripID, calendarDate calendarDay);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
+bool verifyGTFS();
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); 
 std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
@@ -268,7 +269,6 @@ busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
-bool verifyGTFS();
 
 
 int main(int argc, char* argv[]) {
@@ -706,13 +706,31 @@ bool verifyGTFS(int year, int month, int day) { // create a calendarDate overloa
 
     int lineNumber = 0;
     
-    std::unordered_map<string, int>;
+    std::unordered_map<string, int> refs;
+
+    string mo_str = std::to_string(month);
+    string da_str = std::to_string(day);
+
+    if (mo_str.length() <= 1) mo_str = "0" + mo_str;
+    if (da_str.length() <= 1) da_str = "0" + da_str;
+
+    calendarDate inputDate(year, month, day);
 
     while (getline(feedInfo, currentLine)) {
         lineNumber++;
 
         parsedCurrentLine = parseDataCSV(currentLine);
 
+        if (lineNumber == 1) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        }
+
+        if (lineNumber == 2) {
+
+            break;
+        }
 
     }
 }
@@ -1237,7 +1255,7 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
     return output;
 }
 
-// a note: check issue number 6
+// a note: check issue number 6 and remember when modified modify the overload equally
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time) {
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 

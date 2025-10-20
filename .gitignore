@@ -60,3 +60,4 @@ gtfs-rt/testing/tree
 gtfs-rt/testing/testParse
 gtfs-rt/testing/data/busTimes.txt
 gtfs-rt/testing/timeafter
+static-gtfs/testing/calendarDateClass
