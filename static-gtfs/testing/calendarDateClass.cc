@@ -56,6 +56,7 @@ public:
         }
     }
 
+
     bool operator<= (const calendarDate& other) {
         if (other.year > this->year) {
             return true;
@@ -98,6 +99,10 @@ public:
                 }
             }
         }
+    }
+
+    bool operator== (const calendarDate& other) {
+        return (other.year == this->year && other.month == this->month && other.day == this->day);
     }
 };
 
