@@ -11,6 +11,7 @@ using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
+typedef enum {yes, no, incon} incon;
 
 float π = 3.14159;
 
@@ -829,7 +830,7 @@ std::unordered_map<string, int> createMapFromVector(std::vector<string> param) {
     return output;
 }
 
-bool verifyGTFS(int year, int month, int day) { // create a calendarDate overload
+bool verifyGTFS(int year, int month, int day) {
     ifstream feedInfo(feedInfoFile);
     string currentLine;
     std::vector<string> parsedCurrentLine;
@@ -855,8 +856,47 @@ bool verifyGTFS(int year, int month, int day) { // create a calendarDate overloa
 
             calendarDate x;
 
-            if (refs["feed_end_date"] == 0) return false;
-            else x = parseFormattedDate(parsedrefs["feed_end_date"]);
+            if (refs["feed_end_date"] == 0) return true; // assume it is automatically valid
+            else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
+
+            if (x <= inputDate) return true;
+            else return false;
+            break;
+        }
+
+    }
+}
+
+bool verifyGTFS(calendarDate inputDate) { 
+    ifstream feedInfo(feedInfoFile);
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+
+    int lineNumber = 0;
+    
+    std::unordered_map<string, int> refs;
+
+
+    while (getline(feedInfo, currentLine)) {
+        lineNumber++;
+
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (lineNumber == 1) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        }
+
+        if (lineNumber == 2) {
+
+            calendarDate x;
+
+            if (refs["feed_end_date"] == 0) return true; // assume it is automatically valid
+            else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
+
+            if (x <= inputDate) return true;
+            else return false;
             break;
         }
 
