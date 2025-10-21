@@ -11,7 +11,6 @@ using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
-typedef enum {yes, no, incon} incon;
 
 float π = 3.14159;
 
@@ -236,7 +235,6 @@ public:
 
 
 };
-
 
 class calendarDate {
 public:
