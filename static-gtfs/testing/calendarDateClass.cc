@@ -19,6 +19,7 @@ public:
         cout << "month: " << month << std::endl;
         cout << "day: " << day << std::endl;
     }
+
     bool operator< (const calendarDate& other) {
         if (other.year > this->year) {
             return true;
@@ -40,6 +41,7 @@ public:
             }
         }
     }
+
     bool operator> (const calendarDate& other) {
         if (other.year < this->year) {
             return true;
@@ -61,7 +63,6 @@ public:
             }
         }
     }
-
 
     bool operator<= (const calendarDate& other) {
         if (other.year > this->year) {
@@ -141,11 +142,14 @@ public:
     }
 };
 
-int main() {
+int main(int argc, char** argv) {
     calendarDate x(2025, 12, 3);
     calendarDate y(0, 1, 1);
 
     calendarDate z = x + y;
+    int x = 7;
+
+    int y = x << 1;
 
     z.printInfo();
     
