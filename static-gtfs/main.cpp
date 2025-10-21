@@ -838,12 +838,6 @@ bool verifyGTFS(int year, int month, int day) { // create a calendarDate overloa
     
     std::unordered_map<string, int> refs;
 
-    string mo_str = std::to_string(month);
-    string da_str = std::to_string(day);
-
-    if (mo_str.length() <= 1) mo_str = "0" + mo_str;
-    if (da_str.length() <= 1) da_str = "0" + da_str;
-
     calendarDate inputDate(year, month, day);
 
     while (getline(feedInfo, currentLine)) {
@@ -858,11 +852,25 @@ bool verifyGTFS(int year, int month, int day) { // create a calendarDate overloa
         }
 
         if (lineNumber == 2) {
-            
+
+            calendarDate x;
+
+            if (refs["feed_end_date"] == 0) return false;
+            else x = parseFormattedDate(parsedrefs["feed_end_date"]);
             break;
         }
 
     }
+}
+
+calendarDate parseFormattedDate(string input) {
+    calendarDate output;
+
+    output.year = stoi(input.substr(0, 4));
+    output.month = stoi(input.substr(4, 2));
+    output.day = stoi(input.substr(6, 2));
+
+    return output;
 }
 
 
