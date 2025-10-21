@@ -146,11 +146,5 @@ int main(int argc, char** argv) {
     calendarDate x(2025, 12, 3);
     calendarDate y(0, 1, 1);
 
-    calendarDate z = x + y;
-    int x = 7;
-
-    int y = x << 1;
-
-    z.printInfo();
     
 }
