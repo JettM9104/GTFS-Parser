@@ -1431,7 +1431,7 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
     return output;
 }
 
-// a note: check issue number 6 and remember when modified modify the overload equally
+// a note: check issue number 5 and remember when modified modify the overload equally
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time) {
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
