@@ -401,11 +401,21 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 10, 7114, getCurrentTime());
+    std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 23, 6769, getCurrentTime());
 
     for (int i = 0; i < times.size(); i++) {
         cout << times[i].departure_time.h << std::endl;
     }
+}
+
+calendarDate parseFormattedDate(string input) {
+    calendarDate output;
+
+    output.year = stoi(input.substr(0, 4));
+    output.month = stoi(input.substr(4, 2));
+    output.day = stoi(input.substr(6, 2));
+
+    return output;
 }
 
 time24 getCurrentTime() {
@@ -863,6 +873,7 @@ bool verifyGTFS(int year, int month, int day) {
         }
 
     }
+    return false;
 }
 
 bool verifyGTFS(calendarDate inputDate) { 
@@ -901,15 +912,6 @@ bool verifyGTFS(calendarDate inputDate) {
     }
 }
 
-calendarDate parseFormattedDate(string input) {
-    calendarDate output;
-
-    output.year = stoi(input.substr(0, 4));
-    output.month = stoi(input.substr(4, 2));
-    output.day = stoi(input.substr(6, 2));
-
-    return output;
-}
 
 
 busLine getRouteInfo(const unsigned short int& id) {
@@ -1482,3 +1484,4 @@ std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const un
     }
     return output;
 }
+
