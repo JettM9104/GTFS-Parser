@@ -99,6 +99,12 @@ struct time24 {
     virtual string formattedTime() {
         return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(s);
     }
+    time24() = default;
+    time24(int h, int m, int s) {
+        this->h = h;
+        this->m = m;
+        this->s = s;
+    }
 };
 
 struct timeap : public time24 {
@@ -401,7 +407,8 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 23, 6769, getCurrentTime());
+    time24 x(8, 0, 0);
+    std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 23, 6769, x);
 
     for (int i = 0; i < times.size(); i++) {
         cout << times[i].departure_time.h << std::endl;
@@ -910,6 +917,7 @@ bool verifyGTFS(calendarDate inputDate) {
         }
 
     }
+    return false;
 }
 
 
@@ -1449,12 +1457,15 @@ std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, cons
 
         if (output[i].arrival_time.h < time.h) {
             output.erase(output.begin() + i);
+            cout << "1erased " << output[i].arrival_time.h << "<" << time.h << std::endl;
         }
         else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
             output.erase(output.begin() + i);
+            cout << "2erased " << output[i].arrival_time.m << "<" << time.m << std::endl;
         }
         else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
             output.erase(output.begin() + i);
+            cout << "3erased " << output[i].arrival_time.s << "<" << time.s << std::endl;
         }
         
     }
