@@ -1455,8 +1455,6 @@ std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, cons
         // cout << "time.s = " << time.s << std::endl;
         // cout << std::endl
 
-        cout << std::flush;
-
         if (output[i].arrival_time.h < time.h) {
             output.erase(output.begin() + i);
             cout << "1erased " << output[i].arrival_time.h << "<" << time.h << " " << (output[i].arrival_time.h < time.h) << std::endl;
