@@ -407,7 +407,7 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    time24 x(8, 0, 0);
+    time24 x(11, 35, 38);
     std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 23, 6769, x);
 
     for (int i = 0; i < times.size(); i++) {
@@ -1455,17 +1455,25 @@ std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, cons
         // cout << "time.s = " << time.s << std::endl;
         // cout << std::endl
 
+        cout << std::flush;
+
         if (output[i].arrival_time.h < time.h) {
             output.erase(output.begin() + i);
-            cout << "1erased " << output[i].arrival_time.h << "<" << time.h << std::endl;
+            cout << "1erased " << output[i].arrival_time.h << "<" << time.h << " " << (output[i].arrival_time.h < time.h) << std::endl;
+            continue;
         }
         else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
             output.erase(output.begin() + i);
             cout << "2erased " << output[i].arrival_time.m << "<" << time.m << std::endl;
+            continue;
         }
         else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
             output.erase(output.begin() + i);
             cout << "3erased " << output[i].arrival_time.s << "<" << time.s << std::endl;
+            continue;
+        }
+        else {
+            cout << "kept " << output[i].arrival_time.h << ">=" << time.h << std::endl;
         }
         
     }
