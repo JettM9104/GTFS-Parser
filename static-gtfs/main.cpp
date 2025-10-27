@@ -87,7 +87,8 @@ struct stop {
     }
 };
 
-struct time24 {
+class time24 {
+public:
     int h;
     int m;
     float s;
@@ -104,6 +105,30 @@ struct time24 {
         this->h = h;
         this->m = m;
         this->s = s;
+    }
+
+    virtual bool operator>(time24 other) {
+        // greter thatn code
+    }
+    
+    virtual bool operator<(time24 other) {
+
+    }
+
+    virtual bool operator<=(time24 other) {
+
+    }
+    
+    virtual bool operator>=(time24 other) {
+
+    }
+
+    virtual bool operator==(time24 other) {
+
+    }
+
+    virtual time24 operator+(time24 other) { // cannot overlap, note that during calling
+
     }
 };
 
