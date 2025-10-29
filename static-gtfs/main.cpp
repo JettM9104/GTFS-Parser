@@ -1471,14 +1471,16 @@ std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, cons
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
     for (int i = 0; i < output.size(); i++) {
-        // cout << "arrival_time.h = " << output[i].arrival_time.h << std::endl;
-        // cout << "arrival_time.m = " << output[i].arrival_time.m << std::endl;
-        // cout << "arrival_time.s = " << output[i].arrival_time.s << std::endl;
-        // cout << std::endl;
-        // cout << "time.h = " << time.h << std::endl;
-        // cout << "time.m = " << time.m << std::endl;
-        // cout << "time.s = " << time.s << std::endl;
-        // cout << std::endl
+        /*
+        cout << "arrival_time.h = " << output[i].arrival_time.h << std::endl;
+        cout << "arrival_time.m = " << output[i].arrival_time.m << std::endl;
+        cout << "arrival_time.s = " << output[i].arrival_time.s << std::endl;
+        cout << std::endl;
+        cout << "time.h = " << time.h << std::endl;
+        cout << "time.m = " << time.m << std::endl;
+        cout << "time.s = " << time.s << std::endl;
+        cout << std::endl;
+        */
 
         if (output[i].arrival_time.h < time.h) {
             output.erase(output.begin() + i);
