@@ -108,7 +108,21 @@ public:
     }
 
     virtual bool operator>(time24 other) {
-        // greter thatn code
+        if (this->h < other.h) {
+            return false;
+        } else if (this->h > other.h) {
+            return true;
+        } else if (this->m < other.m) {
+            return false;
+        } else if (this->m > other.m) {
+            return true;
+        } else if (this->s < other.s) {
+            return false;
+        } else if (this->s > other.s) {
+            return true;
+        } else {
+            return false;
+        }
     }
     
     virtual bool operator<(time24 other) {
