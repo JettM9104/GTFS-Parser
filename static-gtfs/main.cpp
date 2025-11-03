@@ -161,7 +161,7 @@ public:
             return true;
         }
     }
-    
+
     virtual bool operator>=(time24 other) {
         if (this->h < other.h) {
             return false;
