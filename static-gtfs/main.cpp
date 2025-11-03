@@ -87,6 +87,7 @@ struct stop {
     }
 };
 
+
 class time24 {
 public:
     int h;
@@ -126,25 +127,93 @@ public:
     }
     
     virtual bool operator<(time24 other) {
-
+        if (this->h > other.h) {
+            return false;
+        } else if (this->h < other.h) {
+            return true;
+        } else if (this->m > other.m) {
+            return false;
+        } else if (this->m < other.m) {
+            return true;
+        } else if (this->s > other.s) {
+            return false;
+        } else if (this->s < other.s) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     virtual bool operator<=(time24 other) {
-
+        if (this->h > other.h) {
+            return false;
+        } else if (this->h < other.h) {
+            return true;
+        } else if (this->m > other.m) {
+            return false;
+        } else if (this->m < other.m) {
+            return true;
+        } else if (this->s > other.s) {
+            return false;
+        } else if (this->s < other.s) {
+            return true;
+        } else {
+            return true;
+        }
     }
     
     virtual bool operator>=(time24 other) {
-
+        if (this->h < other.h) {
+            return false;
+        } else if (this->h > other.h) {
+            return true;
+        } else if (this->m < other.m) {
+            return false;
+        } else if (this->m > other.m) {
+            return true;
+        } else if (this->s < other.s) {
+            return false;
+        } else if (this->s > other.s) {
+            return true;
+        } else {
+            return true;
+        }
     }
 
     virtual bool operator==(time24 other) {
+        return (other.h == this->h && other.m == this->m && other.s == this->s);
+    }
 
+    virtual bool operator!=(time24 other) {
+        return !(other.h == this->h && other.m == this->m && other.s == this->s);
     }
 
     virtual time24 operator+(time24 other) { // cannot overlap, note that during calling
+        time24 output;
 
+        output.h = this->h + other.h;
+        output.m = this->m + other.m;
+        output.s = this->s + other.s;
+        if (output.s >= 60) {
+            output.m += 1;
+            output.s -= 60;
+        }
+        if (output.m >= 60) {
+            output.h += 1;
+            output.m -= 1;
+        }
+        if (output.h >= 24) output.h -= 24;
+
+        return output;
+    }
+
+    virtual time24 operator+(double other) {
+        time24 output(this->h, this->m, this->s);
+
+        
     }
 };
+
 
 struct timeap : public time24 {
     tod timeOfDay;
