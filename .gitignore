@@ -63,3 +63,15 @@ gtfs-rt/testing/timeafter
 static-gtfs/testing/calendarDateClass
 other-testing/varadic
 static-gtfs/testing/time24
+static-gtfs/data/new_yrt_archive/agency.txt
+static-gtfs/data/new_yrt_archive/calendar.txt
+static-gtfs/data/new_yrt_archive/calendar_dates.txt
+static-gtfs/data/new_yrt_archive/fare_attributes.txt
+static-gtfs/data/new_yrt_archive/fare_rules.txt
+static-gtfs/data/new_yrt_archive/feed_info.txt
+static-gtfs/data/new_yrt_archive/routes.txt
+static-gtfs/data/new_yrt_archive/shapes.txt
+static-gtfs/data/new_yrt_archive/stop_times.txt
+static-gtfs/data/new_yrt_archive/stops.txt
+static-gtfs/data/new_yrt_archive/transfers.txt
+static-gtfs/data/new_yrt_archive/trips.txt
