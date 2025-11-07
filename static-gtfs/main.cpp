@@ -16,7 +16,7 @@ float π = 3.14159;
 
 typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
-const string root = "data/yrt_archive/";
+const string root = "data/new_yrt_archive/";
 
 const string stopPath = root + "stops.txt";
 const string routePath = root + "routes.txt";
@@ -1579,41 +1579,15 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
     return output;
 }
 
-// a note: check issue number 5 and remember when modified modify the overload equally
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time) {
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
     for (int i = 0; i < output.size(); i++) {
-        /*
-        cout << "arrival_time.h = " << output[i].arrival_time.h << std::endl;
-        cout << "arrival_time.m = " << output[i].arrival_time.m << std::endl;
-        cout << "arrival_time.s = " << output[i].arrival_time.s << std::endl;
-        cout << std::endl;
-        cout << "time.h = " << time.h << std::endl;
-        cout << "time.m = " << time.m << std::endl;
-        cout << "time.s = " << time.s << std::endl;
-        cout << std::endl;
-        */
-
-        if (output[i].arrival_time.h < time.h) {
+        if (output[i].arrival_time < time) {
             output.erase(output.begin() + i);
             cout << "1erased " << output[i].arrival_time.h << "<" << time.h << " " << (output[i].arrival_time.h < time.h) << std::endl;
             continue;
         }
-        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
-            output.erase(output.begin() + i);
-            cout << "2erased " << output[i].arrival_time.m << "<" << time.m << std::endl;
-            continue;
-        }
-        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
-            output.erase(output.begin() + i);
-            cout << "3erased " << output[i].arrival_time.s << "<" << time.s << std::endl;
-            continue;
-        }
-        else {
-            cout << "kept " << output[i].arrival_time.h << ">=" << time.h << std::endl;
-        }
-        
     }
     return output;
 }
@@ -1626,15 +1600,7 @@ std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const un
     std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
 
     for (int i = 0; i < output.size(); i++) {
-        if (output[i].arrival_time.h < time.h) {
-            output.erase(output.begin() + i);
-            continue;
-        }
-        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m < time.m) {
-            output.erase(output.begin() + i);
-            continue;
-        }
-        else if (output[i].arrival_time.h == time.h && output[i].arrival_time.m == time.m && output[i].arrival_time.s <= time.s) {
+        if (output[i].arrival_time < time) {
             output.erase(output.begin() + i);
             continue;
         }
