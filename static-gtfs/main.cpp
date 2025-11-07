@@ -207,11 +207,12 @@ public:
         return output;
     }
 
-    virtual time24 operator+(double other) {
-        time24 output(this->h, this->m, this->s);
+    // virtual time24 operator+(double other) {
+    //     time24 output(this->h, this->m, this->s);
 
+    //     return other;
         
-    }
+    // }
 };
 
 
@@ -493,6 +494,7 @@ public:
 
 
 std::vector<string> parseDataCSV(const string& input);
+void sortVectorByTime(std::vector<tripSegment>& x);
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
 time24 parseFormattedTime(string input);
 bool isValid(int tripID, int year, int month, int date);
@@ -514,12 +516,15 @@ agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 
 
+
 int main(int argc, char* argv[]) {
     time24 x(11, 35, 38);
-    std::vector<tripSegment> times = getRemainingDayStops(2025, 10, 23, 6769, x);
+    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 7, 9794);
+
+    sortVectorByTime(times);
 
     for (int i = 0; i < times.size(); i++) {
-        cout << times[i].departure_time.h << std::endl;
+        cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
     }
 }
 
@@ -531,6 +536,31 @@ calendarDate parseFormattedDate(string input) {
     output.day = stoi(input.substr(6, 2));
 
     return output;
+}
+
+void sortVectorByTime(std::vector<tripSegment>& x) {
+    int number = 0;
+    do {
+        number = 0;
+        for (int i = 0; i < x.size() - 1; i++) {
+            if (x[i].departure_time > x[i+1].departure_time) {
+                tripSegment first = x[i];
+                tripSegment second = x[i+1];
+
+                x[i+1] = first;
+                x[i] = second;
+                number++;
+            }
+            for (int i = 0; i < x.size(); i++) {
+                cout << x[i].departure_time.h << " ";
+            }
+
+            cout << std::endl;
+
+
+            
+        }
+    } while (number > 0);
 }
 
 time24 getCurrentTime() {
