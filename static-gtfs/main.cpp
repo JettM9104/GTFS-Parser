@@ -1581,17 +1581,8 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
 
 std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 intime) {
     std::vector<tripSegment> out = getDayTimesAtStop(year, month, day, id);
-
-    for (int i = 0; i < out.size(); i++) {
-        if (out[i].departure_time <= intime) {
-            out.erase(out.begin() + i);
-            cout << "1erased " << out[i].departure_time.h << "<" << intime.h << " " << (out[i].departure_time <= intime) << std::endl;
-            continue;
-        } else {
-            cout << "2erased " << out[i].departure_time.h << "<" << intime.h << " " << (out[i].departure_time > intime) << std::endl;
-            continue;
-        }
-    }
+    
+    out.erase(std::remove_if(out.begin(), out.end(), [intime](tripSegment x){ return (x.departure_time < intime); }), out.end());
     return out;
 }
 
@@ -1600,14 +1591,9 @@ std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const un
     int month = calendarDay.month;
     int day = calendarDay.day;
 
-    std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
+    std::vector<tripSegment> out = getDayTimesAtStop(year, month, day, id);
 
-    for (int i = 0; i < output.size(); i++) {
-        if (output[i].arrival_time < time) {
-            output.erase(output.begin() + i);
-            continue;
-        }
-    }
-    return output;
+    out.erase(std::remove_if(out.begin(), out.end(), [time](tripSegment x){ return (x.departure_time < time); }), out.end());
+    return out;
 }
 
