@@ -1,10 +1,12 @@
+#ifndef main_h
+#define main_h main_h
 #include "main.cpp"
-// this code will get the reamaing day stops of one day and print it in a nice format
 
+// this code will get the reamaing day stops of one day and print it in a nice format
 // TRIP_ID @ TIME           ROUTE_ID
 // 1921543 @ 23:14:23       9899
 
-int main(int argc, char* argv[]) {
+void getDayStops() {
     time24 x(11, 35, 38);
     std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 9794, x);
 
@@ -19,4 +21,4 @@ int main(int argc, char* argv[]) {
 
 
 
-
+#endif
