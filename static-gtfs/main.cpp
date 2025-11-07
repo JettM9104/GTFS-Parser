@@ -520,7 +520,7 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 
 int main(int argc, char* argv[]) {
-    time24 x(11, 35, 38);
+    time24 x(14, 52, 0);
     std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 9794, x);
 
     sortVectorByTime(times);
