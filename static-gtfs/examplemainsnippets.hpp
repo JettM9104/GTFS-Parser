@@ -1,0 +1,22 @@
+#include "main.cpp"
+// this code will get the reamaing day stops of one day and print it in a nice format
+
+// TRIP_ID @ TIME           ROUTE_ID
+// 1921543 @ 23:14:23       9899
+
+int main(int argc, char* argv[]) {
+    time24 x(11, 35, 38);
+    std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 9794, x);
+
+    sortVectorByTime(times);
+
+    for (int i = 0; i < times.size(); i++) {
+        cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
+    }
+
+    cout << verifyGTFS(2025, 11, 7);
+}
+
+
+
+
