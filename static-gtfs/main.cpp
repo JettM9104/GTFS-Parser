@@ -554,11 +554,7 @@ void sortVectorByTime(std::vector<tripSegment>& x) {
             for (int i = 0; i < x.size(); i++) {
                 cout << x[i].departure_time.h << " ";
             }
-
             cout << std::endl;
-
-
-            
         }
     } while (number > 0);
 }
