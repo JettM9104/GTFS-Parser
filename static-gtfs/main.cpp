@@ -502,7 +502,9 @@ bool isValid(int tripID, calendarDate calendarDay);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
-bool verifyGTFS();
+bool verifyGTFS(int year, int month, int day);
+bool verifyGTFS(calendarDate inputDate);
+
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); 
 std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
@@ -519,13 +521,15 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 int main(int argc, char* argv[]) {
     time24 x(11, 35, 38);
-    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 7, 9794);
+    std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 9794, x);
 
     sortVectorByTime(times);
 
     for (int i = 0; i < times.size(); i++) {
         cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
     }
+
+    cout << verifyGTFS(2025, 11, 7);
 }
 
 calendarDate parseFormattedDate(string input) {
@@ -551,10 +555,10 @@ void sortVectorByTime(std::vector<tripSegment>& x) {
                 x[i] = second;
                 number++;
             }
-            for (int i = 0; i < x.size(); i++) {
-                cout << x[i].departure_time.h << " ";
-            }
-            cout << std::endl;
+            // for (int i = 0; i < x.size(); i++) {
+            //     cout << x[i].departure_time.h << " ";
+            // }
+            // cout << std::endl;
         }
     } while (number > 0);
 }
@@ -1008,7 +1012,7 @@ bool verifyGTFS(int year, int month, int day) {
             if (refs["feed_end_date"] == 0) return true; // assume it is automatically valid
             else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
 
-            if (x <= inputDate) return true;
+            if (x >= inputDate) return true;
             else return false;
             break;
         }
@@ -1575,17 +1579,20 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
     return output;
 }
 
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time) {
-    std::vector<tripSegment> output = getDayTimesAtStop(year, month, day, id);
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 intime) {
+    std::vector<tripSegment> out = getDayTimesAtStop(year, month, day, id);
 
-    for (int i = 0; i < output.size(); i++) {
-        if (output[i].arrival_time < time) {
-            output.erase(output.begin() + i);
-            cout << "1erased " << output[i].arrival_time.h << "<" << time.h << " " << (output[i].arrival_time.h < time.h) << std::endl;
+    for (int i = 0; i < out.size(); i++) {
+        if (out[i].departure_time <= intime) {
+            out.erase(out.begin() + i);
+            cout << "1erased " << out[i].departure_time.h << "<" << intime.h << " " << (out[i].departure_time <= intime) << std::endl;
+            continue;
+        } else {
+            cout << "2erased " << out[i].departure_time.h << "<" << intime.h << " " << (out[i].departure_time > intime) << std::endl;
             continue;
         }
     }
-    return output;
+    return out;
 }
 
 std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time) {

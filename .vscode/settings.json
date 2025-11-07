@@ -43,6 +43,9 @@
         "stack": "cpp",
         "variant": "cpp",
         "__split_buffer": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "__hash_table": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp"
     }
 }
