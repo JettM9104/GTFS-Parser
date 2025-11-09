@@ -521,9 +521,12 @@ std::vector<shape> getShapeInfo(const int& shapeID);
 
 int main(int argc, char* argv[]) {
     time24 x(14, 52, 0);
-    std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 9794, x);
+    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 8, 6769);
+
+    cout << times.size() << std::endl;
 
     sortVectorByTime(times);
+
 
     for (int i = 0; i < times.size(); i++) {
         cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
@@ -546,7 +549,7 @@ void sortVectorByTime(std::vector<tripSegment>& x) {
     int number = 0;
     do {
         number = 0;
-        for (int i = 0; i < x.size() - 1; i++) {
+        for (int i = 0; i < static_cast<int>(x.size()) - 1; i++) {
             if (x[i].departure_time > x[i+1].departure_time) {
                 tripSegment first = x[i];
                 tripSegment second = x[i+1];
@@ -1289,11 +1292,9 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
         
     }
 
-    for (int i = 0; i < output.size(); i++) {
-        if (!isValid(output[i].trip_id, year, month, day)) {
-            output.erase(output.begin() + i);
-        }
-    }
+
+    output.erase(std::remove_if(output.begin(), output.end(), [year, month, day](tripSegment x){ return (!isValid(x.trip_id, year, month, day)); }), output.end());
+
     tripsFile.close();
     
 
