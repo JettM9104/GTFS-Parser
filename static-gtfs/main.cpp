@@ -541,13 +541,13 @@ stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 std::vector<stop> searchStopByName(string name);
-std::vector<intstr> searchStopFromScore(string name);
+std::vector<intstr> searchStopFromScoreAlg1(string name);
 
 
 
 int main(int argc, char* argv[]) {
     cout << "c\n";
-    std::vector<intstr> x = searchStopFromScore("BOND CRES / YONGE ST");
+    std::vector<intstr> x = searchStopFromScoreAlg1("BOND CRES / YONGE ST");
 
     for (int i = 0; i < 50; i++) {
         cout << x[i].num << "\t" << x[i].str << "\t\t\t" << (abs(getScore(x[i].str) - getScore("BOND CRES / YONGE ST"))) << "\n";
@@ -1673,7 +1673,7 @@ std::vector<stop> searchStopByName(string name) {
 
 }
 
-std::vector<intstr> searchStopFromScore(string name) {
+std::vector<intstr> searchStopFromScoreAlg1(string name) {
     double nameScore = getScore(name);
 
     ifstream stopFile(stopPath);
