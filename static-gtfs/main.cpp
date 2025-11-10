@@ -5,6 +5,7 @@
 #include <map>
 #include <unordered_map>
 #include <ctime>
+#include <array>
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
@@ -516,23 +517,16 @@ busLine getRouteInfo(const string& id);
 stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
+std::vector<stop> searchStopByName(string name);
 
 
 
 int main(int argc, char* argv[]) {
-    time24 x(14, 52, 0);
-    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 8, 6769);
+    std::vector<stop> x = searchStopByName("YONGE ST / BOND CRES");
 
-    cout << times.size() << std::endl;
-
-    sortVectorByTime(times);
-
-
-    for (int i = 0; i < times.size(); i++) {
-        cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
+    for (int i = 0; i < x.size(); i++) {
+        cout << x[i].stop_id << std::endl;
     }
-
-    cout << verifyGTFS(2025, 11, 7);
 }
 
 calendarDate parseFormattedDate(string input) {
@@ -1174,9 +1168,6 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
             lineNumber++;
             if (lineNumber == 1) [[unlikely]] {
                 dataVector = parseDataCSV(currentLine);
-                for (int i = 0; i < dataVector.size(); i++) {
-                    cout << dataVector[i] << std::endl;
-                }
             }
 
             parsedCurrentLine = parseDataCSV(currentLine);
@@ -1598,3 +1589,44 @@ std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const un
     return out;
 }
 
+std::vector<stop> searchStopByName(string name) {
+    std::vector<stop> output;
+    ifstream stopFile(stopPath);
+    stop busStop;
+    std::vector<string> parsedCurrentLine;
+    string currentLine;
+
+    unsigned int lineNumber = 0;
+    std::vector<string> dataVector;
+    std::unordered_map<string, int> setupMap;
+
+    while (getline(stopFile, currentLine)) {
+        lineNumber++;
+        if (lineNumber == 1) [[unlikely]] {
+            dataVector = parseDataCSV(currentLine);
+            setupMap = createMapFromVector(dataVector);
+        }
+
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (parsedCurrentLine[setupMap["stop_name"]] == name) {
+            busStop.stop_id = stoi(parsedCurrentLine[setupMap["stop_id"]]);
+            busStop.stop_code = stoi(parsedCurrentLine[setupMap["stop_code"]]);
+            busStop.stop_name = parsedCurrentLine[setupMap["stop_name"]]; //
+            busStop.stop_desc = parsedCurrentLine[setupMap["stop_desc"]]; //
+            busStop.platform_code = (parsedCurrentLine[setupMap["platform_code"]] == "") ? 0 : stoi(parsedCurrentLine[setupMap["platform_code"]]);
+            busStop.stop_lat = (parsedCurrentLine[setupMap["stop_lat"]] == "" || parsedCurrentLine[setupMap["stop_lat"]] == " ") ? 0 : std::stod(parsedCurrentLine[setupMap["stop_lat"]]);
+            busStop.stop_lon = (parsedCurrentLine[setupMap["stop_lon"]] == "" || parsedCurrentLine[setupMap["stop_lon"]] == " ") ? 0 : std::stod(parsedCurrentLine[setupMap["stop_lon"]]);
+            busStop.zone_id = (parsedCurrentLine[setupMap["zone_id"]] == "" || parsedCurrentLine[setupMap["zone_id"]] == " ") ? 0 : stoi(parsedCurrentLine[setupMap["zone_id"]]);
+            busStop.stop_url = parsedCurrentLine[setupMap["stop_url"]]; //
+            busStop.location_type = (parsedCurrentLine[setupMap["location_type"]] == "" || parsedCurrentLine[setupMap["location_type"]] == " " || setupMap["location_type"] == 0) ? 0 : stoi(parsedCurrentLine[setupMap["location_type"]]);
+            busStop.parent_station = (parsedCurrentLine[setupMap["parent_station"]] == "" || parsedCurrentLine[setupMap["parent_station"]] == " " || setupMap["parent_station"] == 0) ? 0 : stoi(parsedCurrentLine[setupMap["parent_station"]]);
+            busStop.stop_timezone = (parsedCurrentLine[setupMap["stop_timezone"]] == "" || parsedCurrentLine[setupMap["stop_timezone"]] == " " || setupMap["stop_timezone"] == 0) ? 0 : stoi(parsedCurrentLine[setupMap["stop_timezone"]]);
+            busStop.wheelchair_boarding = (parsedCurrentLine[setupMap["wheelchair_boarding"]] == "" || parsedCurrentLine[setupMap["wheelchair_boarding"]] == " " || setupMap["wheelchair_boarding"] == 0) ? 0 : stoi(parsedCurrentLine[setupMap["wheelchair_boarding"]]);
+            busStop.preferred = (parsedCurrentLine[setupMap["preferred"]] == "" || parsedCurrentLine[setupMap["preferred"]] == " " || setupMap["preferred"] == 0) ? 0 : stoi(parsedCurrentLine[setupMap["preferred"]]);
+            output.push_back(busStop);
+        }
+    }
+    stopFile.close();
+    return output;
+
+}
