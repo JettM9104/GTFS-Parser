@@ -546,12 +546,16 @@ std::vector<intstr> searchStopFromScoreAlg1(string name);
 
 
 int main(int argc, char* argv[]) {
-    cout << "c\n";
-    std::vector<intstr> x = searchStopFromScoreAlg1("BOND CRES / YONGE ST");
+    time24 x(11, 35, 38);
+    std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 6770, x);
 
-    for (int i = 0; i < 50; i++) {
-        cout << x[i].num << "\t" << x[i].str << "\t\t\t" << (abs(getScore(x[i].str) - getScore("BOND CRES / YONGE ST"))) << "\n";
+    sortVectorByTime(times);
+
+    for (int i = 0; i < times.size(); i++) {
+        cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
     }
+
+    cout << verifyGTFS(2025, 11, 7);
 }
 
 calendarDate parseFormattedDate(string input) {
