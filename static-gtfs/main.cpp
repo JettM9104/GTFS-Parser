@@ -88,7 +88,6 @@ struct stop {
     }
 };
 
-
 class time24 {
 public:
     int h;
@@ -215,7 +214,6 @@ public:
         
     // }
 };
-
 
 struct timeap : public time24 {
     tod timeOfDay;
@@ -493,6 +491,30 @@ public:
     }
 };
 
+struct intstr {
+    int num;
+    string str;
+
+    intstr() = default;
+
+    intstr(int a, string b) {
+        num = a;
+        str = b;
+    }
+
+    intstr(string a, int b) {
+        num = b;
+        str = a;
+    }
+
+    intstr(int a) {
+        num = a;
+    }
+
+    intstr(string a) {
+        str = a;
+    }
+};
 
 std::vector<string> parseDataCSV(const string& input);
 void sortVectorByTime(std::vector<tripSegment>& x);
@@ -1651,5 +1673,32 @@ std::vector<stop> searchStopByName(string name) {
 }
 
 std::vector<stop> searchStopFromScore(string name) {
-    //
+    double nameScore = getScore(name);
+
+    ifstream stopFile(stopPath);
+
+    int lineNumber = 0;
+
+    int bestScore = 1'000'000'000;
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::map<string, int> refs;
+
+    std::vector<intstr> stopNames;
+
+    while (getline(stopFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        lineNumber++;
+
+        if (lineNumber == 1) [[unlikely]] {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        } else {
+            stopNames.push_back(intstr(stoi(parsedCurrentLine[refs["stop_id"]]), parsedCurrentLine[refs["stop_name"]]));
+        }
+
+        
+    }
 }
