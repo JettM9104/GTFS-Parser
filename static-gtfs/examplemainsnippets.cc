@@ -19,6 +19,14 @@ void getDayStops() {
     cout << verifyGTFS(2025, 11, 7);
 }
 
+void findStop1() {
+    cout << "c\n";
+    string x1 = "SUMMIT TRAIl / BAYVIEW AV";
+    std::vector<intstr> x = searchStopFromScoreAlg1(x1);
 
+    for (int i = 0; i < 50; i++) {
+        cout << x[i].num << "\t" << x[i].str << "\t\t\t" << (abs(getScore(x[i].str) - getScore(x1))) << "\n";
+    }
+}
 
 #endif
