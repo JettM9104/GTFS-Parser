@@ -505,6 +505,7 @@ week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
 bool verifyGTFS(int year, int month, int day);
 bool verifyGTFS(calendarDate inputDate);
+double getScore(string input);
 
 
 std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); 
@@ -518,6 +519,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 std::vector<stop> searchStopByName(string name);
+std::vector<stop> searchStopFromScore(string name);
 
 
 
@@ -1055,6 +1057,23 @@ bool verifyGTFS(calendarDate inputDate) {
     return false;
 }
 
+double getScore(string input) {
+    std::vector<int> weights = {1};
+    double total = 0;
+
+    for (int i = 0; i < input.length(); i++) {
+        if (input[i] >= 'A' && input[i] <= 'Z') {
+            input[i] = input[i] + 32;
+        }
+    }
+    for (int i = 0; i < input.length(); i++) {
+        total += static_cast<double>(input[i]) * static_cast<double>(weights[i % weights.size()]) - 48.0;
+    }
+
+    total /= input.length();
+    return total;
+
+}
 
 
 busLine getRouteInfo(const unsigned short int& id) {
@@ -1629,4 +1648,8 @@ std::vector<stop> searchStopByName(string name) {
     stopFile.close();
     return output;
 
+}
+
+std::vector<stop> searchStopFromScore(string name) {
+    //
 }
