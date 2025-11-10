@@ -541,15 +541,16 @@ stop getStopInfo(const unsigned short int& id, const stopType& type);
 agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 std::vector<stop> searchStopByName(string name);
-std::vector<stop> searchStopFromScore(string name);
+std::vector<intstr> searchStopFromScore(string name);
 
 
 
 int main(int argc, char* argv[]) {
-    std::vector<stop> x = searchStopByName("YONGE ST / BOND CRES");
+    cout << "c\n";
+    std::vector<intstr> x = searchStopFromScore("BOND CRES / YONGE ST");
 
-    for (int i = 0; i < x.size(); i++) {
-        cout << x[i].stop_id << std::endl;
+    for (int i = 0; i < 50; i++) {
+        cout << x[i].num << "\t" << x[i].str << "\t\t\t" << (abs(getScore(x[i].str) - getScore("BOND CRES / YONGE ST"))) << "\n";
     }
 }
 
@@ -1672,7 +1673,7 @@ std::vector<stop> searchStopByName(string name) {
 
 }
 
-std::vector<stop> searchStopFromScore(string name) {
+std::vector<intstr> searchStopFromScore(string name) {
     double nameScore = getScore(name);
 
     ifstream stopFile(stopPath);
@@ -1686,6 +1687,7 @@ std::vector<stop> searchStopFromScore(string name) {
     std::map<string, int> refs;
 
     std::vector<intstr> stopNames;
+    cout << "a\n";
 
     while (getline(stopFile, currentLine)) {
         parsedCurrentLine = parseDataCSV(currentLine);
@@ -1698,7 +1700,30 @@ std::vector<stop> searchStopFromScore(string name) {
         } else {
             stopNames.push_back(intstr(stoi(parsedCurrentLine[refs["stop_id"]]), parsedCurrentLine[refs["stop_name"]]));
         }
-
-        
     }
+
+    cout << "b\n";
+    int number = 0;
+
+    cout << stopNames.size() << std::endl;
+    do {
+        number = 0;
+        for (int i = 0; i < static_cast<int>(stopNames.size()) - 1; i++) {
+            if ((abs(getScore(stopNames[i].str) - getScore(name))) > (abs(getScore(stopNames[i+1].str) - getScore(name)))) {
+                intstr a = stopNames[i];
+                intstr b = stopNames[i+1];
+
+                stopNames[i+1] = a;
+                stopNames[i] = b;
+                number++;
+            }
+        }
+
+        cout << number << "\n";
+    } while (number > 0);
+
+    cout << "returned\n";
+
+    return stopNames;
+
 }
