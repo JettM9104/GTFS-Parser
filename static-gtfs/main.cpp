@@ -546,13 +546,15 @@ std::vector<intstr> searchStopFromScoreAlg1(string name);
 
 
 int main(int argc, char* argv[]) {
-    int stopn;
+    stop nice = getStopInfo(1234, ident);
+    nice.printInfo();
 
-    cout << "enter stop number: ";
-    std::cin >> stopn;
+    cout << "\n\n\n";
+
+    time24 x(11, 35, 38);
+    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 12, 9798);
+
     
-    std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, stopn, getCurrentTime());
-
     sortVectorByTime(times);
 
     for (int i = 0; i < times.size(); i++) {

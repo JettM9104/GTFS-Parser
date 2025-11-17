@@ -6,7 +6,7 @@
 // TRIP_ID @ TIME           ROUTE_ID
 // 1921543 @ 23:14:23       9899
 
-void getDayStops() {
+int main(int argc, char* argv[]) {
     time24 x(11, 35, 38);
     std::vector<tripSegment> times = getRemainingDayStops(2025, 11, 7, 9794, x);
 
@@ -19,7 +19,7 @@ void getDayStops() {
     cout << verifyGTFS(2025, 11, 7);
 }
 
-void findStop1() {
+int main(int argc, char* argv[]) {
     cout << "c\n";
     string x1 = "SUMMIT TRAIl / BAYVIEW AV";
     std::vector<intstr> x = searchStopFromScoreAlg1(x1);
