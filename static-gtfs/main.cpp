@@ -546,7 +546,7 @@ std::vector<intstr> searchStopFromScoreAlg1(string name);
 
 
 int main(int argc, char* argv[]) {
-    stop nice = getStopInfo(1234, ident);
+    stop nice = getStopInfo(1234, code);
     nice.printInfo();
 
     cout << "\n\n\n";
@@ -1194,7 +1194,7 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
             if (parsedCurrentLine[0] == std::to_string(busStop.stop_id)) break;
         }
         std::unordered_map<string, int> setupMap = createMapFromVector(dataVector);
-        if (parsedCurrentLine[0] != "0") {
+        if (parsedCurrentLine[0] != "") {
             busStop.stop_id = stoi(parsedCurrentLine[setupMap["stop_id"]]);
             busStop.stop_code = stoi(parsedCurrentLine[setupMap["stop_code"]]);
             busStop.stop_name = parsedCurrentLine[setupMap["stop_name"]]; //
