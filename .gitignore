@@ -77,3 +77,4 @@ static-gtfs/data/new_yrt_archive/transfers.txt
 static-gtfs/data/new_yrt_archive/trips.txt
 static-gtfs/testing/vectorerase
 static-gtfs/testing/wordScores
+static-gtfs/testing/voidpointer
