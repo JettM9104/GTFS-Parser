@@ -3,7 +3,7 @@
 **GTFS**, or *General Transit Feed Specification* (look at repository [`google/transit`](https://github.com/google/transit) and the reference [here](https://gtfs.org/documentation/schedule/reference/)) is the general (and only) worldwide standard for transit agency arrival, departure, and shape data (and more!). A *GTFS Set* is created by a transit agency and used by other software to tell when the bus/vehicle will arrive on time.
 
 ## What is This?
-This code is programmed in **C++** and is one big file in `main.cpp` and is used to parse general *GTFS Static Data*. Look into the path `static-gtfs/main.cpp`.
+This code is programmed in **C++** and is one big file in `gtfs.hpp` and is used to parse general *GTFS Static Data*. Look into the path `static-gtfs/gtfs.hpp`.
 
 ## How do I use it?
 Create a folder in the folder labelled `data` or wherever you want and change the paths inside the code. I didn't include the GTFS data that I used for testing as it is way too big to fit onto GitHub. 
