@@ -1,3 +1,4 @@
+// MARK: LIBRARIES AND NAMESPACES
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -8,6 +9,8 @@
 #include <array>
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
+
+// MARK: VARIABLES AND ENUMS
 
 typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
@@ -29,6 +32,8 @@ const string calendarDatesPath = root + "calendar_dates.txt";
 const string agencyPath = root + "agency.txt";
 const string shapePath = root + "shapes.txt";
 const string feedInfoFile = root + "feed_info.txt";
+
+// MARK: STRUCTS
 
 struct busLine {
     int route_id;
@@ -516,6 +521,8 @@ struct intstr {
     }
 };
 
+
+// MARK: DECLARATIONS
 std::vector<string> parseDataCSV(const string& input);
 void sortVectorByTime(std::vector<tripSegment>& x);
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
@@ -542,6 +549,11 @@ agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 std::vector<stop> searchStopByName(string name);
 std::vector<intstr> searchStopFromScoreAlg1(string name);
+
+
+
+
+// MARK: DEFINITION
 
 
 
