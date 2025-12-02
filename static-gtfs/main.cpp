@@ -546,13 +546,15 @@ std::vector<intstr> searchStopFromScoreAlg1(string name);
 
 
 int main(int argc, char* argv[]) {
-    stop nice = getStopInfo(1234, code);
+
+    stop nice = getStopInfo(7514, code);
     nice.printInfo();
 
     cout << "\n\n\n";
 
+
     time24 x(11, 35, 38);
-    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 12, 9798);
+    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 12, 7514);
 
     
     sortVectorByTime(times);
@@ -628,6 +630,7 @@ week convertDateToWeek(int year, int month, int day) {
         case 4: dayIndex = wed; break;
         case 5: dayIndex = thu; break;
         case 6: dayIndex = fri; break;
+        default: cout << "how??"; break;
     }
     return static_cast<week>(dayIndex);
 }
