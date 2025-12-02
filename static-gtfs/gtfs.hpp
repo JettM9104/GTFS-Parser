@@ -1,3 +1,5 @@
+#ifndef GTFS_HPP
+#define GTFS_HPP
 // MARK: LIBRARIES AND NAMESPACES
 #include <iostream>
 #include <fstream>
@@ -1731,3 +1733,5 @@ std::vector<intstr> searchStopFromScoreAlg1(string name) {
     return stopNames;
 
 }
+
+#endif
