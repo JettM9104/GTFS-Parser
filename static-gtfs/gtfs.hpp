@@ -22,7 +22,7 @@ float π = 3.14159;
 
 typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
-const string root = "data/new_yrt_archive/";
+const string root = "./data/new_yrt_archive/";
 
 const string stopPath = root + "stops.txt";
 const string routePath = root + "routes.txt";

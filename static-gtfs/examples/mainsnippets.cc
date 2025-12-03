@@ -1,6 +1,5 @@
-#ifndef main_h
-#define main_h main_h
-#include "main.cpp"
+
+#include "../main.cpp"
 
 // this code will get the reamaing day stops of one day and print it in a nice format
 // TRIP_ID @ TIME           ROUTE_ID
@@ -28,5 +27,3 @@ int main(int argc, char* argv[]) {
         cout << x[i].num << "\t" << x[i].str << "\t\t\t" << (abs(getScore(x[i].str) - getScore(x1))) << "\n";
     }
 }
-
-#endif
