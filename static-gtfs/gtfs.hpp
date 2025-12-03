@@ -523,6 +523,15 @@ struct intstr {
     }
 };
 
+struct smallStop {
+    int stopID;
+    string name;
+
+    smallStop(int stopID, string name) {
+        this->stopID = stopID;
+        this->name = name;
+    }
+};
 
 // MARK: DECLARATIONS
 std::vector<string> parseDataCSV(const string& input);
@@ -551,7 +560,7 @@ agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 std::vector<stop> searchStopByName(string name);
 std::vector<intstr> searchStopFromScoreAlg1(string name);
-
+std::vector<intstr> searchStopFromScoreAlg2(string name);
 
 
 
@@ -1734,4 +1743,7 @@ std::vector<intstr> searchStopFromScoreAlg1(string name) {
 
 }
 
+std::vector<intstr> searchStopFromScoreAlg2(string name) {
+
+}
 #endif
