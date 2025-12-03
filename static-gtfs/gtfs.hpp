@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <ctime>
 #include <array>
+#include <algorithm>
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
@@ -533,7 +534,13 @@ struct smallStop {
     }
 };
 
+struct matchsearch {
+    intstr text;
+    int score;
+};
+
 // MARK: DECLARATIONS
+int levenshtein(const string &a, const string &b);
 std::vector<string> parseDataCSV(const string& input);
 void sortVectorByTime(std::vector<tripSegment>& x);
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
@@ -560,13 +567,32 @@ agency getAgencyInfo();
 std::vector<shape> getShapeInfo(const int& shapeID);
 std::vector<stop> searchStopByName(string name);
 std::vector<intstr> searchStopFromScoreAlg1(string name);
-std::vector<intstr> searchStopFromScoreAlg2(string name);
+std::vector<matchsearch> searchStopFromScoreAlg2(string name);
 
 
 
 // MARK: DEFINITION
 
+int levenshtein(const string &a, const string &b) {
+    int m = a.size(), n = b.size();
+    std::vector<std::vector<int>> dp(m+1, std::vector<int>(n+1));
 
+    for (int i = 0; i <= m; i++) dp[i][0] = i;
+    for (int j = 0; j <= n; j++) dp[0][j] = j;
+
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            int cost = (a[i-1] == b[j-1]) ? 0 : 1;
+            dp[i][j] = std::min({ 
+                dp[i-1][j] + 1,     // delete
+                dp[i][j-1] + 1,     // insert
+                dp[i-1][j-1] + cost // replace
+            });
+        }
+    }
+
+    return dp[m][n];
+}
 
 calendarDate parseFormattedDate(string input) {
     calendarDate output;
@@ -1190,9 +1216,6 @@ stop getStopInfo(const unsigned short int& id, const stopType& type) {
             lineNumber++;
             if (lineNumber == 1) [[unlikely]] {
                 dataVector = parseDataCSV(currentLine);
-                for (int i = 0; i < dataVector.size(); i++) {
-                    cout << dataVector[i] << std::endl;
-                }
             }
 
             parsedCurrentLine = parseDataCSV(currentLine);
@@ -1743,7 +1766,47 @@ std::vector<intstr> searchStopFromScoreAlg1(string name) {
 
 }
 
-std::vector<intstr> searchStopFromScoreAlg2(string name) {
+std::vector<matchsearch> searchStopFromScoreAlg2(string name) {
+    ifstream stopFile(stopPath);
 
+    int lineNumber = 0;
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::map<string, int> refs;
+
+    std::vector<intstr> stopNames;
+
+    while (getline(stopFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        lineNumber++;
+
+        if (lineNumber == 1) [[unlikely]] {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        } else {
+            stopNames.push_back(intstr(stoi(parsedCurrentLine[refs["stop_id"]]), parsedCurrentLine[refs["stop_name"]]));
+        }
+    }
+
+    int number = 0;
+
+    cout << stopNames.size() << std::endl;
+    
+    std::vector<matchsearch> results;
+
+    for (auto &item : stopNames) {
+        int dist = levenshtein(item.str, name);
+        int maxLen = std::max(item.str.size(), name.size());
+
+        int score = 100 - (dist * 100 / maxLen);
+
+        results.push_back({intstr(item.num, item.str), score});
+    }
+
+    sort(results.begin(), results.end(), [](auto &a, auto &b) { return a.score > b.score; });
+
+    return results;
 }
 #endif

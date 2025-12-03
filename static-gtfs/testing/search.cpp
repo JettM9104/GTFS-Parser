@@ -37,10 +37,10 @@ struct Match {
 
 int main() {
     std::vector<std::string> data = {
-        "YONGE ST / BOND CRES", "YONGE STREET / BNOD CRES", "BNOD CRES / YONGE ST", "application", "apply", "grape"
+        "apple", "banana", "pineapple", "application", "apply", "grape"
     };
 
-    std::string query = "BOND"; // typo of "apple"
+    std::string query = "appel"; // typo of "apple"
 
     std::vector<Match> results;
 

@@ -2,21 +2,10 @@
 
 int main(int argc, char* argv[]) {
 
-    stop nice = getStopInfo(7514, code);
-    nice.printInfo();
+    std::vector<matchsearch> x = searchStopFromScoreAlg2("BNOD CRES");
 
-    cout << "\n\n\n";
-
-
-    time24 x(11, 35, 38);
-    std::vector<tripSegment> times = getDayTimesAtStop(2025, 11, 12, 7514);
-
-    
-    sortVectorByTime(times);
-
-    for (int i = 0; i < times.size(); i++) {
-        cout << times[i].trip_id << " @ " << times[i].departure_time.h << ":" << times[i].departure_time.m << ":" << times[i].departure_time.s << "   \t\t " << times[i].route_id << std::endl;
+    for (int i = x.size() - 1; i >= 0; i--) {
+        cout << i << ": " << x[i].score << " | " << x[i].text.str << " | ";
+        cout << x[i].text.num << std::endl;
     }
-
-    cout << verifyGTFS(2025, 11, 7);
 }
