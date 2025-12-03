@@ -18,3 +18,6 @@ All you have to do is to:
 1. Clone this repository onto your machine - `git clone https://github.com/JettM9104/GTFS-Parser/`
 2. Create a folder called data inside the `static-gtfs` folder
 3. Change the paths inside the code to match the paths of your data folder.
+
+## How do I build the GUI?
+Use the provided `CMakeLists.txt`, install CMake with `brew install cmake` for mac/linux and download it online for windows; Download QT and update the version number inside of the `CMakeLists.cpp`.
