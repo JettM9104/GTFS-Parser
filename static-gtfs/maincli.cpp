@@ -24,6 +24,21 @@ int main(int argc, char* argv[]) {
                 x.printInfo();
             }
 
+        } else if (argv1 == "searchstop") {
+            string word = "";
+            for (int i = 0; i < argc - 2; i++) {
+                string curarg = argv[i + 2];
+                word += curarg;
+                word += " ";
+            }
+            std::vector<matchsearch> x = searchStopFromScoreAlg2(word);
+
+            for (int i = x.size() - 1; i >= 0; i--) {
+                cout << i << ": " << x[i].score << " | " << x[i].text.str << " | ";
+                cout << x[i].text.num << std::endl;
+            }
+
+            cout << word;
         }
 
     }
