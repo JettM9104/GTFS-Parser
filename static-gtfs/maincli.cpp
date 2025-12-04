@@ -10,9 +10,22 @@ int main(int argc, char* argv[]) {
     } else {
         string argv1 = argv[1];
         if (argv1 == "getstopinfo") {
-            stop x = getStopInfo(std::stoi(argv[2]), ident);
-            x.printInfo();
+            if (argc >= 4) {
+                string argv2 = argv[2];
+                if (argv2 == "ident") {
+                    stop x = getStopInfo(std::stoi(argv[3]), ident);
+                    x.printInfo();
+                } else if (argv2 == "code") {
+                    stop x = getStopInfo(std::stoi(argv[3]), code);
+                    x.printInfo();
+                }
+            } else {
+                stop x = getStopInfo(std::stoi(argv[2]), ident);
+                x.printInfo();
+            }
+
         }
+
     }
     
     return 0;
