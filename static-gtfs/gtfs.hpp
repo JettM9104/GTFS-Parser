@@ -13,6 +13,7 @@
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
+namespace gtfs {
 // MARK: VARIABLES AND ENUMS
 
 typedef enum {ident, code} stopType;
@@ -1809,4 +1810,6 @@ std::vector<matchsearch> searchStopFromScoreAlg2(string name) {
 
     return results;
 }
+
+};
 #endif
