@@ -1,5 +1,5 @@
 #include "gtfs.hpp"
-
+using namespace gtfs;
 int main(int argc, char* argv[]) {
 
     std::vector<matchsearch> x = searchStopFromScoreAlg2("BNOD CRES");

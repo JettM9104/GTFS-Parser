@@ -1,3 +1,6 @@
+#define CONFINFOEXISTS 1
+// switch this to 0 if you are building
+
 #ifndef GTFS_HPP
 #define GTFS_HPP
 // MARK: LIBRARIES AND NAMESPACES
@@ -10,6 +13,10 @@
 #include <ctime>
 #include <array>
 #include <algorithm>
+
+#if CONFINFOEXISTS == 1
+#include "confidential_info.hpp"
+#endif
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
 
@@ -24,7 +31,11 @@ float π = 3.14159;
 
 typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
-const string root = "./data/new_yrt_archive/";
+#if CONFINFOEXISTS == 1
+const string root = conf_info::path;
+#else
+const string root = "./data/new_yrt_archive";
+#endif
 
 const string stopPath = root + "stops.txt";
 const string routePath = root + "routes.txt";

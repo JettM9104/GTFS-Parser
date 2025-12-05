@@ -2,7 +2,7 @@
 #include "gtfs.hpp"
 
 using namespace std;
-
+using namespace gtfs;
 
 int main(int argc, char* argv[]) {
     if (argc == 1) {
@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
                 word += curarg;
                 word += " ";
             }
+
             std::vector<matchsearch> x = searchStopFromScoreAlg2(word);
 
             for (int i = x.size() - 1; i >= 0; i--) {

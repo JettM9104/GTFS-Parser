@@ -18,6 +18,25 @@ All you have to do is to:
 1. Clone this repository onto your machine - `git clone https://github.com/JettM9104/GTFS-Parser/`
 2. Create a folder called data inside the `static-gtfs` folder
 3. Change the paths inside the code to match the paths of your data folder.
+4. Set `#define CONFINFOEXISTS` to `0`.
+4. Build it!
 
+## What is the confidential_info.hpp inside gtfs.hpp and in .gitignore?
+The file includes the whole path to the gtfs folder, if you are building set `#define CONFINFOEXISTS` to `0`. But, if you also want to use it (for some reason) then, 
+1. Create a file named `confidential_info.hpp`.
+2. Here's a sneak peek inside:
+```cpp
+#ifndef CONF_INFO_HPP
+#define CONF_INFO_HPP
+#include <string>
+
+
+namespace conf_info {
+    std::string path = "MY/PATH/TO/VSCode/GTFS Parser/static-gtfs/data/new_yrt_archive/";
+};
+
+#endif
+```
+3. Switch `#define CONFINFOEXISTS` back to `1`
 ## How do I build the GUI?
 Use the provided `CMakeLists.txt`, install CMake with `brew install cmake` for mac/linux and download it online for windows; Download QT and update the version number inside of the `CMakeLists.cpp`.

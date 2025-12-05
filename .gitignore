@@ -79,3 +79,4 @@ static-gtfs/testing/vectorerase
 static-gtfs/testing/wordScores
 static-gtfs/testing/voidpointer
 static-gtfs/maincli
+static-gtfs/confidential_info.hpp
