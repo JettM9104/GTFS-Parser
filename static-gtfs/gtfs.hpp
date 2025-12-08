@@ -13,6 +13,9 @@
 #include <ctime>
 #include <array>
 #include <algorithm>
+#include <stdlib.h>
+#include <iomanip>
+
 
 #if CONFINFOEXISTS == 1
 #include "confidential_info.hpp"
@@ -47,6 +50,8 @@ const string calendarDatesPath = root + "calendar_dates.txt";
 const string agencyPath = root + "agency.txt";
 const string shapePath = root + "shapes.txt";
 const string feedInfoFile = root + "feed_info.txt";
+
+const int precision = 17;
 
 // MARK: STRUCTS
 
@@ -96,8 +101,8 @@ struct stop {
         cout << "Stop Name: " << stop_name << std::endl;
         cout << "Stop Description: " << stop_desc << std::endl;
         cout << "Platform Code: " << platform_code << std::endl;
-        cout << "Latitude: " << stop_lat << std::endl;
-        cout << "Longitude: " << stop_lon << std::endl;
+        cout << "Latitude: " << std::setprecision(precision) << stop_lat << std::setprecision(6) << std::endl;
+        cout << "Longitude: " << std::setprecision(precision) << stop_lon << std::setprecision(6) << std::endl;
         cout << "Zone ID: " << zone_id << std::endl;
         cout << "Stop URL: " << stop_url << std::endl;
         cout << "Location Type: " << location_type << std::endl;
@@ -348,6 +353,7 @@ struct trip {
         return 1;
     }
 };
+
 
 class bus {
 public:
