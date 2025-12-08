@@ -35,13 +35,13 @@
 	"orderDependencies" : 
 	[
 		{
+			"id" : "MyGTFSApp_autogen_timestamp_deps::@6890427a1f51a3e7e1df"
+		},
+		{
 			"id" : "Qt6::moc::@6890427a1f51a3e7e1df"
 		},
 		{
 			"id" : "Qt6::uic::@6890427a1f51a3e7e1df"
-		},
-		{
-			"id" : "MyGTFSApp_autogen_timestamp_deps::@6890427a1f51a3e7e1df"
 		}
 	],
 	"paths" : 

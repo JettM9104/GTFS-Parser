@@ -34,12 +34,36 @@ int main(int argc, char* argv[]) {
 
             std::vector<matchsearch> x = searchStopFromScoreAlg2(word);
 
-            for (int i = x.size() - 1; i >= 0; i--) {
+            for (int i = 25; i >= 0; i--) {
                 cout << i << ": " << x[i].score << " | " << x[i].text.str << " | ";
                 cout << x[i].text.num << std::endl;
             }
 
             cout << word;
+        } else if (argv1 == "getdepartures") {
+            int argv2 = stoi(argv[2]);
+            int argv3 = stoi(argv[3]);
+            int argv4 = stoi(argv[4]);
+            short argv5 = stoi(argv[5]);
+
+            vector<tripSegment> x = getDayTimesAtStop(argv2, argv3, argv4, argv5);
+
+
+            sortVectorByTime(x);
+
+            for (int i = 0; i < x.size(); i++) {
+                cout << x[i].trip_id << " @ " << x[i].departure_time.h << ":" << x[i].departure_time.m << ":" << x[i].departure_time.s << "   \t\t " << x[i].route_id << std::endl;
+            }
+
+            int v = verifyGTFS(argv2, argv3, argv4);
+
+            if (v == -1) {
+                cout << "-1, this feed has expired\n";
+            } else if (v == 0) {
+                cout << "0, this feed has not yet been put info place\n";
+            } else {
+                cout << "1, this feed is valid\n";
+            }
         }
 
     }

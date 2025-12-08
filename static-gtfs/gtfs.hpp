@@ -51,7 +51,8 @@ const string agencyPath = root + "agency.txt";
 const string shapePath = root + "shapes.txt";
 const string feedInfoFile = root + "feed_info.txt";
 
-const int precision = 17;
+const int precision = 8;
+const int defPrecision = 6;
 
 // MARK: STRUCTS
 
@@ -101,8 +102,8 @@ struct stop {
         cout << "Stop Name: " << stop_name << std::endl;
         cout << "Stop Description: " << stop_desc << std::endl;
         cout << "Platform Code: " << platform_code << std::endl;
-        cout << "Latitude: " << std::setprecision(precision) << stop_lat << std::setprecision(6) << std::endl;
-        cout << "Longitude: " << std::setprecision(precision) << stop_lon << std::setprecision(6) << std::endl;
+        cout << "Latitude: " << std::setprecision(precision) << stop_lat << std::setprecision(defPrecision) << std::endl;
+        cout << "Longitude: " << std::setprecision(precision) << stop_lon << std::setprecision(defPrecision) << std::endl;
         cout << "Zone ID: " << zone_id << std::endl;
         cout << "Stop URL: " << stop_url << std::endl;
         cout << "Location Type: " << location_type << std::endl;
@@ -568,7 +569,7 @@ bool isValid(int tripID, calendarDate calendarDay);
 bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
 week convertDateToWeek(int year, int month, int day);
 time24 getCurrentTime();
-bool verifyGTFS(int year, int month, int day);
+int verifyGTFS(int year, int month, int day);
 bool verifyGTFS(calendarDate inputDate);
 double getScore(string input);
 
@@ -1064,7 +1065,7 @@ std::unordered_map<string, int> createMapFromVector(std::vector<string> param) {
     return output;
 }
 
-bool verifyGTFS(int year, int month, int day) {
+int verifyGTFS(int year, int month, int day) {
     ifstream feedInfo(feedInfoFile);
     string currentLine;
     std::vector<string> parsedCurrentLine;
@@ -1089,12 +1090,18 @@ bool verifyGTFS(int year, int month, int day) {
         if (lineNumber == 2) {
 
             calendarDate x;
+            calendarDate y;
 
-            if (refs["feed_end_date"] == 0) return true; // assume it is automatically valid
+            if (refs["feed_end_date"] == 0) return 1; // assume it is automatically valid
             else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
 
-            if (x >= inputDate) return true;
-            else return false;
+            if (refs["feed_start_date"] == 0) return 1; // assume it is automatically valid
+            else y = parseFormattedDate(parsedCurrentLine[refs["feed_start_date"]]);
+
+            if (x >= inputDate && y <= inputDate) return 1;
+            else if (x >= inputDate) return 0;
+            else return -1;
+            
             break;
         }
 
