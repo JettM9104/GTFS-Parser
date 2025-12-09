@@ -4,20 +4,32 @@
 #include "gtfs.hpp"
 
 #include <QApplication>
-#include <QLabel>
+#include <QWidget>
+#include <QPushButton>
+#include <QVBoxLayout>
 
-int helloWorld(int argc, char* argv[]) {
+int startButtons(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
-    QLabel label("Hello, Qt!");
-    label.resize(300, 100);
-    label.show();
+    QWidget window;
+    window.setWindowTitle("GUI GTFS");
+
+    QVBoxLayout* layout = new QVBoxLayout();
+
+    for (int i = 1; i <= 10; i++) {
+        QPushButton* btn = new QPushButton(QString("Button %1").arg(i));
+        layout->addWidget(btn);
+    }
+
+    window.setLayout(layout);
+    window.resize(200, 400);
+    window.show();
 
     return app.exec();
 }
 
 int startGUI(int argc, char* argv[]) {
-    return helloWorld(argc, argv);
+    return startButtons(argc, argv);
 }
 
 #endif
