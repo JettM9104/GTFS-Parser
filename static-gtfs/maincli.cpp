@@ -64,6 +64,10 @@ int main(int argc, char* argv[]) {
             } else {
                 cout << "1, this feed is valid\n";
             }
+        } else if (argv1 == "--version") {
+            cout << "\n\n\n\nGTFS PARSER 2025 JETT MU (C)    APACHE LICENCE 2025\n\n\nCLI VEERSION 0.1 ALPHA\tPARSER VERSION 1.8\n\n\n\n";
+        } else {
+            cout << "\nGTFS PARSER 2025 JETT MU (C)    APACHE LICENCE 2025\n\nCLI VEERSION 0.1 ALPHA\tPARSER VERSION 1.8\n\ngetstopinfo [ident/code] <number>\t\t\tSpecify stop number and retrieves stop info from GTFS Data. Default for [ident/code] is ident\nsearchstop <name>\t\t\t\t\tSpecify stop name and return top 50 results (beware of capitalization)\ngetdepartures <year> <month> <day> <stop_ident>\t\tSpecify date and stop ID and print all departures with trip ID, route ID, and time.";
         }
 
     }
