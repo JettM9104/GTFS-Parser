@@ -4,5 +4,5 @@
 4	28	1765226905496029669	/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/timestamp	b96c9e06cd798388
 4	28	1765226905496029669	/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/mocs_compilation.cpp	b96c9e06cd798388
 54	82	1764730667400502278	CMakeFiles/MyGTFSApp.dir/MyGTFSApp_autogen/mocs_compilation.cpp.o	e5a7cb13ee3ddb01
-28	809	1765226905519910083	CMakeFiles/MyGTFSApp.dir/maingui.cpp.o	475d6a796a3b1284
-809	889	1765226906300824097	MyGTFSApp	48bd40016bd4dad6
+51	1166	1765841299943828498	CMakeFiles/MyGTFSApp.dir/maingui.cpp.o	475d6a796a3b1284
+1168	1348	1765841301060255536	MyGTFSApp	48bd40016bd4dad6
