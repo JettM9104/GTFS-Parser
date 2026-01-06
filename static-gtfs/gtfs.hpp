@@ -355,7 +355,6 @@ struct trip {
     }
 };
 
-
 class bus {
 public:
     string licencePlate;
@@ -558,35 +557,30 @@ struct matchsearch {
     int score;
 };
 
-// MARK: DECLARATIONS
-int levenshtein(const string &a, const string &b);
-std::vector<string> parseDataCSV(const string& input);
-void sortVectorByTime(std::vector<tripSegment>& x);
-std::unordered_map<string, int> createMapFromVector(std::vector<string> param);
-time24 parseFormattedTime(string input);
-bool isValid(int tripID, int year, int month, int date);
-bool isValid(int tripID, calendarDate calendarDay);
-bool isValid(int tripID, week day); // more basic version; does not include calendar_dates.txt
-week convertDateToWeek(int year, int month, int day);
-time24 getCurrentTime();
-int verifyGTFS(int year, int month, int day);
-bool verifyGTFS(calendarDate inputDate);
-double getScore(string input);
 
+// MARK: DECLARATIONS - TOOLS
+int levenshtein(const string &a, const string &b);                                      // levenshtien distance between two words, used in Alg2
+calendarDate parseFormattedDate(string input);                                          // parse the formatted date "YYYYMMDD" into a calendarDate struct
+void sortVectorByTime(std::vector<tripSegment>& x);                                     // sorts a vector with given input vector<tripSegment> and sorts it by time
+time24 getCurrentTime();                                                                // gets the current system time with <ctime>
+week convertDateToWeek(int year, int month, int day);                                   // converts the given date to a week enum with sun-sat
+bool isValid(int tripID, int year, int month, int date);                                // given tripID and date, determines if the trip given is running that day, note that this this function, is in no way associated with verifyGTFS, does not refrence or call
+bool isValid(int tripID, calendarDate calendarDay);                                     // an overload for the (int, int, int, int) one, but instead of (int year, int month, int date) using struct calendarDate
+bool isValid(int tripID, week day);                                                     // a similar overload but instead of given date, given day of the week and does not verify using calendar_dates.txt
+time24 parseFormattedTime(string input);                                                // parse the formateed time given in form "HH:MM:SS" in military time, returning a time24 struct
+std::vector<string> parseDataCSV(const string& input);                                  // parse the CSV-formatted string "hello, hello" and returns a vector<string> with the items, for example, {"hello", "hello"}
+std::unordered_map<string, int> createMapFromVector(std::vector<string> param);         // given a vector<string>, returns a map with the following keys-value pairs: map[vector[i]] = i
+int verifyGTFS(int year, int month, int day);                                           // checks the feed_info.txt file and returns a different value for the state of the feed; 1 if valid, 0 if expired, -1 if not yet valid but will be at some point
+bool verifyGTFS(calendarDate inputDate);                                                // similar overload to the int(int, int, int) one but instead returns a bool and inputs a calendarDate and only returns 1 and 0 for valid and invalid
+double getScore(string input);                                                          // a similar distance function to levenshtein's but much more simple but less effective. Used in alg1
 
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id); 
-std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);
-std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);
-std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 time);
-std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time);
-busLine getRouteInfo(const unsigned short int& id);
-busLine getRouteInfo(const string& id);
-stop getStopInfo(const unsigned short int& id, const stopType& type);
-agency getAgencyInfo();
-std::vector<shape> getShapeInfo(const int& shapeID);
-std::vector<stop> searchStopByName(string name);
-std::vector<intstr> searchStopFromScoreAlg1(string name);
-std::vector<matchsearch> searchStopFromScoreAlg2(string name);
+busLine getRouteInfo(const unsigned short int& id);                                                         // gets the route info from routes.txt given the route ID
+busLine getRouteInfo(const string& id);                                                                     // similar to the busLine(const unsigned short int&) overload but insteaed uses the short_name parameter instead
+stop getStopInfo(const unsigned short int& id, const stopType& type = ident);                               // gets the stop info given the id/number, choosable through the stopType(type) enum with options {ident, code}
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id);      // givem year, month, date, and stop ID returns all routes stopping at the given stop
+std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);          // overload for vector<tripsegment>(int, int, int, const unsigned short int) but instead of year, month, and date uses the calendarDate struct
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);                          // similar to the other overlaods but instead of calendarDate uses week but does not refrence the calendar_dates.txt
+agency getAgencyInfo();                                                                                     // gets the agency info from agency.txt and returns struct agency
 
 
 
@@ -714,6 +708,9 @@ bool isValid(int tripID, int year, int month, int date) {
             break;
         }
     }
+
+    
+
     if (found) {
         ifstream dates(calendarPath);
 
@@ -1835,5 +1832,50 @@ std::vector<matchsearch> searchStopFromScoreAlg2(string name) {
     return results;
 }
 
-};
+std::vector<stop> getAllStops(int tripID) {
+    ifstream stopTimesFile(stopTimesPath);
+
+    std::vector<stop> output;
+    string currentLine;
+    
+    std::vector<string> parsedCurrentLine;
+
+    std::map<string, int> refs;
+
+    int line = 0;
+
+    string strTripID = std::to_string(tripID);
+
+    cout << "strTripId is "  << strTripID << std::endl;
+
+    while (getline(stopTimesFile, currentLine)) {
+        line++;
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (line == 1) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            cout << "entered line 1\n";
+
+            cout << refs["trip_id"] << std::endl;
+            continue;
+        }
+        if (line < 100) {
+            cout << parsedCurrentLine[refs["trip_id"]] << std::endl;
+        }
+
+        
+
+        if (parsedCurrentLine[refs["trip_id"]] == strTripID) {
+            stop currentStop;
+            currentStop.stop_id = stoi(parsedCurrentLine[refs["stop_id"]]);
+            cout << "endtered\n";
+        }
+    }
+
+    return output;
+} 
+}; // END OF NAMESPACE GTFS
+
 #endif

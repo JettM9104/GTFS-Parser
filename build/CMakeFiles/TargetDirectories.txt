@@ -1,5 +1,0 @@
-/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/MyGTFSApp.dir
-/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/edit_cache.dir
-/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/rebuild_cache.dir
-/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/MyGTFSApp_autogen_timestamp_deps.dir
-/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/MyGTFSApp_autogen.dir
