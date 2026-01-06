@@ -558,7 +558,7 @@ struct matchsearch {
 };
 
 
-// MARK: DECLARATIONS - TOOLS
+// MARK: DECLARATIONS
 int levenshtein(const string &a, const string &b);                                      // levenshtien distance between two words, used in Alg2
 calendarDate parseFormattedDate(string input);                                          // parse the formatted date "YYYYMMDD" into a calendarDate struct
 void sortVectorByTime(std::vector<tripSegment>& x);                                     // sorts a vector with given input vector<tripSegment> and sorts it by time
@@ -574,14 +574,21 @@ int verifyGTFS(int year, int month, int day);                                   
 bool verifyGTFS(calendarDate inputDate);                                                // similar overload to the int(int, int, int) one but instead returns a bool and inputs a calendarDate and only returns 1 and 0 for valid and invalid
 double getScore(string input);                                                          // a similar distance function to levenshtein's but much more simple but less effective. Used in alg1
 
-busLine getRouteInfo(const unsigned short int& id);                                                         // gets the route info from routes.txt given the route ID
-busLine getRouteInfo(const string& id);                                                                     // similar to the busLine(const unsigned short int&) overload but insteaed uses the short_name parameter instead
-stop getStopInfo(const unsigned short int& id, const stopType& type = ident);                               // gets the stop info given the id/number, choosable through the stopType(type) enum with options {ident, code}
-std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id);      // givem year, month, date, and stop ID returns all routes stopping at the given stop
-std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);          // overload for vector<tripsegment>(int, int, int, const unsigned short int) but instead of year, month, and date uses the calendarDate struct
-std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);                          // similar to the other overlaods but instead of calendarDate uses week but does not refrence the calendar_dates.txt
-agency getAgencyInfo();                                                                                     // gets the agency info from agency.txt and returns struct agency
-
+busLine getRouteInfo(const unsigned short int& id);                                                                             // gets the route info from routes.txt given the route ID
+busLine getRouteInfo(const string& id);                                                                                         // similar to the busLine(const unsigned short int&) overload but insteaed uses the short_name parameter instead
+stop getStopInfo(const unsigned short int& id, const stopType& type = ident);                                                   // gets the stop info given the id/number, choosable through the stopType(type) enum with options {ident, code}
+std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const unsigned short int id);                          // givem year, month, date, and stop ID returns all routes stopping at the given stop
+std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id);                              // overload for vector<tripsegment>(int, int, int, const unsigned short int) but instead of year, month, and date uses the calendarDate struct
+std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id);                                              // similar to the other overlaods but instead of calendarDate uses week but does not refrence the calendar_dates.txt
+agency getAgencyInfo();                                                                                                         // gets the agency info from agency.txt and returns struct agency
+trip getTripInfo(const int& id);                                                                                                // given trip ID, refrences trips.txt, returns struct trip
+std::vector<shape> getShapeInfo(const int& shapeID);                                                                            // given shape ID, returns a vector of struct shapes, refrences shape.txt
+std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, const unsigned short int id, time24 intime);        // given date, id, and time, returns all trips on that day after time. Refrences getDayTimesAtStop
+std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time);              // overload for the (int, int, int, const unsigned short int, time24) function
+std::vector<stop> searchStopByName(string name);                                                                                // searches stop for the exact name given
+std::vector<intstr> searchStopFromScoreAlg1(string name);                                                                       // searches stop matches using the double getScore(string input)
+std::vector<matchsearch> searchStopFromScoreAlg2(string name);                                                                  // searches stop matches using the levenstien distance function
+std::vector<stop> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 
 
 // MARK: DEFINITION
