@@ -1,7 +1,8 @@
-CURRENT LIVE RELEASE v1.4 - Last Update Oct 9, 2025 at 15:17
-    Added lots of new functions like getAgencyInfo() and new structs like agency to complement getAgencyInfo().
+CURRENT LIVE RELEASE v1.5.0 - Last Update Oct 9, 2025 at 15:17
+    Fixed many known issues and added more functions to further incorporate the GTFS data. 
+    The main.cpp file was moved into gtfs.hpp and gui.hpp for better organization.
 
-CURRENT BETA RELEASE v2.1 - Last Update Oct 17, 2025 at 16:49
+CURRENT BETA RELEASE v2.1.10 - Last Update Oct 17, 2025 at 16:49
     Added Live GTFS implementation that is still not ready :(
         Known Issues:
         the getRemainingDaystops function and overlaods do not work as expected
@@ -9,5 +10,8 @@ CURRENT BETA RELEASE v2.1 - Last Update Oct 17, 2025 at 16:49
 
 
 Past Releases:
-RELEASE v1.2 - Last Updated Sep 27, 2025 at 20:42
+RELEASE v1.4.0 - Last Update Oct 9, 2025 at 15:17
+    Added lots of new functions like getAgencyInfo() and new structs like agency to complement getAgencyInfo().
+
+RELEASE v1.2.0 - Last Updated Sep 27, 2025 at 20:42
     Added Functionality to lookup stop times and bus routes
