@@ -1,10 +1,13 @@
 #include "gtfs.hpp"
 using namespace gtfs;
 int main(int argc, char* argv[]) {
+    cout << "1\n";
 
-    std::vector<stop> x = getAllStops(1904660);
+    std::vector<stop> x = getNearestStops(43.92095, -79.41754);
 
-    for (stop a : x) {
-        cout << a.stop_id << " ";
+    cout << "1\n";
+
+    for (int i = 0; i < 10; i++) {
+        cout << x[i].stop_name << "\n";
     }
 }
