@@ -1912,7 +1912,6 @@ std::vector<stop> getNearestStops(double lat, double lon) {
 
     while (getline(stopFile, currentLine)) {
         lineNumber++;
-        cout << "line number:  " << lineNumber << std::endl;
         parsedCurrentLine = parseDataCSV(currentLine);
         if (lineNumber == 1) {
             for (int i = 0; i < parsedCurrentLine.size(); i++) {
@@ -1925,29 +1924,22 @@ std::vector<stop> getNearestStops(double lat, double lon) {
             stop temp;
 
 
-            if (first == "stop_id" || refs["stop_id"] != 0) temp.stop_id = std::stoi(parsedCurrentLine[refs["stop_id"]]);
-            if (first == "stop_code" || refs["stop_code"] != 0) temp.stop_code = std::stoi(parsedCurrentLine[refs["stop_code"]]);
-            if (first == "stop_name" || refs["stop_name"] != 0) temp.stop_name = parsedCurrentLine[refs["stop_name"]];
-            if (first == "tts_stop_name" || refs["tts_stop_name"] != 0) temp.tts_stop_name = parsedCurrentLine[refs["tts_stop_name"]];
-            if (first == "stop_desc" || refs["stop_desc"] != 0) temp.stop_desc = parsedCurrentLine[refs["stop_desc"]];
-            if (first == "stop_lat" || refs["stop_lat"] != 0) temp.stop_lat = std::stod(parsedCurrentLine[refs["stop_lat"]]);
-            if (first == "stop_lon" || refs["stop_lon"] != 0) temp.stop_lon = std::stod(parsedCurrentLine[refs["stop_lon"]]);
-            if (first == "zone_id" || refs["zone_id"] != 0) temp.zone_id = std::stoi(parsedCurrentLine[refs["zone_id"]]);
-            if (first == "stop_url" || refs["stop_url"] != 0) temp.stop_url = parsedCurrentLine[refs["stop_url"]];
-            // if (first == "location_type" || refs["location_type"] != 0) temp.location_type = std::stoi(parsedCurrentLine[refs["location_type"]]);
-            // cout << "stopid\n";
-            // if (first == "parent_station" || refs["parent_station"] != 0) temp.parent_station = std::stoi(parsedCurrentLine[refs["parent_station"]]);
-            // cout << "stopid\n";
-            // if (first == "stop_timezone" || refs["stop_timezone"] != 0) temp.stop_timezone = std::stoi(parsedCurrentLine[refs["stop_timezone"]]);
-            // cout << "new\n";
-            // if (first == "wheelchair_boarding" || refs["wheelchair_boarding"] != 0) temp.wheelchair_boarding = std::stoi(parsedCurrentLine[refs["wheelchair_boarding"]]);
-            // cout << "stopid\n";
-            // if (first == "level_id" || refs["level_id"] != 0) temp.level_id = std::stoi(parsedCurrentLine[refs["level_id"]]);
-            // cout << "stopid\n";
-            // if (first == "platform_code" || refs["platform_code"] != 0) temp.platform_code = std::stoi(parsedCurrentLine[refs["platform_code"]]);
-            // cout << "stopid\n";
-            // if (first == "stop_access" || refs["stop_access"] != 0) temp.stop_access = std::stoi(parsedCurrentLine[refs["stop_access"]]);
-            // cout << "stopid\n";
+            if (first == "stop_id" || refs["stop_id"] != 0 && parsedCurrentLine[refs["stop_id"]] != "" && parsedCurrentLine[refs["stop_id"]] != " ") temp.stop_id = std::stoi(parsedCurrentLine[refs["stop_id"]]);
+            if (first == "stop_code" || refs["stop_code"] != 0 && parsedCurrentLine[refs["stop_code"]] != "" && parsedCurrentLine[refs["stop_code"]] != " ") temp.stop_code = std::stoi(parsedCurrentLine[refs["stop_code"]]);
+            if (first == "stop_name" || refs["stop_name"] != 0 && parsedCurrentLine[refs["stop_name"]] != "" && parsedCurrentLine[refs["stop_name"]] != " ") temp.stop_name = parsedCurrentLine[refs["stop_name"]];
+            if (first == "tts_stop_name" || refs["tts_stop_name"] != 0 && parsedCurrentLine[refs["tts_stop_name"]] != "" && parsedCurrentLine[refs["tts_stop_name"]] != " ") temp.tts_stop_name = parsedCurrentLine[refs["tts_stop_name"]];
+            if (first == "stop_desc" || refs["stop_desc"] != 0 && parsedCurrentLine[refs["stop_desc"]] != "" && parsedCurrentLine[refs["stop_desc"]] != " ") temp.stop_desc = parsedCurrentLine[refs["stop_desc"]];
+            if (first == "stop_lat" || refs["stop_lat"] != 0 && parsedCurrentLine[refs["stop_lat"]] != "" && parsedCurrentLine[refs["stop_lat"]] != " ") temp.stop_lat = std::stod(parsedCurrentLine[refs["stop_lat"]]);
+            if (first == "stop_lon" || refs["stop_lon"] != 0 && parsedCurrentLine[refs["stop_lon"]] != "" && parsedCurrentLine[refs["stop_lon"]] != " ") temp.stop_lon = std::stod(parsedCurrentLine[refs["stop_lon"]]);
+            if (first == "zone_id" || refs["zone_id"] != 0 && parsedCurrentLine[refs["zone_id"]] != "" && parsedCurrentLine[refs["zone_id"]] != " ") temp.zone_id = std::stoi(parsedCurrentLine[refs["zone_id"]]);
+            if (first == "stop_url" || refs["stop_url"] != 0 && parsedCurrentLine[refs["stop_url"]] != "" && parsedCurrentLine[refs["stop_url"]] != " ") temp.stop_url = parsedCurrentLine[refs["stop_url"]];
+            if (first == "location_type" || refs["location_type"] != 0 && parsedCurrentLine[refs["location_type"]] != "" && parsedCurrentLine[refs["location_type"]] != " ") temp.location_type = std::stoi(parsedCurrentLine[refs["location_type"]]);
+            if (first == "parent_station" || refs["parent_station"] != 0 && parsedCurrentLine[refs["parent_station"]] != "" && parsedCurrentLine[refs["parent_station"]] != " ") temp.parent_station = std::stoi(parsedCurrentLine[refs["parent_station"]]);
+            if (first == "stop_timezone" || refs["stop_timezone"] != 0 && parsedCurrentLine[refs["stop_timezone"]] != "" && parsedCurrentLine[refs["stop_timezone"]] != " ") temp.stop_timezone = std::stoi(parsedCurrentLine[refs["stop_timezone"]]);
+            if (first == "wheelchair_boarding" || refs["wheelchair_boarding"] != 0 && parsedCurrentLine[refs["wheelchair_boarding"]] != "" && parsedCurrentLine[refs["wheelchair_boarding"]] != " ") temp.wheelchair_boarding = std::stoi(parsedCurrentLine[refs["wheelchair_boarding"]]);
+            if (first == "level_id" || refs["level_id"] != 0 && parsedCurrentLine[refs["level_id"]] != "" && parsedCurrentLine[refs["level_id"]] != " ") temp.level_id = std::stoi(parsedCurrentLine[refs["level_id"]]);
+            if (first == "platform_code" || refs["platform_code"] != 0 && parsedCurrentLine[refs["platform_code"]] != "" && parsedCurrentLine[refs["platform_code"]] != " ") temp.platform_code = std::stoi(parsedCurrentLine[refs["platform_code"]]);
+            if (first == "stop_access" || refs["stop_access"] != 0 && parsedCurrentLine[refs["stop_access"]] != "" && parsedCurrentLine[refs["stop_access"]] != " ") temp.stop_access = std::stoi(parsedCurrentLine[refs["stop_access"]]);
 
             output.push_back(temp);
         }
