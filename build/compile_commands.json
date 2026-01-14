@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/Users/jettmu/Documents/VSCode/GTFS Parser/build",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -I\"/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/include\" -I\"/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs\" -isystem /Users/jettmu/Qt/6.10.1/macos/lib/QtWidgets.framework/Headers -iframework /Users/jettmu/Qt/6.10.1/macos/lib -isystem /Users/jettmu/Qt/6.10.1/macos/lib/QtCore.framework/Headers -isystem /Users/jettmu/Qt/6.10.1/macos/mkspecs/macx-clang -isystem /Users/jettmu/Qt/6.10.1/macos/include -isystem /Users/jettmu/Qt/6.10.1/macos/lib/QtGui.framework/Headers -g -std=gnu++17 -arch arm64 -o CMakeFiles/MyGTFSApp.dir/MyGTFSApp_autogen/mocs_compilation.cpp.o -c \"/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/mocs_compilation.cpp\"",
+  "file": "/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/mocs_compilation.cpp",
+  "output": "/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/MyGTFSApp.dir/MyGTFSApp_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/Users/jettmu/Documents/VSCode/GTFS Parser/build",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -I\"/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/include\" -I\"/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs\" -isystem /Users/jettmu/Qt/6.10.1/macos/lib/QtWidgets.framework/Headers -iframework /Users/jettmu/Qt/6.10.1/macos/lib -isystem /Users/jettmu/Qt/6.10.1/macos/lib/QtCore.framework/Headers -isystem /Users/jettmu/Qt/6.10.1/macos/mkspecs/macx-clang -isystem /Users/jettmu/Qt/6.10.1/macos/include -isystem /Users/jettmu/Qt/6.10.1/macos/lib/QtGui.framework/Headers -g -std=gnu++17 -arch arm64 -o CMakeFiles/MyGTFSApp.dir/maingui.cpp.o -c \"/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs/maingui.cpp\"",
+  "file": "/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs/maingui.cpp",
+  "output": "/Users/jettmu/Documents/VSCode/GTFS Parser/build/CMakeFiles/MyGTFSApp.dir/maingui.cpp.o"
+}
+]

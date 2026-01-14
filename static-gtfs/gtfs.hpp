@@ -95,6 +95,9 @@ struct stop {
     short int stop_timezone;
     short int wheelchair_boarding;
     short int preferred;
+    string tts_stop_name;
+    short int level_id;
+    short int stop_access;
 
     void printInfo() const {
         cout << "Stop ID: " << stop_id << std::endl;
@@ -557,6 +560,12 @@ struct matchsearch {
     int score;
 };
 
+struct short_stop {
+    double lat;
+    double lon;
+    int id;
+};
+
 
 // MARK: DECLARATIONS
 int levenshtein(const string &a, const string &b);                                      // levenshtien distance between two words, used in Alg2
@@ -588,11 +597,13 @@ std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const un
 std::vector<stop> searchStopByName(string name);                                                                                // searches stop for the exact name given
 std::vector<intstr> searchStopFromScoreAlg1(string name);                                                                       // searches stop matches using the double getScore(string input)
 std::vector<matchsearch> searchStopFromScoreAlg2(string name);                                                                  // searches stop matches using the levenstien distance function
-std::vector<stop> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
-
+std::vector<stop> getAllStops(int tripID);                                                                                       // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 
 // MARK: DEFINITION
 
+double dist(double a, double b) {
+    return sqrt(a*a + b*b);
+}
 int levenshtein(const string &a, const string &b) {
     int m = a.size(), n = b.size();
     std::vector<std::vector<int>> dp(m+1, std::vector<int>(n+1));
@@ -1883,6 +1894,54 @@ std::vector<stop> getAllStops(int tripID) {
 
     return output;
 } 
+
+std::vector<stop> getNearestStops(double lat, double lon, int amount) {
+    ifstream stopFile(stopPath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    unsigned int lineNumber = 1;
+
+    std::unordered_map<string, int> refs;
+
+    string first;
+
+    while (getline(stopFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (lineNumber == 1) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+                if (i == 0) {
+                    first = parsedCurrentLine[i];
+                }
+            }
+        }
+        lineNumber++;
+
+        stop temp;
+        if (first == "stop_id" || refs["stop_id"] != 0) temp.stop_id = std::stoi(parsedCurrentLine[refs["stop_id"]]);
+        if (first == "stop_code" || refs["stop_code"] != 0) temp.stop_code = std::stoi(parsedCurrentLine[refs["stop_code"]]);
+        if (first == "stop_name" || refs["stop_name"] != 0) temp.stop_name = parsedCurrentLine[refs["stop_name"]];
+        if (first == "tts_stop_name" || refs["tts_stop_name"] != 0) temp.tts_stop_name = parsedCurrentLine[refs["tts_stop_name"]];
+        if (first == "stop_desc" || refs["stop_desc"] != 0) temp.stop_desc = parsedCurrentLine[refs["stop_desc"]];
+        if (first == "stop_lat" || refs["stop_lat"] != 0) temp.stop_lat = std::stoi(parsedCurrentLine[refs["stop_lat"]]);
+        if (first == "stop_lon" || refs["stop_lon"] != 0) temp.stop_lon = std::stoi(parsedCurrentLine[refs["stop_lon"]]);
+        if (first == "zone_id" || refs["zone_id"] != 0) temp.zone_id = std::stoi(parsedCurrentLine[refs["zone_id"]]);
+        if (first == "stop_url" || refs["stop_url"] != 0) temp.stop_url = std::stoi(parsedCurrentLine[refs["stop_url"]]);
+        if (first == "location_type" || refs["location_type"] != 0) temp.location_type = std::stoi(parsedCurrentLine[refs["location_type"]]);
+        if (first == "parent_station" || refs["parent_station"] != 0) temp.parent_station = std::stoi(parsedCurrentLine[refs["parent_station"]]);
+        if (first == "stop_timezone" || refs["stop_timezone"] != 0) temp.zone_id = std::stoi(parsedCurrentLine[refs["stop_timezone"]]);
+        if (first == "wheelchair_boarding" || refs["wheelchair_boarding"] != 0) temp.zone_id = std::stoi(parsedCurrentLine[refs["wheelchair_boarding"]]);
+        if (first == "level_id" || refs["level_id"] != 0) temp.level_id = std::stoi(parsedCurrentLine[refs["level_id"]]);
+        if (first == "platform_code" || refs["platform_code"] != 0) temp.platform_code = std::stoi(parsedCurrentLine[refs["platform_code"]]);
+        if (first == "stop_access" || refs["stop_access"] != 0) temp.stop_access = std::stoi(parsedCurrentLine[refs["stop_access"]]);
+        
+        
+    }
+
+    stopFile.close()
+}
+
 }; // END OF NAMESPACE GTFS
 
 #endif
