@@ -29,7 +29,24 @@ int startButtons(int argc, char* argv[]) {
 }
 
 int startGUI(int argc, char* argv[]) {
+    showMap(argc, argv);
     return startButtons(argc, argv);
+}
+
+void showMap(int argc, char* argv[]) {
+    QApplication app(argc, argv);
+
+    QWidget window;
+    window.setWindowTitle("map gui testing");
+
+    QVBoxLayout* layout = new QVBoxLayout();
+
+    for (int i = 1; i <= 10; i++) {
+        
+    }
+
+
+    return;
 }
 
 #endif

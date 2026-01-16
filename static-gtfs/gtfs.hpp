@@ -1956,6 +1956,8 @@ std::vector<stop> getNearestStops(double lat, double lon) {
     return output;
 }
 
+
+
 }; // END OF NAMESPACE GTFS
 
 #endif
