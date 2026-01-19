@@ -1,9 +1,21 @@
-#include <iostream>
+#include <cmath>
 
-int getDistance(double pos1_lat, double pos1_lon, double pos2_lat, double pos2_lon) {
-    double delta_lat_degrees = ((pos1_lat - pos2_lat) < 0) ? ((pos1_lat - pos2_lat) * -1) : (pos1_lat - pos2_lat);
-    double delta_lon_degrees = ((pos1_lon - pos2_lon) < 0) ? ((pos1_lon - pos2_lon) * -1) : (pos1_lon - pos2_lon);
+double getDistanceKM(double lat1, double lon1, double lat2, double lon2) {
+    const double earth_radius = 6371.0;
 
-    double delta_lat_km = (delta_lat_degrees / 360) * 3.1415 * 12742;
-    double delta_lon_km = (delta_lon_degrees / 360) * 3.1415 * 12742
+    double lat1_rad = lat1 * 3.1415 / 180.0;
+    double lon1_rad = lon1 * 3.1415 / 180.0;
+    double lat2_rad = lat2 * 3.1415 / 180.0;
+    double lon2_rad = lon2 * 3.1415 / 180.0;
+
+    double delta_lat = lat2_rad - lat1_rad;
+    double delta_lon = lon2_rad - lon1_rad;
+
+    double a = sin(delta_lat / 2) * sin(delta_lat / 2) + 
+                cos(lat1_rad) * cos(lat2_rad) *
+                sin(delta_lon / 2) * sin(delta_lon / 2);
+
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return earth_radius * c;
 }
