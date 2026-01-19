@@ -1,0 +1,12 @@
+# ninja log v7
+1	46	1768837534419115616	MyGTFSApp_autogen/timestamp	b96c9e06cd798388
+1	46	1768837534419115616	MyGTFSApp_autogen/mocs_compilation.cpp	b96c9e06cd798388
+1	46	1768837534419115616	/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/timestamp	b96c9e06cd798388
+1	46	1768837534419115616	/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/mocs_compilation.cpp	b96c9e06cd798388
+47	74	1768837534428471470	CMakeFiles/MyGTFSApp.dir/MyGTFSApp_autogen/mocs_compilation.cpp.o	e5a7cb13ee3ddb01
+1	27	1768837547232328264	MyGTFSApp_autogen/timestamp	b96c9e06cd798388
+1	27	1768837547232328264	MyGTFSApp_autogen/mocs_compilation.cpp	b96c9e06cd798388
+1	27	1768837547232328264	/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/timestamp	b96c9e06cd798388
+1	27	1768837547232328264	/Users/jettmu/Documents/VSCode/GTFS Parser/build/MyGTFSApp_autogen/mocs_compilation.cpp	b96c9e06cd798388
+2	1274	1768837583628030030	CMakeFiles/MyGTFSApp.dir/maingui.cpp.o	475d6a796a3b1284
+1276	1395	1768837584902682768	MyGTFSApp	48bd40016bd4dad6

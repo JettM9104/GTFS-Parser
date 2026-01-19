@@ -29,7 +29,7 @@ int startButtons(int argc, char* argv[]) {
 }
 
 int startGUI(int argc, char* argv[]) {
-    showMap(argc, argv);
+    //showMap(argc, argv);
     return startButtons(argc, argv);
 }
 
