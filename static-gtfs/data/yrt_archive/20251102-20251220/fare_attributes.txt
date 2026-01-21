@@ -1,0 +1,4 @@
+agency_id,fare_id,price,currency_type,payment_method,transfers,transfer_duration
+YRT,express_1-1,4.50,CAD,1,,7200
+YRT,1-1,4.50,CAD,1,,7200
+

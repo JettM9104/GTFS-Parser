@@ -1,0 +1,2 @@
+feed_publisher_name,feed_publisher_url,feed_lang,feed_start_date,feed_end_date,feed_version
+York Region Transit,http://www.yrt.ca,en,20260104,20260425,2026.01.04_January_20251205
