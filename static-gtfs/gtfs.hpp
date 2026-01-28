@@ -600,7 +600,7 @@ std::vector<stop> searchStopByName(string name);                                
 std::vector<intstr> searchStopFromScoreAlg1(string name);                                                                       // searches stop matches using the double getScore(string input)
 std::vector<matchsearch> searchStopFromScoreAlg2(string name);                                                                  // searches stop matches using the levenstien distance function
 std::vector<stop> getAllStops(int tripID);                                                                                       // given tripID, returns vector of all stops that the trip in the trip ID passes by.
-std::vector<stop> getNearestStops(double lat, double lon);
+std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
 
 // MARK: DEFINITION
 
