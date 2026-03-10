@@ -1678,7 +1678,7 @@ trip getTripInfo(const int& id) {
 std::vector<shape> getShapeInfo(const int& shapeID) {
     ifstream shapeFile(shapePath);
 
-    std::vector<shape> output(shapeID);
+    std::vector<shape> output(0, shape(shapeID));
 
     string currentLine;
     std::vector<string> parsedCurrentLine;
@@ -1693,8 +1693,9 @@ std::vector<shape> getShapeInfo(const int& shapeID) {
             for (int i = 0; i < parsedCurrentLine.size(); i++) {
                 refs[parsedCurrentLine[i]] = i;
             }
+            continue;
         }
-        else {
+        if (stoi(parsedCurrentLine[refs["shape_id"]]) == shapeID) {
             shape localShape;
 
             localShape.shape_id = stoi(parsedCurrentLine[refs["shape_id"]]);
@@ -1887,7 +1888,6 @@ std::vector<stop> getAllStops(int tripID) {
 
     string strTripID = std::to_string(tripID);
 
-    cout << "strTripId is "  << strTripID << std::endl;
 
     while (getline(stopTimesFile, currentLine)) {
         line++;
@@ -1897,13 +1897,7 @@ std::vector<stop> getAllStops(int tripID) {
             for (int i = 0; i < parsedCurrentLine.size(); i++) {
                 refs[parsedCurrentLine[i]] = i;
             }
-            cout << "entered line 1\n";
-
-            cout << refs["trip_id"] << std::endl;
             continue;
-        }
-        if (line < 100) {
-            cout << parsedCurrentLine[refs["trip_id"]] << std::endl;
         }
 
         
@@ -1911,7 +1905,7 @@ std::vector<stop> getAllStops(int tripID) {
         if (parsedCurrentLine[refs["trip_id"]] == strTripID) {
             stop currentStop;
             currentStop.stop_id = stoi(parsedCurrentLine[refs["stop_id"]]);
-            cout << "endtered\n";
+            output.push_back(currentStop);
         }
     }
 

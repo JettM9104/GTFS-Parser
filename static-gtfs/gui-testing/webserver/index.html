@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bus Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 100vh;
+    }
+    #sidebar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="main.js"></script>
+  <script>
+    var map = L.map('map').setView([43.7, -79.4], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Draw polyline with route color from pos_markers
+    var latlngs = data.pos_markers.map(pos => [pos.lat, pos.lng]);
+    var polyline = L.polyline(latlngs, {color: data.route_color, weight: 3}).addTo(map);
+
+    // Fit map to bounds of pos_markers
+    if (data.pos_markers.length > 0) {
+      var bounds = L.latLngBounds(data.pos_markers.map(pos => [pos.lat, pos.lng]));
+      map.fitBounds(bounds);
+    }
+
+    // Array to hold stop markers
+    var stopMarkers = [];
+
+    // Load stop markers from data.stops
+    data.stops.forEach(stop => {
+      const marker = L.circleMarker([stop.lat, stop.lng], {
+        color: data.route_color,
+        fillColor: data.route_color,
+        fillOpacity: 0.7,
+        radius: 2
+      }).addTo(map);
+      marker.bindPopup(`Stop ID: ${stop.id}`);
+      stopMarkers.push(marker);
+    });
+  </script>
+</body>
+</html>
