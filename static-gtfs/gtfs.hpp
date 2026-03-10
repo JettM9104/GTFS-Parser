@@ -130,6 +130,9 @@ public:
     virtual string formattedTime() {
         return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(s);
     }
+    virtual string roundedTime() {
+        return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(static_cast<int>(round(s)));
+    }
     time24() = default;
     time24(int h, int m, int s) {
         this->h = h;
