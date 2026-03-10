@@ -38,13 +38,15 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::vector<gtfs::stop> stops = gtfs::getAllStops(tripID);
+    std::vector<gtfs::tripSegment> tripSegments = gtfs::getAllStops(tripID);
     gtfs::trip tx = gtfs::getTripInfo(tripID);
     gtfs::busLine bx = gtfs::getRouteInfo(tx.route_id);
     std::vector<gtfs::shape> tsx = gtfs::getShapeInfo(tx.shape_id);
+    
+    std::vector<gtfs::stop> stops;
 
-    for (gtfs::stop& x : stops) {
-        x = gtfs::getStopInfo(x.stop_id, gtfs::ident);
+    for (gtfs::tripSegment& x : tripSegments) {
+        stops.push_back(gtfs::getStopInfo(x.stop_id, gtfs::ident));
     }
     int length = stops.size();
 
@@ -59,10 +61,12 @@ int main(int argc, char* argv[]) {
     std::cout << "\t\"stops\": [\n";
     for (int i = 0; i < length; i++) {
         gtfs::stop x = stops[i];
+        gtfs::tripSegment y = tripSegments[i];
         std::cout << "\t\t{ \"lat\": " << x.stop_lat << 
                 ", \"lng\": " << x.stop_lon << 
                 ", \"code\": "<< x.stop_code << 
                 ", \"id\": " << x.stop_id << 
+                ", \"time\": \"" << y.arrival_time.leadingRoundedTime() << "\"" <<
                 (i == (length - 1) ? " }\n" : " },\n");
     } 
 

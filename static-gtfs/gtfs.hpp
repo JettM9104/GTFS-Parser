@@ -133,6 +133,12 @@ public:
     virtual string roundedTime() {
         return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(static_cast<int>(round(s)));
     }
+
+    virtual string leadingRoundedTime() {
+        return (std::to_string(h).length() < 2 ? "0" + std::to_string(h) : std::to_string(h)) + ":" + 
+               (std::to_string(m).length() < 2 ? "0" + std::to_string(m) : std::to_string(m)) + ":" + 
+               (std::to_string((int)std::round(s)).length() < 2 ? "0" + std::to_string((int)std::round(s)) : std::to_string((int)std::round(s)));
+    }
     time24() = default;
     time24(int h, int m, int s) {
         this->h = h;
@@ -602,7 +608,7 @@ std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const un
 std::vector<stop> searchStopByName(string name);                                                                                // searches stop for the exact name given
 std::vector<intstr> searchStopFromScoreAlg1(string name);                                                                       // searches stop matches using the double getScore(string input)
 std::vector<matchsearch> searchStopFromScoreAlg2(string name);                                                                  // searches stop matches using the levenstien distance function
-std::vector<stop> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
+std::vector<tripSegment> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
 
 // MARK: DEFINITION
@@ -1877,10 +1883,10 @@ std::vector<matchsearch> searchStopFromScoreAlg2(string name) {
     return results;
 }
 
-std::vector<stop> getAllStops(int tripID) {
+std::vector<tripSegment> getAllStops(int tripID) {
     ifstream stopTimesFile(stopTimesPath);
 
-    std::vector<stop> output;
+    std::vector<tripSegment> output;
     string currentLine;
     
     std::vector<string> parsedCurrentLine;
@@ -1906,8 +1912,9 @@ std::vector<stop> getAllStops(int tripID) {
         
 
         if (parsedCurrentLine[refs["trip_id"]] == strTripID) {
-            stop currentStop;
+            tripSegment currentStop;
             currentStop.stop_id = stoi(parsedCurrentLine[refs["stop_id"]]);
+            currentStop.arrival_time = parseFormattedTime(parsedCurrentLine[refs["arrival_time"]]);
             output.push_back(currentStop);
         }
     }

@@ -9,52 +9,338 @@
       height: 100%;
       margin: 0;
       padding: 0;
+      font-family: "SF Pro Rounded", ui-rounded, "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
     #map {
       height: 100vh;
     }
     #sidebar {
       position: absolute;
-      top: 10px;
+      bottom: 10px;
       left: 10px;
       z-index: 1000;
       background: white;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
+      max-width: 300px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #sidebar div {
+      margin-bottom: 10px;
+    }
+    #sidebar input, #sidebar button {
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    #sidebar input[type="text"] {
+      width: 80px;
+    }
+    #latInput, #lonInput {
+      width: 100px;
+    }
+    #stopInfo ul {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-left: 20px;
+    }
+    .triangle-marker div {
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 20px solid #FF6B6B;
+      margin-top: -10px;
+    }
+    .user-location-marker div {
+      width: 16px;
+      height: 16px;
+      background-color: #4A90E2;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(0,0,0,0.3);
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <script src="main.js"></script>
+  <div id="sidebar">
+    <div>
+      <input type="text" id="tripIdInput" placeholder="Enter Trip ID" />
+      <button id="loadTripBtn">Load Trip</button>
+    </div>
+    <div>
+      <input type="text" id="stopIdInput" placeholder="Enter Stop ID" />
+      <button id="loadStopBtn">Load Stop</button>
+    </div>
+    <div>
+      <input type="text" id="latInput" placeholder="Latitude" />
+      <input type="text" id="lonInput" placeholder="Longitude" />
+      <button id="findNearestBtn">Find Nearest Stops</button>
+    </div>
+    <div>
+      <button id="showLocationBtn">Show Current Location</button>
+      <button id="useMyLocationBtn">Nearest Stops to Me</button>
+    </div>
+    <div id="tripInfo"></div>
+    <div id="stopInfo"></div>
+    <div id="nearestStopsInfo"></div>
+  </div>
   <script>
-    var map = L.map('map').setView([43.7, -79.4], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    let map;
+    let stopMarkers = [];
+    let polyline;
 
-    // Draw polyline with route color from pos_markers
-    var latlngs = data.pos_markers.map(pos => [pos.lat, pos.lng]);
-    var polyline = L.polyline(latlngs, {color: data.route_color, weight: 3}).addTo(map);
-
-    // Fit map to bounds of pos_markers
-    if (data.pos_markers.length > 0) {
-      var bounds = L.latLngBounds(data.pos_markers.map(pos => [pos.lat, pos.lng]));
-      map.fitBounds(bounds);
+    function initMap() {
+      map = L.map('map').setView([43.7, -79.4], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     }
 
-    // Array to hold stop markers
-    var stopMarkers = [];
+    function loadTrip(tripId) {
+      fetch(`/api/trip/${tripId}`)
+        .then(response => response.json())
+        .then(data => {
+          displayTrip(data);
+        })
+        .catch(error => {
+          console.error('Error loading trip:', error);
+          document.getElementById('tripInfo').textContent = 'Error loading trip';
+        });
+    }
 
-    // Load stop markers from data.stops
-    data.stops.forEach(stop => {
-      const marker = L.circleMarker([stop.lat, stop.lng], {
-        color: data.route_color,
-        fillColor: data.route_color,
-        fillOpacity: 0.7,
-        radius: 2
-      }).addTo(map);
-      marker.bindPopup(`Stop ID: ${stop.id}`);
-      stopMarkers.push(marker);
+    function loadStop(stopId) {
+      fetch(`/api/stop/${stopId}`)
+        .then(response => response.json())
+        .then(data => {
+          displayStop(data);
+        })
+        .catch(error => {
+          console.error('Error loading stop:', error);
+          document.getElementById('stopInfo').textContent = 'Error loading stop';
+        });
+    }
+
+    function displayTrip(data) {
+      // Clear previous markers and polyline
+      stopMarkers.forEach(marker => map.removeLayer(marker));
+      stopMarkers = [];
+      if (polyline) {
+        map.removeLayer(polyline);
+      }
+
+      // Update trip info
+      document.getElementById('tripInfo').innerHTML = `
+        <p><b>Trip ID</b>: ${data.trip_id}</p>
+        <p><b>Route</b>: ${data.route_short_name} - ${data.route_long_name}</p>
+        <p><b>Total Stops</b>: ${data.total}</p>
+      `;
+
+      // Draw polyline
+      var latlngs = data.pos_markers.map(pos => [pos.lat, pos.lng]);
+      polyline = L.polyline(latlngs, {color: data.route_color, weight: 3}).addTo(map);
+
+      // Fit map to bounds
+      if (data.pos_markers.length > 0) {
+        var bounds = L.latLngBounds(data.pos_markers.map(pos => [pos.lat, pos.lng]));
+        map.fitBounds(bounds);
+      }
+
+      // Load stop markers
+      data.stops.forEach(stop => {
+        const marker = L.circleMarker([stop.lat, stop.lng], {
+          color: data.route_color,
+          fillColor: data.route_color,
+          fillOpacity: 0.7,
+          radius: 4
+        }).addTo(map);
+        marker.bindPopup(`Stop ID: ${stop.id}<br>Time: ${stop.time}`);
+        stopMarkers.push(marker);
+      });
+    }
+
+    function displayStop(data) {
+      // Clear previous stop marker
+      if (window.stopMarker) {
+        map.removeLayer(window.stopMarker);
+      }
+
+      // Update stop info
+      let departuresHtml = '<h4>Departures:</h4><ul>';
+      data.departures.forEach(dep => {
+        departuresHtml += `<li>Route ${dep.route_id}: ${dep.arrival_time} (Trip ${dep.trip_id})</li>`;
+      });
+      departuresHtml += '</ul>';
+
+      document.getElementById('stopInfo').innerHTML = `
+        <p><b>Stop ID</b>: ${data.stop_id}</p>
+        <p><b>Stop Code</b>: ${data.stop_code}</p>
+        <p><b>Stop Name</b>: ${data.stop_name}</p>
+        <p><b>Location</b>: ${data.lat}, ${data.lon}</p>
+        ${departuresHtml}
+      `;
+
+      // Add stop marker on map
+      window.stopMarker = L.marker([data.lat, data.lon]).addTo(map);
+      window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
+
+      // Center map on the stop
+      map.setView([data.lat, data.lon], 15);
+    }
+
+    function showUserLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Remove previous user location marker
+            if (window.userLocationMarker) {
+              map.removeLayer(window.userLocationMarker);
+            }
+            
+            // Add user location marker
+            const userIcon = L.divIcon({
+              className: 'user-location-marker',
+              html: '<div></div>',
+              iconSize: [16, 16],
+              iconAnchor: [8, 8]
+            });
+            
+            window.userLocationMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map);
+            window.userLocationMarker.bindPopup('📍 Your Location');
+            
+            // Center map on user location
+            map.setView([lat, lon], 15);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            alert('Unable to get your location. Please check your browser permissions.');
+          }
+        );
+      } else {
+        alert('Geolocation is not supported by this browser.');
+      }
+    }
+
+    function findNearestStops(lat, lon) {
+      fetch(`/api/nearest/${lat}/${lon}`)
+        .then(response => response.json())
+        .then(data => {
+          displayNearestStops(data);
+        })
+        .catch(error => {
+          console.error('Error finding nearest stops:', error);
+          document.getElementById('nearestStopsInfo').textContent = 'Error finding nearest stops';
+        });
+    }
+
+    function displayNearestStops(data) {
+      // Clear previous nearest stops markers
+      if (window.nearestStopsMarkers) {
+        window.nearestStopsMarkers.forEach(marker => map.removeLayer(marker));
+      }
+      window.nearestStopsMarkers = [];
+
+      // Update nearest stops info
+      let stopsHtml = `<h4>Nearest Stops to (${data.request_lat}, ${data.request_lon})</h4><ul>`;
+      data.nearest_stops.forEach(stop => {
+        stopsHtml += `<li>Stop ${stop.stop_id}: ${stop.distanceKM.toFixed(2)} km away</li>`;
+      });
+      stopsHtml += '</ul>';
+
+      document.getElementById('nearestStopsInfo').innerHTML = stopsHtml;
+
+      // Add markers for nearest stops
+      data.nearest_stops.forEach(stop => {
+        const marker = L.circleMarker([stop.stop_lat, stop.stop_lon], {
+          color: '#FFA500',
+          fillColor: '#FFA500',
+          fillOpacity: 0.7,
+          radius: 6,
+          weight: 2
+        }).addTo(map);
+        
+        marker.bindPopup(`Stop ID: ${stop.stop_id}<br>Distance: ${stop.distanceKM.toFixed(2)} km`);
+        window.nearestStopsMarkers.push(marker);
+      });
+
+      // Fit map to show all nearest stops
+      if (data.nearest_stops.length > 0) {
+        const bounds = L.latLngBounds(data.nearest_stops.map(stop => [stop.stop_lat, stop.stop_lon]));
+        map.fitBounds(bounds.pad(0.1));
+      }
+    }
+
+    // Initialize map on load
+    initMap();
+
+    // Event listener for load button
+    document.getElementById('loadTripBtn').addEventListener('click', () => {
+      const tripId = document.getElementById('tripIdInput').value.trim();
+      if (tripId) {
+        loadTrip(tripId);
+      }
+    });
+
+    // Event listener for load stop button
+    document.getElementById('loadStopBtn').addEventListener('click', () => {
+      const stopId = document.getElementById('stopIdInput').value.trim();
+      if (stopId) {
+        loadStop(stopId);
+      }
+    });
+
+    // Allow enter key to submit
+    document.getElementById('tripIdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('loadTripBtn').click();
+      }
+    });
+
+    // Allow enter key to submit for stop input
+    document.getElementById('stopIdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('loadStopBtn').click();
+      }
+    });
+
+    // Event listener for show location button
+    document.getElementById('showLocationBtn').addEventListener('click', () => {
+      showUserLocation();
+    });
+
+    // Event listener for find nearest stops button
+    document.getElementById('findNearestBtn').addEventListener('click', () => {
+      const lat = document.getElementById('latInput').value.trim();
+      const lon = document.getElementById('lonInput').value.trim();
+      if (lat && lon) {
+        findNearestStops(lat, lon);
+      } else {
+        alert('Please enter both latitude and longitude');
+      }
+    });
+
+    // Event listener for use my location button
+    document.getElementById('useMyLocationBtn').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            document.getElementById('latInput').value = lat;
+            document.getElementById('lonInput').value = lon;
+            findNearestStops(lat, lon);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            alert('Unable to get your location. Please check your browser permissions.');
+          }
+        );
+      } else {
+        alert('Geolocation is not supported by this browser.');
+      }
     });
   </script>
 </body>

@@ -82,3 +82,6 @@ static-gtfs/maincli
 static-gtfs/confidential_info.hpp
 static-gtfs/testing/precision
 static-gtfs/testing/search
+static-gtfs/gui-testing/webserver/tripjson
+static-gtfs/gui-testing/webserver/getneareststopsjson
+static-gtfs/gui-testing/webserver/stopjson
