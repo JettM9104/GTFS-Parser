@@ -5,7 +5,7 @@
 ## How do I use this?
 1. Make a new folder, right click the folder and press `Open Terminal at Folder` (Linux/Mac) or open `Command Prompt` on Windows and use cd to navigate to your folder
 2. run `git clone https://github.com/JettM9104/GTFS-Parser/`
-3. Read the README.md for either [static-gtfs](/static-gtfs/) or gtfs-rt to continue
+3. Read the README.md for either [static-gtfs](/static-gtfs/) or [gtfs-rt](/gtfs-rt/) to continue
 
 ## What do I need?
 1. A C++ compiler
