@@ -93,3 +93,4 @@ gtfs-rt/proto-conversion/gtfs-realtime.pb.cc
 gtfs-rt/proto-conversion/gtfs-realtime.proto
 gtfs-rt/proto-conversion/parseGTFS
 gtfs-rt/noteToSelf.md
+.vscode/c_cpp_properties.json
