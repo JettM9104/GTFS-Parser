@@ -44,7 +44,7 @@ int main() {
     outfile << output;
     outfile.close();
 
-    cout << "✅ GTFS data successfully written to decoded_gtfs.json" << endl;
+    cout << "GTFS data successfully written to decoded_gtfs.json" << endl;
 
     google::protobuf::ShutdownProtobufLibrary();
     return 0;
