@@ -88,3 +88,7 @@ static-gtfs/gui-testing/webserver/stopjson
 webserver/tripjson
 webserver/stopjson
 webserver/getneareststopsjson
+gtfs-rt/proto-conversion/gtfs-realtime.pb.h
+gtfs-rt/proto-conversion/gtfs-realtime.pb.cc
+gtfs-rt/proto-conversion/gtfs-realtime.proto
+gtfs-rt/proto-conversion/parseGTFS
