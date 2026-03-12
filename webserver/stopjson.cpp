@@ -3,7 +3,7 @@
 #include <string>
 #include <iomanip>
 #include <cstdlib>
-#include "../../gtfs.hpp"
+#include "../static-gtfs/gtfs.hpp"
 #include <ctime>
 
 int main(int argc, char* argv[]) {

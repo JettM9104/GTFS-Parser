@@ -85,3 +85,6 @@ static-gtfs/testing/search
 static-gtfs/gui-testing/webserver/tripjson
 static-gtfs/gui-testing/webserver/getneareststopsjson
 static-gtfs/gui-testing/webserver/stopjson
+webserver/tripjson
+webserver/stopjson
+webserver/getneareststopsjson
