@@ -1,15 +1,17 @@
-CURRENT LIVE RELEASE v1.5.0 - Last Update Oct 9, 2025 at 15:17
+CURRENT RELEASE v1.8.0 - Last Update Mar 11, 2026 at 23:57
+    Fixed many known issues and added more functions to further incorporate the GTFS data. 
+    Reorganized the main.cpp file into gtfs.hpp and gui.hpp for better organization.
+    Reimplemented the GTFS-RT section to be more efficient and easier to use, and to output JSON.
+
+CURRENT BETA RELEASE v3.0 - LLast Update Mar 11, 2026 at 23:57
+    Woohoo! Added a GUI made out of HTML. Runs with the python webserver and uses JavaScript to fetch data from the C++ backend. Still a work in progress, but it is coming along nicely. The GUI is pretty basic right now, but it is functional and can be used to test out the new functions added in v1.8.0.
+    Almost done the GTFS-RT section, just need to add a few more functions and then it will be ready for release. The GTFS-RT section is now much more efficient and easier to use, and it outputs JSON which can be easily consumed by the GUI.
+
+Past Releases:
+RELEASE v1.5.0 - Last Update Mar 11, 2026 at 23:57
     Fixed many known issues and added more functions to further incorporate the GTFS data. 
     The main.cpp file was moved into gtfs.hpp and gui.hpp for better organization.
 
-CURRENT BETA RELEASE v2.1.10 - Last Update Oct 17, 2025 at 16:49
-    Added Live GTFS implementation that is still not ready :(
-        Known Issues:
-        the getRemainingDaystops function and overlaods do not work as expected
-
-
-
-Past Releases:
 RELEASE v1.4.0 - Last Update Oct 9, 2025 at 15:17
     Added lots of new functions like getAgencyInfo() and new structs like agency to complement getAgencyInfo().
 
