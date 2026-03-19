@@ -93,8 +93,11 @@
     let polyline;
 
     function initMap() {
+      let offline = false;
+
       map = L.map('map').setView([43.7, -79.4], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      if (!offline) L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      else L.tileLayer('/tiles/{z}/{x}/{y}.png').addTo(map);
     }
 
     function loadTrip(tripId) {
