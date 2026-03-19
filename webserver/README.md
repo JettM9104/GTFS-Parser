@@ -26,3 +26,9 @@ A web application to visualize GTFS bus trips on a map.
 - Enter a Trip ID in the input field.
 - Click "Load Trip" or press Enter.
 - The map will display the route and stops for that trip.
+
+## Offline Map Usage
+
+Use something like **Mobile Atlas Creator** and create/download a folder with all the OSM images. Create a folder called `tiles` and inside it, it should look like:
+`/tiles/{z}/{x}/{y}.png`
+
