@@ -46,5 +46,10 @@ def index():
 def static_files(path):
     return send_from_directory('.', path)
 
+# OPTIONAL: OFFLINE TILES
+@app.route('/tiles/<int:z>/<int:x>/<int:y>.png')
+def tiles(z, x, y):
+    return send_from_directory(f'tiles/{z}/{x}', f'{y}.png')
+
 if __name__ == '__main__':
     app.run(debug=True, port=5015)
