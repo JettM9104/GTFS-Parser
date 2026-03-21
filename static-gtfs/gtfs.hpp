@@ -34,10 +34,12 @@ float π = 3.14159;
 
 typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
+const string path = "/data/yrt_archive/20260104-20260425/";
+
 #if CONFINFOEXISTS == 1
-const string root = conf_info::path;
+const string root = conf_info::path + path;
 #else
-const string root = "./data/new_yrt_archive";
+const string root = "." + path;
 #endif
 
 const string stopPath = root + "stops.txt";

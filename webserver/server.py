@@ -52,4 +52,4 @@ def tiles(z, x, y):
     return send_from_directory(f'tiles/{z}/{x}', f'{y}.png')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5015)
+    app.run(debug=True, port=5015, host = '0.0.0.0')

@@ -64,6 +64,8 @@ static-gtfs/testing/calendarDateClass
 other-testing/varadic
 static-gtfs/testing/time24
 static-gtfs/data/new_yrt_archive/
+static-gtfs/data/yrt_archive/
+static-gtfs/data/ttc_archive/
 static-gtfs/testing/vectorerase
 static-gtfs/testing/wordScores
 static-gtfs/testing/voidpointer

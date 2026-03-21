@@ -37,10 +37,10 @@ int main(int argc, char* argv[]) {
         lat = std::stod(argv[1]);
         lon = std::stod(argv[2]);
     } catch (std::invalid_argument& err) {
-        std::cerr << "invalid tripID\n" << std::flush;
+        std::cerr << "invalid coordinates\n" << std::flush;
         return 1;
     } catch (std::out_of_range& err) {
-        std::cerr << "invalid tripID, out of range\n" << std::flush;
+        std::cerr << "invalid coordinates, out of range\n" << std::flush;
         return 2;
     } catch (...) {
         std::cerr << "if you are reading this its prolly my fault just email me\n" << std::flush;
