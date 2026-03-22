@@ -304,13 +304,45 @@
       border-radius: 50%;
       box-shadow: 0 0 8px rgba(91,138,240,0.6);
     }
+
+    button.pick-mode-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 100%;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    button.pick-mode-btn:hover { background: var(--border); }
+    button.pick-mode-btn.active {
+      background: rgba(240,91,138,0.15);
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* Crosshair cursor when pick mode is on */
+    #map.pick-mode { cursor: crosshair !important; }
+    #map.pick-mode .leaflet-interactive { cursor: crosshair !important; }
+
+    /* Pin marker pulse */
+    .click-pin-marker div {
+      width: 14px; height: 14px;
+      background: var(--accent2, #f05b8a);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(240,91,138,0.5);
+      animation: pin-pulse 1.6s ease-out infinite;
+    }
+    @keyframes pin-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(240,91,138,0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(240,91,138,0); }
+      100% { box-shadow: 0 0 0 0 rgba(240,91,138,0); }
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="sidebar">
     <div id="sidebar-header">
-      <h1>GTFS GUI</h1>
     </div>
     <div id="sidebar-body">
 
@@ -363,17 +395,18 @@
       <!-- Nearest stops -->
       <div class="field-block">
         <div class="input-row-label">Find Nearest</div>
-        <div class="input-group">
+        <div class="input-group" style="flex-direction:column">
           <input type="text" id="latInput" placeholder="Lat" />
           <input type="text" id="lonInput" placeholder="Lon" />
         </div>
         <div class="input-group" style="margin-top:4px">
           <button id="findNearestBtn" class="secondary" style="flex:1">Search</button>
-          <button id="useMyLocationBtn" class="secondary" style="flex:1">My Location</button>
+          <button id="useMyLocationBtn" class="secondary" style="flex:1">📍 My Location</button>
         </div>
       </div>
 
       <button id="showLocationBtn" class="secondary" style="width:100%">Show My Location on Map</button>
+      <button id="pickModeBtn" class="pick-mode-btn">🖱️ Click Map to Find Nearest Stops</button>
 
       <div id="nearestStopsInfo"></div>
 
@@ -622,6 +655,55 @@
         document.getElementById('lonInput').value = lon;
         findNearestStops(lat, lon);
       }, () => alert('Unable to get your location.'));
+    });
+
+    let pickModeActive = false;
+    let clickPinMarker = null;
+
+    function setPickMode(on) {
+      pickModeActive = on;
+      const btn = document.getElementById('pickModeBtn');
+      const mapEl = document.getElementById('map');
+      if (on) {
+        btn.classList.add('active');
+        btn.textContent = '✕ Cancel Click Mode';
+        mapEl.classList.add('pick-mode');
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '🖱️ Click Map to Find Nearest Stops';
+        mapEl.classList.remove('pick-mode');
+      }
+    }
+
+    document.getElementById('pickModeBtn').addEventListener('click', () => {
+      setPickMode(!pickModeActive);
+    });
+
+    map.on('click', (e) => {
+      if (!pickModeActive) return;
+
+      const { lat, lng } = e.latlng;
+
+      // Update the lat/lon inputs
+      document.getElementById('latInput').value = lat.toFixed(6);
+      document.getElementById('lonInput').value = lng.toFixed(6);
+
+      // Drop a pulsing pin at the clicked point
+      if (clickPinMarker) map.removeLayer(clickPinMarker);
+      const pinIcon = L.divIcon({
+        className: 'click-pin-marker',
+        html: '<div></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      });
+      clickPinMarker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+      clickPinMarker.bindPopup(`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup();
+
+      // Run the search
+      findNearestStops(lat, lng);
+
+      // Turn off pick mode after one click
+      setPickMode(false);
     });
   </script>
 </body>

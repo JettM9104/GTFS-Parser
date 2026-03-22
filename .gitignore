@@ -87,3 +87,4 @@ gtfs-rt/noteToSelf.md
 .vscode/c_cpp_properties.json
 webserver/tiles
 static-gtfs/data/yrt_archive
+gtfs-rt/proto-conversion/decodeTrip
