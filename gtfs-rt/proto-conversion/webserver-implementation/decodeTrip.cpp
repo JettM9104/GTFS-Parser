@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "gtfs-realtime.pb.h"
+#include "../transit-files/gtfs-realtime.pb.h"
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/util/json_util.h>
+#include <libgen.h>
 
 /* build commadn
 clang++ -std=c++17 decodeTrip.cpp gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeTrip
@@ -12,15 +13,21 @@ using namespace std;
 using namespace transit_realtime;
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        cerr << "Usage: " << argv[0] << " <input.pb> <tripID>" << endl;
+    std::string exeDir = dirname(argv[0]);
+    std::string outputPath = exeDir + "/downloaded_file.pb";
+
+    std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/VehiclePositions";
+    system(cmd.c_str());
+
+    if (argc != 2) {
+        cerr << "Usage: " << argv[0] << " <tripID>" << endl;
         return 1;
     }
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    string inputFile = argv[1];
-    string targetTripId = argv[2];
+    string inputFile = exeDir + "/downloaded_file.pb";
+    string targetTripId = argv[1];
 
     // Open the GTFS-realtime feed
     fstream input(inputFile, ios::in | ios::binary);

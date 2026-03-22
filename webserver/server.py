@@ -39,6 +39,17 @@ def get_nearest_stops(lat, lon):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/rt/location/<tripID>')
+def get_rt_location(tripID):
+    try:
+        result = subprocess.run(['../gtfs-rt/proto-conversion/webserver-implementation/./decodeTrip', tripID], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
