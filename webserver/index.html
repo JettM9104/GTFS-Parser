@@ -8,15 +8,17 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2e334d;
-      --accent: #5b8af0;
-      --accent2: #f05b8a;
-      --accent3: #5bf0b0;
+      --bg: #000000;
+      --surface: #000000;
+      --surface2: #181818;
+      --border: #454545;
+      --accent: #676767;
+      --accent2: #bbbbbb;
+      --accent3: #5db0e4;
+      --negative: #ff0000;
+      --positive: #1bd446;
       --text: #e8eaf2;
-      --text-muted: #7a80a0;
+      --text-muted: #c7c7c7;
       --radius: 10px;
       --card-radius: 8px;
     }
@@ -270,9 +272,9 @@
       position: relative;
       z-index: 1;
     }
-    .rt-ontime   { background: rgba(91,240,176,0.15); color: var(--accent3); }
-    .rt-delayed  { background: rgba(240,91,138,0.15); color: var(--accent2); }
-    .rt-live-only { background: rgba(91,138,240,0.15); color: var(--accent); }
+    .rt-ontime   { background: rgba(91,240,176,0.15); color: var(--positive); }
+    .rt-delayed  { background: rgba(240,91,138,0.15); color: var(--negative); }
+    .rt-live-only { background: rgba(91,138,240,0.15); color: var(--positive); }
 
     /* subtle glow on cards that have live data */
     .dep-card.rt-live {
@@ -341,8 +343,8 @@
     button.pick-mode-btn:hover { background: var(--border); }
     button.pick-mode-btn.active {
       background: rgba(240,91,138,0.15);
-      border-color: var(--accent2);
-      color: var(--accent2);
+      border-color: var(--negative);
+      color: var(--negaitve);
     }
 
     #map.pick-mode { cursor: crosshair !important; }
@@ -397,7 +399,7 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50%       { opacity: 0.4; transform: scale(0.75); }
     }
-    #rtPulse.error { background: var(--accent2); animation: none; opacity: 0.7; }
+    #rtPulse.error { background: var(--negative); animation: none; opacity: 0.7; }
 
     #rtBody {
       padding: 8px 10px;
@@ -439,9 +441,9 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
-    .rt-badge.in-transit  { background: rgba(91,240,176,0.15); color: var(--accent3); }
+    .rt-badge.in-transit  { background: rgba(91,240,176,0.15); color: var(--positive); }
     .rt-badge.stopped     { background: rgba(91,138,240,0.15); color: var(--accent); }
-    .rt-badge.incoming    { background: rgba(240,91,138,0.15); color: var(--accent2); }
+    .rt-badge.incoming    { background: rgba(240,91,138,0.15); color: var(--negative); }
 
     #rtTimestamp {
       font-size: 10px;
@@ -463,6 +465,43 @@
       0%   { box-shadow: 0 0 0 0 rgba(91,240,176,0.55); }
       70%  { box-shadow: 0 0 0 12px rgba(91,240,176,0); }
       100% { box-shadow: 0 0 0 0 rgba(91,240,176,0); }
+    }
+
+    /* ── Departures section header row ── */
+    #departuresSectionHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    #departuresSectionHeader .section-title {
+      margin-bottom: 0;
+    }
+
+    #showAllDepsBtn {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    #showAllDepsBtn:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+      background: var(--border);
+    }
+
+    #depWindowLabel {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 6px;
     }
   </style>
 </head>
@@ -510,7 +549,11 @@
 
       <!-- Departures grid -->
       <div id="departuresSection" style="display:none">
-        <div class="section-title">Departures</div>
+        <div id="departuresSectionHeader">
+          <div class="section-title">Departures</div>
+          <button id="showAllDepsBtn">Show all</button>
+        </div>
+        <div id="depWindowLabel"></div>
         <div id="departuresGrid"></div>
       </div>
 
@@ -551,12 +594,12 @@
         </div>
         <div class="input-group" style="margin-top:4px">
           <button id="findNearestBtn" class="secondary" style="flex:1">Search</button>
-          <button id="useMyLocationBtn" class="secondary" style="flex:1">📍 My Location</button>
+          <button id="useMyLocationBtn" class="secondary" style="flex:1">My Location</button>
         </div>
       </div>
 
       <button id="showLocationBtn" class="secondary" style="width:100%">Show My Location on Map</button>
-      <button id="pickModeBtn" class="pick-mode-btn">🖱️ Click Map to Find Nearest Stops</button>
+      <button id="pickModeBtn" class="pick-mode-btn">Click Map to Find Nearest Stops</button>
 
       <div id="nearestStopsInfo"></div>
 
@@ -575,6 +618,10 @@
     let rtLastVehTs  = null;
     let rtTripId = null;
     let vehicleRTMarker = null;
+
+    // ── Departures state ──
+    let allDepartures = [];
+    let showingAllDeps = false;
 
     function todayStr() {
       const d = new Date();
@@ -616,6 +663,22 @@
         case 'INCOMING_AT':    return [`Incoming to stop${stop}`,   'incoming'];
         default:               return [s, 'in-transit'];
       }
+    }
+
+    // Returns current time in seconds since midnight (handles "today" based on the selected date)
+    function nowInSeconds() {
+      const now = new Date();
+      return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    }
+
+    // Filter to departures within the next 3 hours from current time
+    function filterNext3h(departures) {
+      const now = nowInSeconds();
+      const cutoff = now + 3 * 3600;
+      return departures.filter(dep => {
+        const t = parseTime(dep.arrival_time);
+        return t >= now && t <= cutoff;
+      });
     }
 
     function initMap() {
@@ -798,7 +861,6 @@
         const tripId = tu.trip?.trip_id;
         if (!tripId) return;
 
-        // Use the first stop_time_update entry for delay
         const stu = tu.stop_time_update?.[0];
         const delay = stu?.departure?.delay ?? stu?.arrival?.delay ?? null;
 
@@ -815,11 +877,11 @@
         }
 
         if (delay === null) {
-          badge.textContent = '● Live';
+          badge.textContent = 'Live';
           badge.className = 'rt-delay-badge rt-live-only';
         } else if (delay <= 0) {
           const mins = Math.abs(Math.round(delay / 60));
-          badge.textContent = mins > 0 ? `▲ ${mins}m early` : '✓ On time';
+          badge.textContent = mins > 0 ? `${mins}m early` : 'On time';
           badge.className = 'rt-delay-badge rt-ontime';
         } else {
           const mins = Math.round(delay / 60);
@@ -829,37 +891,13 @@
       });
     }
 
-    // ───────────────────────────────────────────────────────────────────────
+    // ── Departures rendering ────────────────────────────────────────────────
 
-    function loadStop(stopId) {
-      const date = document.getElementById('dateInput').value || todayStr();
-      const url = `/api/stop/${stopId}/${date}`;
-
-      fetch(url)
-        .then(r => r.json())
-        .then(data => displayStop(data))
-        .catch(() => {
-          document.getElementById('stopHeader').style.display = 'none';
-          document.getElementById('departuresSection').style.display = 'none';
-        });
-    }
-
-    function displayStop(data) {
-      if (window.stopMarker) map.removeLayer(window.stopMarker);
-
-      const hdr = document.getElementById('stopHeader');
-      hdr.style.display = 'block';
-      document.getElementById('stopNameDisplay').textContent = data.stop_name;
-      document.getElementById('stopMetaDisplay').textContent =
-        `Stop ${data.stop_code}  ·  ID ${data.stop_id}  ·  ${data.lat}, ${data.lon}`;
-
-      const sorted = [...data.departures].sort((a, b) =>
-        parseTime(a.arrival_time) - parseTime(b.arrival_time)
-      );
-
+    function renderDepartureCards(departures, stopId) {
       const grid = document.getElementById('departuresGrid');
       grid.innerHTML = '';
-      sorted.forEach(dep => {
+
+      departures.forEach(dep => {
         const card = document.createElement('div');
         card.className = 'dep-card';
         card.dataset.tripId = dep.trip_id;
@@ -879,16 +917,77 @@
         grid.appendChild(card);
       });
 
-      document.getElementById('departuresSection').style.display =
-        sorted.length ? 'block' : 'none';
+      loadRTStopUpdates(stopId);
+    }
+
+    function updateDeparturesView(stopId) {
+      const btn = document.getElementById('showAllDepsBtn');
+      const label = document.getElementById('depWindowLabel');
+
+      if (showingAllDeps) {
+        renderDepartureCards(allDepartures, stopId);
+        btn.textContent = 'Next 3h only';
+        label.textContent = `${allDepartures.length} departure${allDepartures.length !== 1 ? 's' : ''} total`;
+      } else {
+        const filtered = filterNext3h(allDepartures);
+        renderDepartureCards(filtered, stopId);
+        btn.textContent = filtered.length < allDepartures.length ? `Show all ${allDepartures.length}` : 'Show all';
+        if (filtered.length === 0) {
+          label.textContent = 'No departures in the next 3 hours';
+        } else {
+          label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length !== 1 ? 's' : ''}`;
+        }
+      }
+
+      document.getElementById('departuresSection').style.display = 'block';
+    }
+
+    // ───────────────────────────────────────────────────────────────────────
+
+    function loadStop(stopId) {
+      const date = document.getElementById('dateInput').value || todayStr();
+      const url = `/api/stop/${stopId}/${date}`;
+
+      fetch(url)
+        .then(r => r.json())
+        .then(data => displayStop(data))
+        .catch(() => {
+          document.getElementById('stopHeader').style.display = 'none';
+          document.getElementById('departuresSection').style.display = 'none';
+        });
+    }
+
+    // Holds the current stop ID so the "Show all" button can re-render
+    let currentStopId = null;
+
+    function displayStop(data) {
+      if (window.stopMarker) map.removeLayer(window.stopMarker);
+
+      const hdr = document.getElementById('stopHeader');
+      hdr.style.display = 'block';
+      document.getElementById('stopNameDisplay').textContent = data.stop_name;
+      document.getElementById('stopMetaDisplay').textContent =
+        `Stop ${data.stop_code}  ·  ID ${data.stop_id}  ·  ${data.lat}, ${data.lon}`;
+
+      allDepartures = [...data.departures].sort((a, b) =>
+        parseTime(a.arrival_time) - parseTime(b.arrival_time)
+      );
+
+      // Reset to filtered view whenever a new stop is loaded
+      showingAllDeps = false;
+      currentStopId = data.stop_id;
+
+      updateDeparturesView(data.stop_id);
 
       window.stopMarker = L.marker([data.lat, data.lon]).addTo(map);
       window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
       map.setView([data.lat, data.lon], 15);
-
-      // Fetch RT data and overlay delay badges on cards
-      loadRTStopUpdates(data.stop_id);
     }
+
+    document.getElementById('showAllDepsBtn').addEventListener('click', () => {
+      showingAllDeps = !showingAllDeps;
+      if (currentStopId) updateDeparturesView(currentStopId);
+    });
 
     function showUserLocation() {
       navigator.geolocation?.getCurrentPosition(pos => {
@@ -901,7 +1000,7 @@
           iconSize: [16, 16], iconAnchor: [8, 8]
         });
         window.userLocationMarker = L.marker([lat, lon], { icon }).addTo(map);
-        window.userLocationMarker.bindPopup('📍 Your Location');
+        window.userLocationMarker.bindPopup('Your Location');
         map.setView([lat, lon], 15);
       }, () => alert('Unable to get your location.'));
     }
@@ -1016,11 +1115,11 @@
       const mapEl = document.getElementById('map');
       if (on) {
         btn.classList.add('active');
-        btn.textContent = '✕ Cancel Click Mode';
+        btn.textContent = 'Cancel';
         mapEl.classList.add('pick-mode');
       } else {
         btn.classList.remove('active');
-        btn.textContent = '🖱️ Click Map to Find Nearest Stops';
+        btn.textContent = 'Click Map to Find Nearest Stops';
         mapEl.classList.remove('pick-mode');
       }
     }
@@ -1045,7 +1144,7 @@
         iconAnchor: [7, 7]
       });
       clickPinMarker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
-      clickPinMarker.bindPopup(`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup();
+      clickPinMarker.bindPopup(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup();
 
       findNearestStops(lat, lng);
       setPickMode(false);
