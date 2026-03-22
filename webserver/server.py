@@ -51,5 +51,10 @@ def static_files(path):
 def tiles(z, x, y):
     return send_from_directory(f'tiles/{z}/{x}', f'{y}.png')
 
+@app.route("/crash")
+def home():
+    raise Exception("test error") 
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5015, host = '0.0.0.0')

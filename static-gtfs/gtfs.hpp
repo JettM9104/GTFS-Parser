@@ -29,6 +29,7 @@ namespace gtfs {
 typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
+typedef enum {in_use = 0, expired = -1, upcoming = 1, no_result = 10, no_result_a = 11, no_result_b = 12} feedStatus;
 
 float π = 3.14159;
 
@@ -585,6 +586,7 @@ int levenshtein(const string &a, const string &b);                              
 calendarDate parseFormattedDate(string input);                                          // parse the formatted date "YYYYMMDD" into a calendarDate struct
 void sortVectorByTime(std::vector<tripSegment>& x);                                     // sorts a vector with given input vector<tripSegment> and sorts it by time
 time24 getCurrentTime();                                                                // gets the current system time with <ctime>
+calendarDate getToday();                                                                // gets the date today
 week convertDateToWeek(int year, int month, int day);                                   // converts the given date to a week enum with sun-sat
 bool isValid(int tripID, int year, int month, int date);                                // given tripID and date, determines if the trip given is running that day, note that this this function, is in no way associated with verifyGTFS, does not refrence or call
 bool isValid(int tripID, calendarDate calendarDay);                                     // an overload for the (int, int, int, int) one, but instead of (int year, int month, int date) using struct calendarDate
@@ -592,8 +594,8 @@ bool isValid(int tripID, week day);                                             
 time24 parseFormattedTime(string input);                                                // parse the formateed time given in form "HH:MM:SS" in military time, returning a time24 struct
 std::vector<string> parseDataCSV(const string& input);                                  // parse the CSV-formatted string "hello, hello" and returns a vector<string> with the items, for example, {"hello", "hello"}
 std::unordered_map<string, int> createMapFromVector(std::vector<string> param);         // given a vector<string>, returns a map with the following keys-value pairs: map[vector[i]] = i
-int verifyGTFS(int year, int month, int day);                                           // checks the feed_info.txt file and returns a different value for the state of the feed; 1 if valid, 0 if expired, -1 if not yet valid but will be at some point
-bool verifyGTFS(calendarDate inputDate);                                                // similar overload to the int(int, int, int) one but instead returns a bool and inputs a calendarDate and only returns 1 and 0 for valid and invalid
+feedStatus verifyGTFS(int year, int month, int day);                                    // checks the feed_info.txt file and returns a different value for the state of the feed; 1 if valid, 0 if expired, -1 if not yet valid but will be at some point
+feedStatus verifyGTFS(calendarDate inputDate);                                          // similar overload to the int(int, int, int) one but instead returns a bool and inputs a calendarDate and only returns 1 and 0 for valid and invalid
 double getScore(string input);                                                          // a similar distance function to levenshtein's but much more simple but less effective. Used in alg1
 
 busLine getRouteInfo(const unsigned short int& id);                                                                             // gets the route info from routes.txt given the route ID
@@ -638,6 +640,7 @@ double getDistanceKM(double lat1, double lon1, double lat2, double lon2) {
 double dist(double a, double b, double c, double d) {
     return sqrt((a-c) * (a-c) + (b-d) * (b-d));
 }
+
 int levenshtein(const string &a, const string &b) {
     int m = a.size(), n = b.size();
     std::vector<std::vector<int>> dp(m+1, std::vector<int>(n+1));
@@ -688,6 +691,18 @@ void sortVectorByTime(std::vector<tripSegment>& x) {
             // cout << std::endl;
         }
     } while (number > 0);
+}
+
+calendarDate getToday() {
+    calendarDate output;
+    std::time_t rn = std::time(0);
+    std::tm* ltm = std::localtime(&rn);
+
+    output.year = 1900 + ltm->tm_year;
+    output.month = 1 + ltm->tm_mon;
+    output.day = ltm->tm_mday;
+
+    return output;
 }
 
 time24 getCurrentTime() {
@@ -1114,7 +1129,8 @@ std::unordered_map<string, int> createMapFromVector(std::vector<string> param) {
     return output;
 }
 
-int verifyGTFS(int year, int month, int day) {
+feedStatus verifyGTFS(int year, int month, int day) {
+    cout << root << " " << feedInfoFile << std::endl;
     ifstream feedInfo(feedInfoFile);
     string currentLine;
     std::vector<string> parsedCurrentLine;
@@ -1141,24 +1157,25 @@ int verifyGTFS(int year, int month, int day) {
             calendarDate x;
             calendarDate y;
 
-            if (refs["feed_end_date"] == 0) return 1; // assume it is automatically valid
+            if (refs["feed_end_date"] == 0) return no_result_a; // assume it is automatically valid
             else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
 
-            if (refs["feed_start_date"] == 0) return 1; // assume it is automatically valid
+            if (refs["feed_start_date"] == 0) return no_result_b; // assume it is automatically valid
             else y = parseFormattedDate(parsedCurrentLine[refs["feed_start_date"]]);
 
-            if (x >= inputDate && y <= inputDate) return 1;
-            else if (x >= inputDate) return 0;
-            else return -1;
+            if (x >= inputDate && y <= inputDate) return in_use;
+            else if (x <= inputDate) return expired; // expired
+            else return upcoming; // upcoming
             
             break;
         }
 
     }
-    return false;
+    return no_result;
 }
 
-bool verifyGTFS(calendarDate inputDate) { 
+feedStatus verifyGTFS(calendarDate inputDate) {
+    cout << root << " " << feedInfoFile << std::endl;
     ifstream feedInfo(feedInfoFile);
     string currentLine;
     std::vector<string> parsedCurrentLine;
@@ -1166,7 +1183,6 @@ bool verifyGTFS(calendarDate inputDate) {
     int lineNumber = 0;
     
     std::unordered_map<string, int> refs;
-
 
     while (getline(feedInfo, currentLine)) {
         lineNumber++;
@@ -1182,17 +1198,23 @@ bool verifyGTFS(calendarDate inputDate) {
         if (lineNumber == 2) {
 
             calendarDate x;
+            calendarDate y;
 
-            if (refs["feed_end_date"] == 0) return true; // assume it is automatically valid
+            if (refs["feed_end_date"] == 0) return no_result_a; // assume it is automatically valid
             else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
 
-            if (x <= inputDate) return true;
-            else return false;
+            if (refs["feed_start_date"] == 0) return no_result_b; // assume it is automatically valid
+            else y = parseFormattedDate(parsedCurrentLine[refs["feed_start_date"]]);
+
+            if (x >= inputDate && y <= inputDate) return in_use;
+            else if (x <= inputDate) return expired; // expired
+            else return upcoming; // upcoming
+            
             break;
         }
 
     }
-    return false;
+    return no_result;
 }
 
 double getScore(string input) {
