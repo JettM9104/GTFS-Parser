@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cout << "Usage: \n" << argv[0] << " <stopID> [year, month, day]";
+        std::cerr << "Usage: \n" << argv[0] << " <stopID> [year, month, day]";
         return -1;
     }
 
@@ -26,12 +26,22 @@ int main(int argc, char* argv[]) {
         std::cerr << "how\n" << std::flush;
         return -1;
     }
-    std::time_t rn = std::time(0);
-    std::tm* ltm = std::localtime(&rn);
+    int year, month, day;
 
-    int year = 1900 + ltm->tm_year;
-    int month = 1 + ltm->tm_mon;
-    int day = ltm->tm_mday;
+    if (argc == 2) {
+        std::time_t rn = std::time(0);
+        std::tm* ltm = std::localtime(&rn);
+        year = 1900 + ltm->tm_year;
+        month = 1 + ltm->tm_mon;
+        day = ltm->tm_mday;
+    } else if (argc == 5) {
+        year = std::stoi(argv[2]);
+        month = std::stoi(argv[3]);
+        day = std::stoi(argv[4]);
+    } else {
+        std::cerr << "Usage: \n" << argv[0] << " <stopID> [year, month, day]";
+        return -1;
+    }
 
     std::vector<gtfs::tripSegment> ts = gtfs::getDayTimesAtStop(year, month, day, st.stop_id);
 

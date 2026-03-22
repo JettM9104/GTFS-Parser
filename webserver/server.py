@@ -16,10 +16,11 @@ def get_trip(trip_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/stop/<stop_id>')
-def get_stop(stop_id):
+@app.route('/api/stop/<stop_id>/<date>')
+def get_stop(stop_id, date):
     try:
-        result = subprocess.run(['./stopjson', stop_id], capture_output=True, text=True)
+        year, month, day = date.split('-')
+        result = subprocess.run(['./stopjson', stop_id, year, month, day], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)

@@ -4,346 +4,624 @@
   <title>Bus Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e334d;
+      --accent: #5b8af0;
+      --accent2: #f05b8a;
+      --text: #e8eaf2;
+      --text-muted: #7a80a0;
+      --radius: 10px;
+      --card-radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     html, body {
       height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: "SF Pro Rounded", ui-rounded, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
+
     #map {
-      height: 100vh;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
     }
+
     #sidebar {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      bottom: 16px;
       z-index: 1000;
-      background: white;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      max-width: 300px;
-      max-height: 80vh;
+      width: 300px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    #sidebar-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #sidebar-header h1 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+    }
+
+    #sidebar-body {
+      flex: 1;
       overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
-    #sidebar div {
-      margin-bottom: 10px;
+
+    .input-group {
+      display: flex;
+      gap: 6px;
     }
-    #sidebar input, #sidebar button {
-      margin-right: 5px;
-      margin-bottom: 5px;
+
+    .input-group input, .input-group button, .input-group select {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
     }
-    #sidebar input[type="text"] {
-      width: 80px;
+
+    input[type="text"], input[type="date"], select {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      color: var(--text);
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
     }
-    #latInput, #lonInput {
-      width: 100px;
+
+    input[type="text"]::placeholder { color: var(--text-muted); }
+    input[type="text"]:focus, input[type="date"]:focus, select:focus {
+      border-color: var(--accent);
     }
-    #stopInfo ul {
-      max-height: 300px;
-      overflow-y: auto;
-      padding-left: 20px;
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--card-radius);
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
     }
-    .triangle-marker div {
-      width: 0;
-      height: 0;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-bottom: 20px solid #FF6B6B;
-      margin-top: -10px;
+
+    button:hover { background: #7aa3f7; }
+    button:active { transform: scale(0.97); }
+
+    button.secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
     }
+    button.secondary:hover { background: var(--border); }
+
+    .input-row-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .field-block { display: flex; flex-direction: column; gap: 4px; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+
+    #tripInfo, #nearestStopsInfo {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    #tripInfo p { margin-bottom: 2px; }
+    #tripInfo b { color: var(--text); }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    #stopHeader {
+      display: none;
+    }
+    #stopHeader .stop-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    #stopHeader .stop-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-top: 2px;
+    }
+
+    #departuresGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .dep-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 9px 10px;
+      cursor: pointer;
+      transition:
+        border-color 0.18s,
+        background 0.18s,
+        transform 0.15s,
+        box-shadow 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dep-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(91,138,240,0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .dep-card:hover {
+      border-color: var(--accent);
+      background: #1e2235;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(91,138,240,0.2);
+    }
+
+    .dep-card:hover::before { opacity: 1; }
+
+    .dep-card:active { transform: scale(0.98); }
+
+    .dep-card.active {
+      border-color: var(--accent);
+      background: #1e2235;
+      box-shadow: 0 0 0 2px rgba(91,138,240,0.35);
+    }
+
+    .dep-route {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dep-time {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .dep-trip {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-top: 3px;
+    }
+
+    .dep-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    .nearest-stop-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 7px 10px;
+      font-size: 12.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .nearest-stop-item:hover {
+      border-color: var(--accent2);
+      transform: translateX(3px);
+    }
+    .nearest-stop-item .ns-id { color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 12px; }
+    .nearest-stop-item .ns-dist { color: var(--text-muted); font-size: 11px; }
+
+    .date-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .date-row input[type="date"] { flex: 1; }
+    .date-row button { padding: 7px 10px; font-size: 12px; }
+
+    #sidebar-body::-webkit-scrollbar { width: 4px; }
+    #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .leaflet-control-zoom a {
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(15,17,23,0.7) !important;
+      color: var(--text-muted) !important;
+    }
+
     .user-location-marker div {
-      width: 16px;
-      height: 16px;
-      background-color: #4A90E2;
+      width: 16px; height: 16px;
+      background: var(--accent);
       border: 2px solid white;
       border-radius: 50%;
-      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+      box-shadow: 0 0 8px rgba(91,138,240,0.6);
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="sidebar">
-    <div>
-      <input type="text" id="tripIdInput" placeholder="Enter Trip ID" />
-      <button id="loadTripBtn">Load Trip</button>
+    <div id="sidebar-header">
+      <h1>GTFS GUI</h1>
     </div>
-    <div>
-      <input type="text" id="stopIdInput" placeholder="Enter Stop ID" />
-      <button id="loadStopBtn">Load Stop</button>
+    <div id="sidebar-body">
+
+      <!-- Trip lookup -->
+      <div class="field-block">
+        <div class="input-row-label">Trip</div>
+        <div class="input-group">
+          <input type="text" id="tripIdInput" placeholder="Trip ID" />
+          <button id="loadTripBtn">Go</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Stop lookup -->
+      <div class="field-block">
+        <div class="input-row-label">Stop</div>
+        <div class="input-group">
+          <input type="text" id="stopIdInput" placeholder="Stop ID" />
+          <button id="loadStopBtn">Go</button>
+        </div>
+      </div>
+
+      <!-- Date picker for departures -->
+      <div class="field-block">
+        <div class="input-row-label">Date</div>
+        <div class="date-row">
+          <input type="date" id="dateInput" />
+          <button class="secondary" id="todayBtn">Today</button>
+        </div>
+      </div>
+
+      <!-- Stop header (shown after a stop is loaded) -->
+      <div id="stopHeader">
+        <div class="stop-name" id="stopNameDisplay"></div>
+        <div class="stop-meta" id="stopMetaDisplay"></div>
+      </div>
+
+      <!-- Departures grid -->
+      <div id="departuresSection" style="display:none">
+        <div class="section-title">Departures</div>
+        <div id="departuresGrid"></div>
+      </div>
+
+      <!-- Trip info (shown after a trip is loaded) -->
+      <div id="tripInfo"></div>
+
+      <div class="divider"></div>
+
+      <!-- Nearest stops -->
+      <div class="field-block">
+        <div class="input-row-label">Find Nearest</div>
+        <div class="input-group">
+          <input type="text" id="latInput" placeholder="Lat" />
+          <input type="text" id="lonInput" placeholder="Lon" />
+        </div>
+        <div class="input-group" style="margin-top:4px">
+          <button id="findNearestBtn" class="secondary" style="flex:1">Search</button>
+          <button id="useMyLocationBtn" class="secondary" style="flex:1">My Location</button>
+        </div>
+      </div>
+
+      <button id="showLocationBtn" class="secondary" style="width:100%">Show My Location on Map</button>
+
+      <div id="nearestStopsInfo"></div>
+
     </div>
-    <div>
-      <input type="text" id="latInput" placeholder="Latitude" />
-      <input type="text" id="lonInput" placeholder="Longitude" />
-      <button id="findNearestBtn">Find Nearest Stops</button>
-    </div>
-    <div>
-      <button id="showLocationBtn">Show Current Location</button>
-      <button id="useMyLocationBtn">Nearest Stops to Me</button>
-    </div>
-    <div id="tripInfo"></div>
-    <div id="stopInfo"></div>
-    <div id="nearestStopsInfo"></div>
   </div>
+
   <script>
     let map;
     let stopMarkers = [];
     let polyline;
+    let activeDepCard = null;
 
-    function initMap() {
-      let offline = true;
-
-      map = L.map('map').setView([43.7, -79.4], 12);
-      if (!offline) L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-      else L.tileLayer('/tiles/{z}/{x}/{y}.png').addTo(map);
+    function todayStr() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
     }
 
-    function loadTrip(tripId) {
+    function parseTime(t) {
+      const parts = t.split(':').map(Number);
+      return parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+    }
+
+    function fmtTime(t) {
+      const parts = t.split(':').map(Number);
+      let h = parts[0] % 24;
+      const m = String(parts[1]).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
+    function initMap() {
+      map = L.map('map').setView([43.7, -79.4], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    function loadTrip(tripId, cardEl) {
+      // highlight active card
+      if (activeDepCard) activeDepCard.classList.remove('active');
+      if (cardEl) { cardEl.classList.add('active'); activeDepCard = cardEl; }
+
       fetch(`/api/trip/${tripId}`)
-        .then(response => response.json())
-        .then(data => {
-          displayTrip(data);
-        })
-        .catch(error => {
-          console.error('Error loading trip:', error);
+        .then(r => r.json())
+        .then(displayTrip)
+        .catch(() => {
           document.getElementById('tripInfo').textContent = 'Error loading trip';
         });
     }
 
+    function displayTrip(data) {
+      stopMarkers.forEach(m => map.removeLayer(m));
+      stopMarkers = [];
+      if (polyline) map.removeLayer(polyline);
+
+      document.getElementById('tripInfo').innerHTML = `
+        <div class="section-title" style="margin-top:4px">Trip Info</div>
+        <p><b>ID</b>: ${data.trip_id}</p>
+        <p><b>Route</b>: ${data.route_short_name} — ${data.route_long_name}</p>
+        <p><b>Stops</b>: ${data.total}</p>
+      `;
+
+      const latlngs = data.pos_markers.map(p => [p.lat, p.lng]);
+      polyline = L.polyline(latlngs, { color: data.route_color, weight: 4, opacity: 0.85 }).addTo(map);
+
+      if (latlngs.length) map.fitBounds(L.latLngBounds(latlngs));
+
+      data.stops.forEach(stop => {
+        const m = L.circleMarker([stop.lat, stop.lng], {
+          color: data.route_color, fillColor: data.route_color,
+          fillOpacity: 0.8, radius: 5, weight: 2
+        }).addTo(map);
+        m.bindPopup(`Stop ID: ${stop.id}<br>Time: ${stop.time}`);
+        stopMarkers.push(m);
+      });
+    }
+
     function loadStop(stopId) {
-      fetch(`/api/stop/${stopId}`)
-        .then(response => response.json())
-        .then(data => {
-          displayStop(data);
-        })
-        .catch(error => {
-          console.error('Error loading stop:', error);
-          document.getElementById('stopInfo').textContent = 'Error loading stop';
+      const date = document.getElementById('dateInput').value || todayStr();
+      const url = `/api/stop/${stopId}/${date}`;
+
+      fetch(url)
+        .then(r => r.json())
+        .then(data => displayStop(data))
+        .catch(() => {
+          document.getElementById('stopHeader').style.display = 'none';
+          document.getElementById('departuresSection').style.display = 'none';
         });
     }
 
-    function displayTrip(data) {
-      // Clear previous markers and polyline
-      stopMarkers.forEach(marker => map.removeLayer(marker));
-      stopMarkers = [];
-      if (polyline) {
-        map.removeLayer(polyline);
-      }
-
-      // Update trip info
-      document.getElementById('tripInfo').innerHTML = `
-        <p><b>Trip ID</b>: ${data.trip_id}</p>
-        <p><b>Route</b>: ${data.route_short_name} - ${data.route_long_name}</p>
-        <p><b>Total Stops</b>: ${data.total}</p>
-      `;
-
-      // Draw polyline
-      var latlngs = data.pos_markers.map(pos => [pos.lat, pos.lng]);
-      polyline = L.polyline(latlngs, {color: data.route_color, weight: 3}).addTo(map);
-
-      // Fit map to bounds
-      if (data.pos_markers.length > 0) {
-        var bounds = L.latLngBounds(data.pos_markers.map(pos => [pos.lat, pos.lng]));
-        map.fitBounds(bounds);
-      }
-
-      // Load stop markers
-      data.stops.forEach(stop => {
-        const marker = L.circleMarker([stop.lat, stop.lng], {
-          color: data.route_color,
-          fillColor: data.route_color,
-          fillOpacity: 0.7,
-          radius: 4
-        }).addTo(map);
-        marker.bindPopup(`Stop ID: ${stop.id}<br>Time: ${stop.time}`);
-        stopMarkers.push(marker);
-      });
-    }
-
     function displayStop(data) {
-      // Clear previous stop marker
-      if (window.stopMarker) {
-        map.removeLayer(window.stopMarker);
-      }
+      if (window.stopMarker) map.removeLayer(window.stopMarker);
 
-      // Update stop info
-      let departuresHtml = '<h4>Departures:</h4><ul>';
-      data.departures.forEach(dep => {
-        departuresHtml += `<li>Route ${dep.route_id}: ${dep.arrival_time} (Trip ${dep.trip_id})</li>`;
+      const hdr = document.getElementById('stopHeader');
+      hdr.style.display = 'block';
+      document.getElementById('stopNameDisplay').textContent = data.stop_name;
+      document.getElementById('stopMetaDisplay').textContent =
+        `Stop ${data.stop_code}  ·  ID ${data.stop_id}  ·  ${data.lat}, ${data.lon}`;
+
+      const sorted = [...data.departures].sort((a, b) =>
+        parseTime(a.arrival_time) - parseTime(b.arrival_time)
+      );
+
+      const grid = document.getElementById('departuresGrid');
+      grid.innerHTML = '';
+      sorted.forEach(dep => {
+        const card = document.createElement('div');
+        card.className = 'dep-card';
+
+        const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent)';
+
+        card.innerHTML = `
+          <div class="dep-route">
+            <span class="dep-dot" style="background:${color}"></span>
+            Route ${dep.route_id}
+          </div>
+          <div class="dep-time">${fmtTime(dep.arrival_time)}</div>
+          <div class="dep-trip">Trip ${dep.trip_id}</div>
+        `;
+
+        card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+        grid.appendChild(card);
       });
-      departuresHtml += '</ul>';
 
-      document.getElementById('stopInfo').innerHTML = `
-        <p><b>Stop ID</b>: ${data.stop_id}</p>
-        <p><b>Stop Code</b>: ${data.stop_code}</p>
-        <p><b>Stop Name</b>: ${data.stop_name}</p>
-        <p><b>Location</b>: ${data.lat}, ${data.lon}</p>
-        ${departuresHtml}
-      `;
+      document.getElementById('departuresSection').style.display =
+        sorted.length ? 'block' : 'none';
 
-      // Add stop marker on map
       window.stopMarker = L.marker([data.lat, data.lon]).addTo(map);
       window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
-
-      // Center map on the stop
       map.setView([data.lat, data.lon], 15);
     }
 
     function showUserLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            
-            // Remove previous user location marker
-            if (window.userLocationMarker) {
-              map.removeLayer(window.userLocationMarker);
-            }
-            
-            // Add user location marker
-            const userIcon = L.divIcon({
-              className: 'user-location-marker',
-              html: '<div></div>',
-              iconSize: [16, 16],
-              iconAnchor: [8, 8]
-            });
-            
-            window.userLocationMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map);
-            window.userLocationMarker.bindPopup('📍 Your Location');
-            
-            // Center map on user location
-            map.setView([lat, lon], 15);
-          },
-          (error) => {
-            console.error('Error getting location:', error);
-            alert('Unable to get your location. Please check your browser permissions.');
-          }
-        );
-      } else {
-        alert('Geolocation is not supported by this browser.');
-      }
+      navigator.geolocation?.getCurrentPosition(pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
+
+        const icon = L.divIcon({
+          className: 'user-location-marker',
+          html: '<div></div>',
+          iconSize: [16, 16], iconAnchor: [8, 8]
+        });
+        window.userLocationMarker = L.marker([lat, lon], { icon }).addTo(map);
+        window.userLocationMarker.bindPopup('📍 Your Location');
+        map.setView([lat, lon], 15);
+      }, () => alert('Unable to get your location.'));
     }
 
     function findNearestStops(lat, lon) {
       fetch(`/api/nearest/${lat}/${lon}`)
-        .then(response => response.json())
-        .then(data => {
-          displayNearestStops(data);
-        })
-        .catch(error => {
-          console.error('Error finding nearest stops:', error);
-          document.getElementById('nearestStopsInfo').textContent = 'Error finding nearest stops';
+        .then(r => r.json())
+        .then(displayNearestStops)
+        .catch(() => {
+          document.getElementById('nearestStopsInfo').textContent = 'Error finding stops';
         });
     }
 
     function displayNearestStops(data) {
-      // Clear previous nearest stops markers
-      if (window.nearestStopsMarkers) {
-        window.nearestStopsMarkers.forEach(marker => map.removeLayer(marker));
-      }
+      if (window.nearestStopsMarkers)
+        window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
       window.nearestStopsMarkers = [];
 
-      // Update nearest stops info
-      let stopsHtml = `<h4>Nearest Stops to (${data.request_lat}, ${data.request_lon})</h4><ul>`;
-      data.nearest_stops.forEach(stop => {
-        stopsHtml += `<li>Stop ${stop.stop_id}: ${stop.distanceKM.toFixed(2)} km away</li>`;
-      });
-      stopsHtml += '</ul>';
+      const container = document.getElementById('nearestStopsInfo');
+      container.innerHTML = `<div class="section-title" style="margin-bottom:6px">Nearest Stops</div>`;
 
-      document.getElementById('nearestStopsInfo').innerHTML = stopsHtml;
+      const list = document.createElement('div');
+      list.style.display = 'flex';
+      list.style.flexDirection = 'column';
+      list.style.gap = '5px';
 
-      // Add markers for nearest stops
       data.nearest_stops.forEach(stop => {
-        const marker = L.circleMarker([stop.stop_lat, stop.stop_lon], {
-          color: '#FFA500',
-          fillColor: '#FFA500',
-          fillOpacity: 0.7,
-          radius: 6,
-          weight: 2
+        const item = document.createElement('div');
+        item.className = 'nearest-stop-item';
+        item.innerHTML = `
+          <span class="ns-id">${stop.stop_id}</span>
+          <span class="ns-dist">${stop.distanceKM.toFixed(2)} km</span>
+        `;
+        item.addEventListener('click', () => {
+          document.getElementById('stopIdInput').value = stop.stop_id;
+          loadStop(stop.stop_id);
+        });
+        list.appendChild(item);
+
+        const m = L.circleMarker([stop.stop_lat, stop.stop_lon], {
+          color: '#f05b8a', fillColor: '#f05b8a',
+          fillOpacity: 0.75, radius: 7, weight: 2
         }).addTo(map);
-        
-        marker.bindPopup(`Stop ID: ${stop.stop_id}<br>Distance: ${stop.distanceKM.toFixed(2)} km`);
-        window.nearestStopsMarkers.push(marker);
+        m.bindPopup(`Stop ${stop.stop_id} · ${stop.distanceKM.toFixed(2)} km`);
+        window.nearestStopsMarkers.push(m);
       });
 
-      // Fit map to show all nearest stops
-      if (data.nearest_stops.length > 0) {
-        const bounds = L.latLngBounds(data.nearest_stops.map(stop => [stop.stop_lat, stop.stop_lon]));
-        map.fitBounds(bounds.pad(0.1));
+      container.appendChild(list);
+
+      if (data.nearest_stops.length) {
+        const bounds = L.latLngBounds(
+          data.nearest_stops.map(s => [s.stop_lat, s.stop_lon])
+        );
+        map.fitBounds(bounds.pad(0.15));
       }
     }
 
-    // Initialize map on load
     initMap();
 
-    // Event listener for load button
+    const dateInput = document.getElementById('dateInput');
+    dateInput.value = todayStr();
+
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      dateInput.value = todayStr();
+    });
+
     document.getElementById('loadTripBtn').addEventListener('click', () => {
-      const tripId = document.getElementById('tripIdInput').value.trim();
-      if (tripId) {
-        loadTrip(tripId);
-      }
+      const v = document.getElementById('tripIdInput').value.trim();
+      if (v) loadTrip(v, null);
+    });
+    document.getElementById('tripIdInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') document.getElementById('loadTripBtn').click();
     });
 
-    // Event listener for load stop button
     document.getElementById('loadStopBtn').addEventListener('click', () => {
-      const stopId = document.getElementById('stopIdInput').value.trim();
-      if (stopId) {
-        loadStop(stopId);
-      }
+      const v = document.getElementById('stopIdInput').value.trim();
+      if (v) loadStop(v);
+    });
+    document.getElementById('stopIdInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') document.getElementById('loadStopBtn').click();
     });
 
-    // Allow enter key to submit
-    document.getElementById('tripIdInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('loadTripBtn').click();
-      }
+    dateInput.addEventListener('change', () => {
+      const v = document.getElementById('stopIdInput').value.trim();
+      if (v) loadStop(v);
     });
 
-    // Allow enter key to submit for stop input
-    document.getElementById('stopIdInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('loadStopBtn').click();
-      }
-    });
+    document.getElementById('showLocationBtn').addEventListener('click', showUserLocation);
 
-    // Event listener for show location button
-    document.getElementById('showLocationBtn').addEventListener('click', () => {
-      showUserLocation();
-    });
-
-    // Event listener for find nearest stops button
     document.getElementById('findNearestBtn').addEventListener('click', () => {
       const lat = document.getElementById('latInput').value.trim();
       const lon = document.getElementById('lonInput').value.trim();
-      if (lat && lon) {
-        findNearestStops(lat, lon);
-      } else {
-        alert('Please enter both latitude and longitude');
-      }
+      if (lat && lon) findNearestStops(lat, lon);
+      else alert('Please enter both latitude and longitude.');
     });
 
-    // Event listener for use my location button
     document.getElementById('useMyLocationBtn').addEventListener('click', () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            document.getElementById('latInput').value = lat;
-            document.getElementById('lonInput').value = lon;
-            findNearestStops(lat, lon);
-          },
-          (error) => {
-            console.error('Error getting location:', error);
-            alert('Unable to get your location. Please check your browser permissions.');
-          }
-        );
-      } else {
-        alert('Geolocation is not supported by this browser.');
-      }
+      navigator.geolocation?.getCurrentPosition(pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        document.getElementById('latInput').value = lat;
+        document.getElementById('lonInput').value = lon;
+        findNearestStops(lat, lon);
+      }, () => alert('Unable to get your location.'));
     });
   </script>
 </body>
