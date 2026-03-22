@@ -258,6 +258,31 @@
       flex-shrink: 0;
     }
 
+    /* ── RT delay badges on departure cards ── */
+    .rt-delay-badge {
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 5px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      display: inline-block;
+      letter-spacing: 0.03em;
+      position: relative;
+      z-index: 1;
+    }
+    .rt-ontime   { background: rgba(91,240,176,0.15); color: var(--accent3); }
+    .rt-delayed  { background: rgba(240,91,138,0.15); color: var(--accent2); }
+    .rt-live-only { background: rgba(91,138,240,0.15); color: var(--accent); }
+
+    /* subtle glow on cards that have live data */
+    .dep-card.rt-live {
+      border-color: rgba(91,240,176,0.3);
+    }
+    .dep-card.rt-live:hover {
+      border-color: var(--accent3);
+      box-shadow: 0 6px 20px rgba(91,240,176,0.15);
+    }
+
     .nearest-stop-item {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -489,7 +514,6 @@
         <div id="departuresGrid"></div>
       </div>
 
-
       <!-- Trip info (shown after a trip is loaded) -->
       <div id="tripInfo"></div>
 
@@ -547,8 +571,8 @@
 
     // ── RT state ──
     let rtIntervalId = null;
-    let rtRelativeId = null;   // ticks every second to update "X ago" display
-    let rtLastVehTs  = null;   // unix seconds from last vehicle timestamp
+    let rtRelativeId = null;
+    let rtLastVehTs  = null;
     let rtTripId = null;
     let vehicleRTMarker = null;
 
@@ -612,7 +636,6 @@
           document.getElementById('tripInfo').textContent = 'Error loading trip';
         });
 
-      // Start real-time polling for this trip
       startRTPolling(tripId);
     }
 
@@ -654,11 +677,9 @@
       document.getElementById('rtPulse').className = '';
       document.getElementById('rtPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      // Fetch immediately, then every 5 s
       fetchRTLocation();
       rtIntervalId = setInterval(fetchRTLocation, 10000);
 
-      // Tick the "X ago" label every second
       rtRelativeId = setInterval(() => {
         if (rtLastVehTs) {
           document.getElementById('rtTimestamp').textContent =
@@ -693,7 +714,6 @@
     }
 
     function renderRTData(data) {
-      // Find the matching entity (first vehicle entry)
       const entity = (data.entity || []).find(e => e.vehicle);
       if (!entity) {
         document.getElementById('rtPulse').className = 'error';
@@ -708,7 +728,6 @@
       const pos   = veh.position || {};
       const info  = veh.vehicle || {};
 
-      // Populate rows
       set('rv-id',      info.id     || entity.id || '—');
       set('rv-route',   trip.route_id   || '—');
       set('rv-trip',    trip.trip_id    || '—');
@@ -723,12 +742,10 @@
           ? veh.occupancy_status.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase())
           : '—');
 
-      // Status badge — now includes the stop ID in the label
       const [label, cls] = fmtStatus(veh.current_status, veh.stop_id);
       document.getElementById('rv-status').innerHTML =
         `<span class="rt-badge ${cls}">${label}</span>`;
 
-      // Store vehicle timestamp and update the "X ago" label immediately
       const ts = veh.timestamp || data.header?.timestamp;
       if (ts) {
         rtLastVehTs = ts;
@@ -759,6 +776,57 @@
     function set(id, val) {
       const el = document.getElementById(id);
       if (el) el.textContent = val;
+    }
+
+    // ── RT stop departures overlay ──────────────────────────────────────────
+
+    function loadRTStopUpdates(stopId) {
+      fetch(`/api/rt/stop/${stopId}`)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(applyRTtoDepartures)
+        .catch(() => {});
+    }
+
+    function applyRTtoDepartures(data) {
+      const entities = data.entity || [];
+      entities.forEach(e => {
+        const tu = e.trip_update;
+        if (!tu) return;
+        const tripId = tu.trip?.trip_id;
+        if (!tripId) return;
+
+        // Use the first stop_time_update entry for delay
+        const stu = tu.stop_time_update?.[0];
+        const delay = stu?.departure?.delay ?? stu?.arrival?.delay ?? null;
+
+        const card = document.querySelector(`.dep-card[data-trip-id="${tripId}"]`);
+        if (!card) return;
+
+        card.classList.add('rt-live');
+
+        let badge = card.querySelector('.rt-delay-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'rt-delay-badge';
+          card.appendChild(badge);
+        }
+
+        if (delay === null) {
+          badge.textContent = '● Live';
+          badge.className = 'rt-delay-badge rt-live-only';
+        } else if (delay <= 0) {
+          const mins = Math.abs(Math.round(delay / 60));
+          badge.textContent = mins > 0 ? `▲ ${mins}m early` : '✓ On time';
+          badge.className = 'rt-delay-badge rt-ontime';
+        } else {
+          const mins = Math.round(delay / 60);
+          badge.textContent = `+${mins}m delay`;
+          badge.className = 'rt-delay-badge rt-delayed';
+        }
+      });
     }
 
     // ───────────────────────────────────────────────────────────────────────
@@ -794,6 +862,7 @@
       sorted.forEach(dep => {
         const card = document.createElement('div');
         card.className = 'dep-card';
+        card.dataset.tripId = dep.trip_id;
 
         const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent)';
 
@@ -816,6 +885,9 @@
       window.stopMarker = L.marker([data.lat, data.lon]).addTo(map);
       window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
       map.setView([data.lat, data.lon], 15);
+
+      // Fetch RT data and overlay delay badges on cards
+      loadRTStopUpdates(data.stop_id);
     }
 
     function showUserLocation() {

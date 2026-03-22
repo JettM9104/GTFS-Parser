@@ -90,3 +90,7 @@ static-gtfs/data/yrt_archive
 gtfs-rt/proto-conversion/decodeTrip
 gtfs-rt/proto-conversion/webserver-implementation/decodeTrip
 gtfs-rt/proto-conversion/webserver-implementation/decodeStop
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_stop.pb
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
