@@ -89,3 +89,4 @@ webserver/tiles
 static-gtfs/data/yrt_archive
 gtfs-rt/proto-conversion/decodeTrip
 gtfs-rt/proto-conversion/webserver-implementation/decodeTrip
+gtfs-rt/proto-conversion/webserver-implementation/decodeStop

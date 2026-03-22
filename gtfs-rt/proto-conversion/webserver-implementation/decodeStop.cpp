@@ -6,28 +6,28 @@
 #include <google/protobuf/util/json_util.h>
 #include <libgen.h>
 
-/* build commadn
-clang++ -std=c++17 decodeTrip.cpp gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeTrip
+/* build command
+clang++ -std=c++17 decodeStop.cpp ../transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeStop
 */
 using namespace std;
 using namespace transit_realtime;
 
 int main(int argc, char* argv[]) {
     std::string exeDir = dirname(argv[0]);
-    std::string outputPath = exeDir + "/downloaded_file.pb";
+    std::string outputPath = exeDir + "/downloaded_stop.pb";
 
-    std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/VehiclePositions";
+    std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/TripUpdates";
     system(cmd.c_str());
 
     if (argc != 2) {
-        cerr << "Usage: " << argv[0] << " <tripID>" << endl;
+        cerr << "Usage: " << argv[0] << " <stopID>" << endl;
         return 1;
     }
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    string inputFile = exeDir + "/downloaded_file.pb";
-    string targetTripId = argv[1];
+    string inputFile = exeDir + "/downloaded_stop.pb";
+    string targetStopId = argv[1];
 
     fstream input(inputFile, ios::in | ios::binary);
     if (!input) {
@@ -48,21 +48,27 @@ int main(int argc, char* argv[]) {
     for (const auto& entity : feed.entity()) {
         bool matches = false;
 
-        if (entity.has_trip_update() &&
-            entity.trip_update().has_trip() &&
-            entity.trip_update().trip().trip_id() == targetTripId) {
-            matches = true;
+        // Check trip_update stop_time_updates for matching stop_id
+        if (entity.has_trip_update()) {
+            for (const auto& stu : entity.trip_update().stop_time_update()) {
+                if (stu.stop_id() == targetStopId) {
+                    matches = true;
+                    break;
+                }
+            }
         }
 
-        if (entity.has_vehicle() &&
-            entity.vehicle().has_trip() &&
-            entity.vehicle().trip().trip_id() == targetTripId) {
-            matches = true;
+        // Check vehicle position current stop
+        if (entity.has_vehicle()) {
+            if (entity.vehicle().stop_id() == targetStopId) {
+                matches = true;
+            }
         }
 
+        // Check alerts for matching stop
         if (entity.has_alert()) {
             for (const auto& selector : entity.alert().informed_entity()) {
-                if (selector.trip().trip_id() == targetTripId) {
+                if (selector.stop_id() == targetStopId) {
                     matches = true;
                     break;
                 }
@@ -76,10 +82,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (!found) {
-        cerr << "No entities found for trip ID: " << targetTripId << endl;
+        cerr << "No entities found for stop ID: " << targetStopId << endl;
         return 1;
     }
-    
+
     google::protobuf::util::JsonPrintOptions options;
     options.add_whitespace = true;
     options.always_print_primitive_fields = true;

@@ -656,7 +656,7 @@
 
       // Fetch immediately, then every 5 s
       fetchRTLocation();
-      rtIntervalId = setInterval(fetchRTLocation, 5000);
+      rtIntervalId = setInterval(fetchRTLocation, 10000);
 
       // Tick the "X ago" label every second
       rtRelativeId = setInterval(() => {

@@ -49,6 +49,17 @@ def get_rt_location(tripID):
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/rt/stop/<stopID>')
+def get_rt_stop(stopID):
+    try:
+        result = subprocess.run(['../gtfs-rt/proto-conversion/webserver-implementation/./decodeStop', stopID], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/')
 def index():
