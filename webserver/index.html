@@ -16,6 +16,7 @@
       --accent2: #bbbbbb;
       --accent3: #5db0e4;
       --negative: #ff0000;
+      --neutral: #bdbdbd;
       --positive: #1bd446;
       --text: #e8eaf2;
       --text-muted: #c7c7c7;
@@ -58,6 +59,7 @@
       padding: 14px 16px 10px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
+      color: var(--text-muted);
     }
 
     #sidebar-header h1 {
@@ -392,7 +394,7 @@
     #rtPulse {
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--accent3);
+      background: var(--positive);
       animation: rt-pulse 1.4s ease-in-out infinite;
     }
     @keyframes rt-pulse {
@@ -442,7 +444,7 @@
       text-transform: uppercase;
     }
     .rt-badge.in-transit  { background: rgba(91,240,176,0.15); color: var(--positive); }
-    .rt-badge.stopped     { background: rgba(91,138,240,0.15); color: var(--accent); }
+    .rt-badge.stopped     { background: rgba(91,138,240,0.15); color: var(--neutral); }
     .rt-badge.incoming    { background: rgba(240,91,138,0.15); color: var(--negative); }
 
     #rtTimestamp {
@@ -509,6 +511,7 @@
   <div id="map"></div>
   <div id="sidebar">
     <div id="sidebar-header">
+      <h1>GTFS Parser</h1>
     </div>
     <div id="sidebar-body">
 
