@@ -31,6 +31,7 @@ typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 typedef enum {in_use = 0, expired = -1, upcoming = 1, no_result = 10, no_result_a = 11, no_result_b = 12} feedStatus;
+typedef enum {week_calendar, day_calendar} calendarType;
 
 float π = 3.14159;
 
@@ -579,6 +580,16 @@ struct short_stop {
     int id;
 };
 
+struct service {
+    calendarType type;
+
+    calendarDate start_date;
+    calendarDate end_date;
+    
+    bool mon, tue, wed, thurs, fri, sat, sun;
+
+    calendarType special_date;
+};
 
 // MARK: DECLARATIONS
 double getDistanceKM(double pos1_lat, double pos1_lon, double pos2_lat, double pos2_lon);
@@ -616,6 +627,7 @@ std::vector<matchsearch> searchStopFromScoreAlg2(string name);                  
 std::vector<tripSegment> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
 std::vector<trip> getAllTrips(int routeID); 
+std::vector<service> getServiceInfo(string serviceID);
 
 // MARK: DEFINITION
 
@@ -2036,10 +2048,11 @@ std::vector<trip> getAllTrips(int routeID) {
             output.push_back(temp);
         }
     }
-
-    
-
     return output;
+}
+
+std::vector<service> getServiceInfo(string serviceID) {
+
 }
 }; // END OF NAMESPACE GTFS
 
