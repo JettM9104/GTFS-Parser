@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bus Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #000000;
+      --surface2: #181818;
+      --border: #454545;
+      --accent: #676767;
+      --accent2: #bbbbbb;
+      --accent3: #5db0e4;
+      --negative: #ff0000;
+      --neutral: #bdbdbd;
+      --positive: #1bd446;
+      --text: #e8eaf2;
+      --text-muted: #c7c7c7;
+      --radius: 10px;
+      --card-radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    #map {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    #sidebar {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 1000;
+      width: 300px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    #sidebar-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    #sidebar-header h1 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+    }
+
+    #sidebar-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .input-group input, .input-group button, .input-group select {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+    }
+
+    input[type="text"], input[type="date"], select {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      color: var(--text);
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
+    }
+
+    input[type="text"]::placeholder { color: var(--text-muted); }
+    input[type="text"]:focus, input[type="date"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--card-radius);
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #7aa3f7; }
+    button:active { transform: scale(0.97); }
+
+    button.secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.secondary:hover { background: var(--border); }
+
+    .input-row-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .field-block { display: flex; flex-direction: column; gap: 4px; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+
+    #tripInfo, #nearestStopsInfo {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    #tripInfo p { margin-bottom: 2px; }
+    #tripInfo b { color: var(--text); }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    #stopHeader {
+      display: none;
+    }
+    #stopHeader .stop-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    #stopHeader .stop-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-top: 2px;
+    }
+
+    #departuresGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .dep-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 9px 10px;
+      cursor: pointer;
+      transition:
+        border-color 0.18s,
+        background 0.18s,
+        transform 0.15s,
+        box-shadow 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dep-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(91,138,240,0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .dep-card:hover {
+      border-color: var(--accent);
+      background: #1e2235;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(91,138,240,0.2);
+    }
+
+    .dep-card:hover::before { opacity: 1; }
+
+    .dep-card:active { transform: scale(0.98); }
+
+    .dep-card.active {
+      border-color: var(--accent);
+      background: #1e2235;
+      box-shadow: 0 0 0 2px rgba(91,138,240,0.35);
+    }
+
+    .dep-route {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dep-time {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .dep-trip {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-top: 3px;
+    }
+
+    .dep-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── RT delay badges on departure cards ── */
+    .rt-delay-badge {
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 5px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      display: inline-block;
+      letter-spacing: 0.03em;
+      position: relative;
+      z-index: 1;
+    }
+    .rt-ontime   { background: rgba(91,240,176,0.15); color: var(--positive); }
+    .rt-delayed  { background: rgba(240,91,138,0.15); color: var(--negative); }
+    .rt-live-only { background: rgba(91,138,240,0.15); color: var(--positive); }
+
+    /* subtle glow on cards that have live data */
+    .dep-card.rt-live {
+      border-color: rgba(91,240,176,0.3);
+    }
+    .dep-card.rt-live:hover {
+      border-color: var(--accent3);
+      box-shadow: 0 6px 20px rgba(91,240,176,0.15);
+    }
+
+    .nearest-stop-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 7px 10px;
+      font-size: 12.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .nearest-stop-item:hover {
+      border-color: var(--accent2);
+      transform: translateX(3px);
+    }
+    .nearest-stop-item .ns-id { color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 12px; }
+    .nearest-stop-item .ns-dist { color: var(--text-muted); font-size: 11px; }
+
+    .date-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .date-row input[type="date"] { flex: 1; }
+    .date-row button { padding: 7px 10px; font-size: 12px; }
+
+    #sidebar-body::-webkit-scrollbar { width: 4px; }
+    #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .leaflet-control-zoom a {
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(15,17,23,0.7) !important;
+      color: var(--text-muted) !important;
+    }
+
+    .user-location-marker div {
+      width: 16px; height: 16px;
+      background: var(--accent);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(91,138,240,0.6);
+    }
+
+    button.pick-mode-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 100%;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    button.pick-mode-btn:hover { background: var(--border); }
+    button.pick-mode-btn.active {
+      background: rgba(240,91,138,0.15);
+      border-color: var(--negative);
+      color: var(--negaitve);
+    }
+
+    #map.pick-mode { cursor: crosshair !important; }
+    #map.pick-mode .leaflet-interactive { cursor: crosshair !important; }
+
+    .click-pin-marker div {
+      width: 14px; height: 14px;
+      background: var(--accent2, #f05b8a);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(240,91,138,0.5);
+      animation: pin-pulse 1.6s ease-out infinite;
+    }
+    @keyframes pin-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(240,91,138,0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(240,91,138,0); }
+      100% { box-shadow: 0 0 0 0 rgba(240,91,138,0); }
+    }
+
+    /* ── Live vehicle panel ── */
+    #rtPanel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    #rtPanel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #rtPanel-header .rt-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent3);
+    }
+
+    #rtPulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--positive);
+      animation: rt-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes rt-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.75); }
+    }
+    #rtPulse.error { background: var(--negative); animation: none; opacity: 0.7; }
+
+    #rtBody {
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+
+    .rt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .rt-row .rt-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .rt-row .rt-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rt-badge {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .rt-badge.in-transit  { background: rgba(91,240,176,0.15); color: var(--positive); }
+    .rt-badge.stopped     { background: rgba(91,138,240,0.15); color: var(--neutral); }
+    .rt-badge.incoming    { background: rgba(240,91,138,0.15); color: var(--negative); }
+
+    #rtTimestamp {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 6px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .vehicle-rt-marker div {
+      width: 18px; height: 18px;
+      background: var(--accent3, #5bf0b0);
+      border: 2.5px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(91,240,176,0.5);
+      animation: veh-pulse 1.8s ease-out infinite;
+    }
+    @keyframes veh-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(91,240,176,0.55); }
+      70%  { box-shadow: 0 0 0 12px rgba(91,240,176,0); }
+      100% { box-shadow: 0 0 0 0 rgba(91,240,176,0); }
+    }
+
+    /* ── Departures section header row ── */
+    #departuresSectionHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    #departuresSectionHeader .section-title {
+      margin-bottom: 0;
+    }
+
+    #showAllDepsBtn {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    #showAllDepsBtn:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+      background: var(--border);
+    }
+
+    #depWindowLabel {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h1>GTFS Parser</h1>
+    </div>
+    <div id="sidebar-body">
+
+      <!-- Trip lookup -->
+      <div class="field-block">
+        <div class="input-row-label">Trip</div>
+        <div class="input-group">
+          <input type="text" id="tripIdInput" placeholder="Trip ID" />
+          <button id="loadTripBtn">Go</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Stop lookup -->
+      <div class="field-block">
+        <div class="input-row-label">Stop</div>
+        <div class="input-group">
+          <input type="text" id="stopIdInput" placeholder="Stop ID" />
+          <button id="loadStopBtn">Go</button>
+        </div>
+      </div>
+
+      <!-- Date picker for departures -->
+      <div class="field-block">
+        <div class="input-row-label">Date</div>
+        <div class="date-row">
+          <input type="date" id="dateInput" />
+          <button class="secondary" id="todayBtn">Today</button>
+        </div>
+      </div>
+
+      <!-- Stop header (shown after a stop is loaded) -->
+      <div id="stopHeader">
+        <div class="stop-name" id="stopNameDisplay"></div>
+        <div class="stop-meta" id="stopMetaDisplay"></div>
+      </div>
+
+      <!-- Departures grid -->
+      <div id="departuresSection" style="display:none">
+        <div id="departuresSectionHeader">
+          <div class="section-title">Departures</div>
+          <button id="showAllDepsBtn">Show all</button>
+        </div>
+        <div id="depWindowLabel"></div>
+        <div id="departuresGrid"></div>
+      </div>
+
+      <!-- Trip info (shown after a trip is loaded) -->
+      <div id="tripInfo"></div>
+
+      <!-- ── Live vehicle panel ── -->
+      <div id="rtPanel" style="display:none">
+        <div id="rtPanel-header">
+          <span class="rt-title">Live Vehicle</span>
+          <span id="rtPulse"></span>
+        </div>
+        <div id="rtBody">
+          <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="rv-id">—</span></div>
+          <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="rv-route">—</span></div>
+          <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="rv-trip">—</span></div>
+          <div class="rt-row"><span class="rt-label">Direction</span><span class="rt-val" id="rv-dir">—</span></div>
+          <div class="rt-row"><span class="rt-label">Start</span><span class="rt-val" id="rv-start">—</span></div>
+          <div class="rt-row"><span class="rt-label">Status</span><span class="rt-val" id="rv-status">—</span></div>
+          <div class="rt-row"><span class="rt-label">Stop seq</span><span class="rt-val" id="rv-seq">—</span></div>
+          <div class="rt-row"><span class="rt-label">Next stop</span><span class="rt-val" id="rv-stop">—</span></div>
+          <div class="rt-row"><span class="rt-label">Lat / Lon</span><span class="rt-val" id="rv-pos">—</span></div>
+          <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="rv-bearing">—</span></div>
+          <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="rv-speed">—</span></div>
+          <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="rv-occ">—</span></div>
+          <div id="rtTimestamp"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Nearest stops -->
+      <div class="field-block">
+        <div class="input-row-label">Find Nearest</div>
+        <div class="input-group" style="flex-direction:column">
+          <input type="text" id="latInput" placeholder="Lat" />
+          <input type="text" id="lonInput" placeholder="Lon" />
+        </div>
+        <div class="input-group" style="margin-top:4px">
+          <button id="findNearestBtn" class="secondary" style="flex:1">Search</button>
+          <button id="useMyLocationBtn" class="secondary" style="flex:1">My Location</button>
+        </div>
+      </div>
+
+      <button id="showLocationBtn" class="secondary" style="width:100%">Show My Location on Map</button>
+      <button id="pickModeBtn" class="pick-mode-btn">Click Map to Find Nearest Stops</button>
+
+      <div id="nearestStopsInfo"></div>
+
+    </div>
+  </div>
+
+  <script>
+    let map;
+    let stopMarkers = [];
+    let polyline;
+    let activeDepCard = null;
+
+    // ── RT state ──
+    let rtIntervalId = null;
+    let rtRelativeId = null;
+    let rtLastVehTs  = null;
+    let rtTripId = null;
+    let vehicleRTMarker = null;
+
+    // ── Departures state ──
+    let allDepartures = [];
+    let showingAllDeps = false;
+
+    const token = new URLSearchParams(window.location.search).get('token');
+
+    function apiFetch(url, options = {}) {
+      return fetch(url, {
+        ...options,
+        headers: { ...options.headers, 'X-Auth-Token': token }
+      });
+    }
+
+    function todayStr() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+
+    function parseTime(t) {
+      const parts = t.split(':').map(Number);
+      return parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+    }
+
+    function fmtTime(t) {
+      const parts = t.split(':').map(Number);
+      let h = parts[0] % 24;
+      const m = String(parts[1]).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
+    function fmtUnixTime(ts) {
+      const d = new Date(Number(ts) * 1000);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function timeAgo(unixSec) {
+      const diff = Math.floor(Date.now() / 1000) - Number(unixSec);
+      if (diff < 5)    return 'just now';
+      if (diff < 60)   return `${diff}s ago`;
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ${diff % 60}s ago`;
+      return `${Math.floor(diff / 3600)}h ago`;
+    }
+
+    function fmtStatus(s, stopId) {
+      const stop = stopId ? ` #${stopId}` : '';
+      switch (s) {
+        case 'IN_TRANSIT_TO':  return [`In transit to stop${stop}`, 'in-transit'];
+        case 'STOPPED_AT':     return [`Stopped at stop${stop}`,    'stopped'];
+        case 'INCOMING_AT':    return [`Incoming to stop${stop}`,   'incoming'];
+        default:               return [s, 'in-transit'];
+      }
+    }
+
+    // Returns current time in seconds since midnight (handles "today" based on the selected date)
+    function nowInSeconds() {
+      const now = new Date();
+      return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    }
+
+    // Filter to departures within the next 3 hours from current time
+    function filterNext3h(departures) {
+      const now = nowInSeconds();
+      const cutoff = now + 3 * 3600;
+      return departures.filter(dep => {
+        const t = parseTime(dep.arrival_time);
+        return t >= now && t <= cutoff;
+      });
+    }
+
+    function initMap() {
+      map = L.map('map').setView([43.7, -79.4], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    function loadTrip(tripId, cardEl) {
+      if (activeDepCard) activeDepCard.classList.remove('active');
+      if (cardEl) { cardEl.classList.add('active'); activeDepCard = cardEl; }
+
+      apiFetch(`/api/trip/${tripId}`)
+        .then(r => r.json())
+        .then(displayTrip)
+        .catch(() => {
+          document.getElementById('tripInfo').textContent = 'Error loading trip';
+        });
+
+      startRTPolling(tripId);
+    }
+
+    function displayTrip(data) {
+      stopMarkers.forEach(m => map.removeLayer(m));
+      stopMarkers = [];
+      if (polyline) map.removeLayer(polyline);
+
+      document.getElementById('tripInfo').innerHTML = `
+        <div class="section-title" style="margin-top:4px">Trip Info</div>
+        <p><b>ID</b>: ${data.trip_id}</p>
+        <p><b>Route</b>: ${data.route_short_name} — ${data.route_long_name}</p>
+        <p><b>Stops</b>: ${data.total}</p>
+      `;
+
+      const latlngs = data.pos_markers.map(p => [p.lat, p.lng]);
+      polyline = L.polyline(latlngs, { color: data.route_color, weight: 4, opacity: 0.85 }).addTo(map);
+
+      if (latlngs.length) map.fitBounds(L.latLngBounds(latlngs));
+
+      data.stops.forEach(stop => {
+        const m = L.circleMarker([stop.lat, stop.lng], {
+          color: data.route_color, fillColor: data.route_color,
+          fillOpacity: 0.8, radius: 5, weight: 2
+        }).addTo(map);
+        m.bindPopup(`Stop ID: ${stop.id}<br>Time: ${stop.time}`);
+        stopMarkers.push(m);
+      });
+    }
+
+    // ── Real-time vehicle location ──────────────────────────────────────────
+
+    function startRTPolling(tripId) {
+      stopRTPolling();
+
+      rtTripId    = tripId;
+      rtLastVehTs = null;
+      document.getElementById('rtPanel').style.display = 'block';
+      document.getElementById('rtPulse').className = '';
+      document.getElementById('rtPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      fetchRTLocation();
+      rtIntervalId = setInterval(fetchRTLocation, 10000);
+
+      rtRelativeId = setInterval(() => {
+        if (rtLastVehTs) {
+          document.getElementById('rtTimestamp').textContent =
+            `GPS ${fmtUnixTime(rtLastVehTs)} · ${timeAgo(rtLastVehTs)}`;
+        }
+      }, 1000);
+    }
+
+    function stopRTPolling() {
+      if (rtIntervalId !== null) { clearInterval(rtIntervalId); rtIntervalId = null; }
+      if (rtRelativeId !== null) { clearInterval(rtRelativeId); rtRelativeId = null; }
+      rtLastVehTs = null;
+      if (vehicleRTMarker) {
+        map.removeLayer(vehicleRTMarker);
+        vehicleRTMarker = null;
+      }
+    }
+
+    function fetchRTLocation() {
+      if (!rtTripId) return;
+
+      apiFetch(`/api/rt/location/${rtTripId}`)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(renderRTData)
+        .catch(err => {
+          document.getElementById('rtPulse').className = 'error';
+          document.getElementById('rtTimestamp').textContent = `Error: ${err.message}`;
+        });
+    }
+
+    function renderRTData(data) {
+      const entity = (data.entity || []).find(e => e.vehicle);
+      if (!entity) {
+        document.getElementById('rtPulse').className = 'error';
+        document.getElementById('rtTimestamp').textContent = 'No vehicle data in feed';
+        return;
+      }
+
+      document.getElementById('rtPulse').className = '';
+
+      const veh   = entity.vehicle;
+      const trip  = veh.trip  || {};
+      const pos   = veh.position || {};
+      const info  = veh.vehicle || {};
+
+      set('rv-id',      info.id     || entity.id || '—');
+      set('rv-route',   trip.route_id   || '—');
+      set('rv-trip',    trip.trip_id    || '—');
+      set('rv-dir',     trip.direction_id != null ? (trip.direction_id === 0 ? '0 — Outbound' : '1 — Inbound') : '—');
+      set('rv-start',   trip.start_time ? `${trip.start_time} · ${trip.start_date || ''}` : '—');
+      set('rv-seq',     veh.current_stop_sequence != null ? String(veh.current_stop_sequence) : '—');
+      set('rv-stop',    veh.stop_id  || '—');
+      set('rv-pos',     pos.latitude != null ? `${pos.latitude}, ${pos.longitude}` : '—');
+      set('rv-bearing', pos.bearing  != null ? `${pos.bearing}°` : '—');
+      set('rv-speed',   pos.speed    != null ? `${(pos.speed * 3.6).toFixed(1)} km/h` : '—');
+      set('rv-occ',     veh.occupancy_status
+          ? veh.occupancy_status.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase())
+          : '—');
+
+      const [label, cls] = fmtStatus(veh.current_status, veh.stop_id);
+      document.getElementById('rv-status').innerHTML =
+        `<span class="rt-badge ${cls}">${label}</span>`;
+
+      const ts = veh.timestamp || data.header?.timestamp;
+      if (ts) {
+        rtLastVehTs = ts;
+        document.getElementById('rtTimestamp').textContent =
+          `GPS ${fmtUnixTime(ts)} · ${timeAgo(ts)}`;
+      }
+
+      if (pos.latitude != null && pos.longitude != null) {
+        const latlng  = [pos.latitude, pos.longitude];
+        const popupTxt = `<b>Vehicle ${info.id || entity.id}</b><br>Route ${trip.route_id}<br>${label}`;
+
+        if (!vehicleRTMarker) {
+          const icon = L.divIcon({
+            className: 'vehicle-rt-marker',
+            html: '<div></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+          });
+          vehicleRTMarker = L.marker(latlng, { icon, zIndexOffset: 1000 }).addTo(map);
+          vehicleRTMarker.bindPopup(popupTxt);
+        } else {
+          vehicleRTMarker.setLatLng(latlng);
+          vehicleRTMarker.setPopupContent(popupTxt);
+        }
+      }
+    }
+
+    function set(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+
+    // ── RT stop departures overlay ──────────────────────────────────────────
+
+    function loadRTStopUpdates(stopId) {
+      apiFetch(`/api/rt/stop/${stopId}`)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(applyRTtoDepartures)
+        .catch(() => {});
+    }
+
+    function applyRTtoDepartures(data) {
+      const entities = data.entity || [];
+      entities.forEach(e => {
+        const tu = e.trip_update;
+        if (!tu) return;
+        const tripId = tu.trip?.trip_id;
+        if (!tripId) return;
+
+        const stu = tu.stop_time_update?.[0];
+        const delay = stu?.departure?.delay ?? stu?.arrival?.delay ?? null;
+
+        const card = document.querySelector(`.dep-card[data-trip-id="${tripId}"]`);
+        if (!card) return;
+
+        card.classList.add('rt-live');
+
+        let badge = card.querySelector('.rt-delay-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'rt-delay-badge';
+          card.appendChild(badge);
+        }
+
+        if (delay === null) {
+          badge.textContent = 'Live';
+          badge.className = 'rt-delay-badge rt-live-only';
+        } else if (delay <= 0) {
+          const mins = Math.abs(Math.round(delay / 60));
+          badge.textContent = mins > 0 ? `${mins}m early` : 'On time';
+          badge.className = 'rt-delay-badge rt-ontime';
+        } else {
+          const mins = Math.round(delay / 60);
+          badge.textContent = `+${mins}m delay`;
+          badge.className = 'rt-delay-badge rt-delayed';
+        }
+      });
+    }
+
+    // ── Departures rendering ────────────────────────────────────────────────
+
+    function renderDepartureCards(departures, stopId) {
+      const grid = document.getElementById('departuresGrid');
+      grid.innerHTML = '';
+
+      departures.forEach(dep => {
+        const card = document.createElement('div');
+        card.className = 'dep-card';
+        card.dataset.tripId = dep.trip_id;
+
+        const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent)';
+
+        card.innerHTML = `
+          <div class="dep-route">
+            <span class="dep-dot" style="background:${color}"></span>
+            Route ${dep.route_id}
+          </div>
+          <div class="dep-time">${fmtTime(dep.arrival_time)}</div>
+          <div class="dep-trip">Trip ${dep.trip_id}</div>
+        `;
+
+        card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+        grid.appendChild(card);
+      });
+
+      loadRTStopUpdates(stopId);
+    }
+
+    function updateDeparturesView(stopId) {
+      const btn = document.getElementById('showAllDepsBtn');
+      const label = document.getElementById('depWindowLabel');
+
+      if (showingAllDeps) {
+        renderDepartureCards(allDepartures, stopId);
+        btn.textContent = 'Next 3h only';
+        label.textContent = `${allDepartures.length} departure${allDepartures.length !== 1 ? 's' : ''} total`;
+      } else {
+        const filtered = filterNext3h(allDepartures);
+        renderDepartureCards(filtered, stopId);
+        btn.textContent = filtered.length < allDepartures.length ? `Show all ${allDepartures.length}` : 'Show all';
+        if (filtered.length === 0) {
+          label.textContent = 'No departures in the next 3 hours';
+        } else {
+          label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length !== 1 ? 's' : ''}`;
+        }
+      }
+
+      document.getElementById('departuresSection').style.display = 'block';
+    }
+
+    // ───────────────────────────────────────────────────────────────────────
+
+    function loadStop(stopId) {
+      const date = document.getElementById('dateInput').value || todayStr();
+      const url = `/api/stop/${stopId}/${date}`;
+
+      apiFetch(url)
+        .then(r => r.json())
+        .then(data => displayStop(data))
+        .catch(() => {
+          document.getElementById('stopHeader').style.display = 'none';
+          document.getElementById('departuresSection').style.display = 'none';
+        });
+    }
+
+    // Holds the current stop ID so the "Show all" button can re-render
+    let currentStopId = null;
+
+    function displayStop(data) {
+      if (window.stopMarker) map.removeLayer(window.stopMarker);
+
+      const hdr = document.getElementById('stopHeader');
+      hdr.style.display = 'block';
+      document.getElementById('stopNameDisplay').textContent = data.stop_name;
+      document.getElementById('stopMetaDisplay').textContent =
+        `Stop ${data.stop_code}  ·  ID ${data.stop_id}  ·  ${data.lat}, ${data.lon}`;
+
+      allDepartures = [...data.departures].sort((a, b) =>
+        parseTime(a.arrival_time) - parseTime(b.arrival_time)
+      );
+
+      // Reset to filtered view whenever a new stop is loaded
+      showingAllDeps = false;
+      currentStopId = data.stop_id;
+
+      updateDeparturesView(data.stop_id);
+
+      window.stopMarker = L.marker([data.lat, data.lon]).addTo(map);
+      window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
+      map.setView([data.lat, data.lon], 15);
+    }
+
+    document.getElementById('showAllDepsBtn').addEventListener('click', () => {
+      showingAllDeps = !showingAllDeps;
+      if (currentStopId) updateDeparturesView(currentStopId);
+    });
+
+    function showUserLocation() {
+      navigator.geolocation?.getCurrentPosition(pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
+
+        const icon = L.divIcon({
+          className: 'user-location-marker',
+          html: '<div></div>',
+          iconSize: [16, 16], iconAnchor: [8, 8]
+        });
+        window.userLocationMarker = L.marker([lat, lon], { icon }).addTo(map);
+        window.userLocationMarker.bindPopup('Your Location');
+        map.setView([lat, lon], 15);
+      }, () => alert('Unable to get your location.'));
+    }
+
+    function findNearestStops(lat, lon) {
+      apiFetch(`/api/nearest/${lat}/${lon}`)
+        .then(r => r.json())
+        .then(displayNearestStops)
+        .catch(() => {
+          document.getElementById('nearestStopsInfo').textContent = 'Error finding stops';
+        });
+    }
+
+    function displayNearestStops(data) {
+      if (window.nearestStopsMarkers)
+        window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
+      window.nearestStopsMarkers = [];
+
+      const container = document.getElementById('nearestStopsInfo');
+      container.innerHTML = `<div class="section-title" style="margin-bottom:6px">Nearest Stops</div>`;
+
+      const list = document.createElement('div');
+      list.style.display = 'flex';
+      list.style.flexDirection = 'column';
+      list.style.gap = '5px';
+
+      data.nearest_stops.forEach(stop => {
+        const item = document.createElement('div');
+        item.className = 'nearest-stop-item';
+        item.innerHTML = `
+          <span class="ns-id">${stop.stop_id}</span>
+          <span class="ns-dist">${stop.distanceKM.toFixed(2)} km</span>
+        `;
+        item.addEventListener('click', () => {
+          document.getElementById('stopIdInput').value = stop.stop_id;
+          loadStop(stop.stop_id);
+        });
+        list.appendChild(item);
+
+        const m = L.circleMarker([stop.stop_lat, stop.stop_lon], {
+          color: '#f05b8a', fillColor: '#f05b8a',
+          fillOpacity: 0.75, radius: 7, weight: 2
+        }).addTo(map);
+        m.bindPopup(`Stop ${stop.stop_id} · ${stop.distanceKM.toFixed(2)} km`);
+        window.nearestStopsMarkers.push(m);
+      });
+
+      container.appendChild(list);
+
+      if (data.nearest_stops.length) {
+        const bounds = L.latLngBounds(
+          data.nearest_stops.map(s => [s.stop_lat, s.stop_lon])
+        );
+        map.fitBounds(bounds.pad(0.15));
+      }
+    }
+
+    initMap();
+
+    const dateInput = document.getElementById('dateInput');
+    dateInput.value = todayStr();
+
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      dateInput.value = todayStr();
+    });
+
+    document.getElementById('loadTripBtn').addEventListener('click', () => {
+      const v = document.getElementById('tripIdInput').value.trim();
+      if (v) loadTrip(v, null);
+    });
+    document.getElementById('tripIdInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') document.getElementById('loadTripBtn').click();
+    });
+
+    document.getElementById('loadStopBtn').addEventListener('click', () => {
+      const v = document.getElementById('stopIdInput').value.trim();
+      if (v) loadStop(v);
+    });
+    document.getElementById('stopIdInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') document.getElementById('loadStopBtn').click();
+    });
+
+    dateInput.addEventListener('change', () => {
+      const v = document.getElementById('stopIdInput').value.trim();
+      if (v) loadStop(v);
+    });
+
+    document.getElementById('showLocationBtn').addEventListener('click', showUserLocation);
+
+    document.getElementById('findNearestBtn').addEventListener('click', () => {
+      const lat = document.getElementById('latInput').value.trim();
+      const lon = document.getElementById('lonInput').value.trim();
+      if (lat && lon) findNearestStops(lat, lon);
+      else alert('Please enter both latitude and longitude.');
+    });
+
+    document.getElementById('useMyLocationBtn').addEventListener('click', () => {
+      navigator.geolocation?.getCurrentPosition(pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        document.getElementById('latInput').value = lat;
+        document.getElementById('lonInput').value = lon;
+        findNearestStops(lat, lon);
+      }, () => alert('Unable to get your location.'));
+    });
+
+    let pickModeActive = false;
+    let clickPinMarker = null;
+
+    function setPickMode(on) {
+      pickModeActive = on;
+      const btn = document.getElementById('pickModeBtn');
+      const mapEl = document.getElementById('map');
+      if (on) {
+        btn.classList.add('active');
+        btn.textContent = 'Cancel';
+        mapEl.classList.add('pick-mode');
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = 'Click Map to Find Nearest Stops';
+        mapEl.classList.remove('pick-mode');
+      }
+    }
+
+    document.getElementById('pickModeBtn').addEventListener('click', () => {
+      setPickMode(!pickModeActive);
+    });
+
+    map.on('click', (e) => {
+      if (!pickModeActive) return;
+
+      const { lat, lng } = e.latlng;
+
+      document.getElementById('latInput').value = lat.toFixed(6);
+      document.getElementById('lonInput').value = lng.toFixed(6);
+
+      if (clickPinMarker) map.removeLayer(clickPinMarker);
+      const pinIcon = L.divIcon({
+        className: 'click-pin-marker',
+        html: '<div></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      });
+      clickPinMarker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+      clickPinMarker.bindPopup(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup();
+
+      findNearestStops(lat, lng);
+      setPickMode(false);
+    });
+  </script>
+</body>
+</html>
