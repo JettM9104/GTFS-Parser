@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> <!--line 629-->
 <html>
 <head>
   <title>Bus Map</title>
@@ -626,13 +626,22 @@
     let allDepartures = [];
     let showingAllDeps = false;
 
-  function todayStr() {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
+    const token = new URLSearchParams(window.location.search).get('token');
+
+    function apiFetch(url, options = {}) {
+      return fetch(url, {
+        ...options,
+        headers: { ...options.headers, 'X-Auth-Token': token }
+      });
+    }
+
+    function todayStr() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
 
     function parseTime(t) {
       const parts = t.split(':').map(Number);
@@ -698,7 +707,7 @@
       if (activeDepCard) activeDepCard.classList.remove('active');
       if (cardEl) { cardEl.classList.add('active'); activeDepCard = cardEl; }
 
-      fetch(`/api/trip/${tripId}`)
+      apiFetch(`/api/trip/${tripId}`)
         .then(r => r.json())
         .then(displayTrip)
         .catch(() => {
@@ -770,7 +779,7 @@
     function fetchRTLocation() {
       if (!rtTripId) return;
 
-      fetch(`/api/rt/location/${rtTripId}`)
+      apiFetch(`/api/rt/location/${rtTripId}`)
         .then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -850,7 +859,7 @@
     // ── RT stop departures overlay ──────────────────────────────────────────
 
     function loadRTStopUpdates(stopId) {
-      fetch(`/api/rt/stop/${stopId}`)
+      apiFetch(`/api/rt/stop/${stopId}`)
         .then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -954,7 +963,7 @@
       const date = document.getElementById('dateInput').value || todayStr();
       const url = `/api/stop/${stopId}/${date}`;
 
-      fetch(url)
+      apiFetch(url)
         .then(r => r.json())
         .then(data => displayStop(data))
         .catch(() => {
@@ -1012,7 +1021,7 @@
     }
 
     function findNearestStops(lat, lon) {
-      fetch(`/api/nearest/${lat}/${lon}`)
+      apiFetch(`/api/nearest/${lat}/${lon}`)
         .then(r => r.json())
         .then(displayNearestStops)
         .catch(() => {
