@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <iomanip>
+#include <cmath>
 
 
 #if CONFINFOEXISTS == 1
@@ -30,6 +31,7 @@ typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 typedef enum {in_use = 0, expired = -1, upcoming = 1, no_result = 10, no_result_a = 11, no_result_b = 12} feedStatus;
+typedef enum {week_calendar, day_calendar} calendarType;
 
 float π = 3.14159;
 
@@ -578,6 +580,16 @@ struct short_stop {
     int id;
 };
 
+struct service {
+    calendarType type;
+
+    calendarDate start_date;
+    calendarDate end_date;
+    
+    bool mon, tue, wed, thurs, fri, sat, sun;
+
+    calendarType special_date;
+};
 
 // MARK: DECLARATIONS
 double getDistanceKM(double pos1_lat, double pos1_lon, double pos2_lat, double pos2_lon);
@@ -614,6 +626,8 @@ std::vector<intstr> searchStopFromScoreAlg1(string name);                       
 std::vector<matchsearch> searchStopFromScoreAlg2(string name);                                                                  // searches stop matches using the levenstien distance function
 std::vector<tripSegment> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
+std::vector<trip> getAllTrips(int routeID); 
+std::vector<service> getServiceInfo(string serviceID);
 
 // MARK: DEFINITION
 
@@ -2005,7 +2019,41 @@ std::vector<stop> getNearestStops(double lat, double lon) {
     return output;
 }
 
+std::vector<trip> getAllTrips(int routeID) {
+    string strRouteID = std::to_string(routeID);
+    std::vector<trip> output;
+    ifstream tripFile = ifstream(tripPath);
 
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+
+    std::map<string, int> refs;
+
+    int lineNumber = 0;
+    while (getline(tripFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        lineNumber++;
+
+        if (lineNumber == 1) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["route_id"]] == strRouteID) {
+            trip temp;
+            temp.trip_id = std::stoi(parsedCurrentLine[refs["trip_id"]]);
+
+            output.push_back(temp);
+        }
+    }
+    return output;
+}
+
+std::vector<service> getServiceInfo(string serviceID) {
+
+}
 }; // END OF NAMESPACE GTFS
 
 #endif
