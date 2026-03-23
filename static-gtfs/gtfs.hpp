@@ -615,6 +615,7 @@ std::vector<intstr> searchStopFromScoreAlg1(string name);                       
 std::vector<matchsearch> searchStopFromScoreAlg2(string name);                                                                  // searches stop matches using the levenstien distance function
 std::vector<tripSegment> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
+std::vector<trip> getAllTrips(int routeID); 
 
 // MARK: DEFINITION
 
@@ -2006,7 +2007,40 @@ std::vector<stop> getNearestStops(double lat, double lon) {
     return output;
 }
 
+std::vector<trip> getAllTrips(int routeID) {
+    string strRouteID = std::to_string(routeID);
+    std::vector<trip> output;
+    ifstream tripFile = ifstream(tripPath);
 
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+
+    std::map<string, int> refs;
+
+    int lineNumber = 0;
+    while (getline(tripFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        lineNumber++;
+
+        if (lineNumber == 1) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["route_id"]] == strRouteID) {
+            trip temp;
+            temp.trip_id = std::stoi(parsedCurrentLine[refs["trip_id"]]);
+
+            output.push_back(temp);
+        }
+    }
+
+    
+
+    return output;
+}
 }; // END OF NAMESPACE GTFS
 
 #endif

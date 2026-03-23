@@ -7,7 +7,15 @@ using namespace std;
 
 
 int main(int argc, char* argv[]) {
-    gtfs::feedStatus x = verifyGTFS(2028, 3, 1);
+    std::vector<gtfs::trip> x = getAllTrips(9102);
 
-    cout << x;
+    for (trip y : x) {
+        cout << y.trip_id << " ";
+    }
+
+    x[0] = gtfs::getTripInfo(x[0].trip_id);
+
+    cout << x[0].service_id << endl;
+
+    gtfs::
 }
