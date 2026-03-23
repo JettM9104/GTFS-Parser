@@ -96,3 +96,6 @@ gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
 webserver/t_confidental_info.py
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
+gtfs-rt/proto-conversion/webserver-implementation/decodeTrip
+gtfs-rt/proto-conversion/webserver-implementation/decodeStop
+webserver/t_confidental_info.py
