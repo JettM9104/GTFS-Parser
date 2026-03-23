@@ -17,5 +17,5 @@ int main(int argc, char* argv[]) {
 
     cout << x[0].service_id << endl;
 
-    gtfs::
+    return 0;
 }
