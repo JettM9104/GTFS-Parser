@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <iomanip>
+#include <cmath>
 
 
 #if CONFINFOEXISTS == 1
