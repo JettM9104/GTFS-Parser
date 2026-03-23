@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "gtfs-realtime.pb.h"
+#include "transit-files/gtfs-realtime.pb.h"
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/util/json_util.h>
 
