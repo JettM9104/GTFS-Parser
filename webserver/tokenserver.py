@@ -7,7 +7,7 @@ from t_confidental_info import token
 
 app = Flask(__name__)
 
-SECRET_TOKEN = token  # generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+SECRET_TOKEN = token 
 
 def require_token(f):
     @wraps(f)
