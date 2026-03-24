@@ -31,7 +31,7 @@ typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
 typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
 typedef enum {in_use = 0, expired = -1, upcoming = 1, no_result = 10, no_result_a = 11, no_result_b = 12} feedStatus;
-typedef enum {week_calendar, day_calendar} calendarType;
+typedef enum {addition = 1, removal = 2} exceptionType;
 
 float π = 3.14159;
 
@@ -581,14 +581,18 @@ struct short_stop {
 };
 
 struct service {
-    calendarType type;
+    string service_id;
 
     calendarDate start_date;
     calendarDate end_date;
     
-    bool mon, tue, wed, thurs, fri, sat, sun;
+    bool mon, tue, wed, thu, fri, sat, sun;
 
-    calendarType special_date;
+    std::vector<std::pair<calendarDate, exceptionType>> special_dates;
+
+    service() {
+        service_id = "";
+    }
 };
 
 // MARK: DECLARATIONS
@@ -627,7 +631,7 @@ std::vector<matchsearch> searchStopFromScoreAlg2(string name);                  
 std::vector<tripSegment> getAllStops(int tripID);                                                                                      // given tripID, returns vector of all stops that the trip in the trip ID passes by.
 std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
 std::vector<trip> getAllTrips(int routeID); 
-std::vector<service> getServiceInfo(string serviceID);
+service getServiceInfo(string serviceID);                                   
 
 // MARK: DEFINITION
 
@@ -2051,8 +2055,68 @@ std::vector<trip> getAllTrips(int routeID) {
     return output;
 }
 
-std::vector<service> getServiceInfo(string serviceID) {
+service getServiceInfo(string serviceID) {
+    service output;
+    output.service_id = serviceID;
 
+    ifstream calendarFile = ifstream(calendarPath);
+    ifstream calendarDatesFile = ifstream(calendarDatesPath);
+
+    bool firstLine = true;
+    string currentLine;
+
+    std::vector<string> parsedCurrentLine;
+
+    std::map<string, int> refs;
+    while (getline(calendarFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            firstLine = false;
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["service_id"]] == serviceID) {
+            output.start_date = parseFormattedDate(parsedCurrentLine[refs["start_date"]]);
+            output.end_date = parseFormattedDate(parsedCurrentLine[refs["end_date"]]);
+
+            output.mon = static_cast<bool>(stoi(parsedCurrentLine[refs["monday"]]));
+            output.tue = static_cast<bool>(stoi(parsedCurrentLine[refs["tuesday"]]));
+            output.wed = static_cast<bool>(stoi(parsedCurrentLine[refs["wednesday"]]));
+            output.thu = static_cast<bool>(stoi(parsedCurrentLine[refs["thursday"]]));
+            output.fri = static_cast<bool>(stoi(parsedCurrentLine[refs["friday"]]));
+            output.sat = static_cast<bool>(stoi(parsedCurrentLine[refs["saturday"]]));
+            output.sun = static_cast<bool>(stoi(parsedCurrentLine[refs["sunday"]]));
+            break; // accoring to google the service id SHOULD show up only once in calendar.txt
+        }
+    }
+
+    calendarFile.close();
+
+    currentLine = "";
+    parsedCurrentLine = std::vector<string>(0);
+
+    while (getline(calendarDatesFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            firstLine = false;
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["service_id"]] == serviceID) {
+            exceptionType x = static_cast<exceptionType>(std::stoi(parsedCurrentLine[refs["exception_type"]]));
+            calendarDate y = parseFormattedDate(parsedCurrentLine[refs["date"]]);
+            continue;
+        }
+    }
+    return output;
 }
 }; // END OF NAMESPACE GTFS
 
