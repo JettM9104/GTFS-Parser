@@ -1117,22 +1117,18 @@ time24 parseFormattedTime(string input) {
 std::vector<string> parseDataCSV(const string& input) {
     std::vector<string> output;
     string additions;
-    unsigned int length = input.length();
 
-    for (int i = 0; i < length; i++) {
-        if (input.substr(i, 1) == ",") {
+    for (char c : input) {
+        if (c == ',') {
             output.push_back(additions);
-            additions = "";
-            continue;
+            additions.clear();
+        } else if (c != '\r') {
+            additions += c;
         }
-        additions += input.substr(i, 1);
-
-        if (i == length - 1) {
-            output.push_back(additions);
-            break;
-        }
-        
     }
+
+    output.push_back(additions);
+
     return output;
 }
 
@@ -2098,6 +2094,9 @@ service getServiceInfo(string serviceID) {
 
     currentLine = "";
     parsedCurrentLine = std::vector<string>(0);
+    firstLine = true;
+
+    refs = std::map<string, int>();
 
     while (getline(calendarDatesFile, currentLine)) {
         parsedCurrentLine = parseDataCSV(currentLine);
@@ -2105,17 +2104,21 @@ service getServiceInfo(string serviceID) {
         if (firstLine) {
             for (int i = 0; i < parsedCurrentLine.size(); i++) {
                 refs[parsedCurrentLine[i]] = i;
+                cout << parsedCurrentLine[i] << "->" << i << "\n";
             }
             firstLine = false;
+            
             continue;
         }
 
         if (parsedCurrentLine[refs["service_id"]] == serviceID) {
             exceptionType x = static_cast<exceptionType>(std::stoi(parsedCurrentLine[refs["exception_type"]]));
             calendarDate y = parseFormattedDate(parsedCurrentLine[refs["date"]]);
+            output.special_dates.push_back({y, x});
             continue;
         }
     }
+    calendarDatesFile.close();
     return output;
 }
 }; // END OF NAMESPACE GTFS
