@@ -31,13 +31,4 @@ int main(int argc, char* argv[]) {
     }
 
     
-
-    service y = getServiceInfo("152.0.1");
-    cout << y.sun << y.mon << y.tue << y.wed << y.thu << y.fri << y.sat << endl;
-
-    for (pair<calendarDate, exceptionType> x : y.special_dates) {
-        x.first.printInfo();
-        cout << endl;
-        cout << x.second << "\n\n\n";
-    }
 }

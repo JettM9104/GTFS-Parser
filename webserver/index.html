@@ -281,11 +281,11 @@
 
     /* subtle glow on cards that have live data */
     .dep-card.rt-live {
-      border-color: rgba(91,240,176,0.3);
+      border-color: var(--border);  /* was: rgba(91,240,176,0.3) */
     }
     .dep-card.rt-live:hover {
-      border-color: var(--accent3);
-      box-shadow: 0 6px 20px rgba(91,240,176,0.15);
+      border-color: var(--accent);  /* was: var(--accent3) — the teal/cyan color */
+      box-shadow: 0 6px 20px rgba(91,138,240,0.2);  /* was: rgba(91,240,176,0.15) */
     }
 
     .nearest-stop-item {
