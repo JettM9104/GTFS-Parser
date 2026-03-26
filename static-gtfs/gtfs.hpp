@@ -2105,7 +2105,6 @@ service getServiceInfo(string serviceID) {
         if (firstLine) {
             for (int i = 0; i < parsedCurrentLine.size(); i++) {
                 refs[parsedCurrentLine[i]] = i;
-                cout << parsedCurrentLine[i] << "->" << i << "\n";
             }
             firstLine = false;
             
