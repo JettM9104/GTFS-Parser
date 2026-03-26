@@ -281,11 +281,11 @@
 
     /* subtle glow on cards that have live data */
     .dep-card.rt-live {
-      border-color: var(--border);  /* was: rgba(91,240,176,0.3) */
+      border-color: var(--border);
     }
     .dep-card.rt-live:hover {
-      border-color: var(--accent);  /* was: var(--accent3) — the teal/cyan color */
-      box-shadow: 0 6px 20px rgba(91,138,240,0.2);  /* was: rgba(91,240,176,0.15) */
+      border-color: var(--accent);
+      box-shadow: 0 6px 20px rgba(91,138,240,0.2);
     }
 
     .nearest-stop-item {
@@ -506,6 +506,109 @@
       font-family: 'DM Mono', monospace;
       margin-bottom: 6px;
     }
+
+    /* ── Route trips section ── */
+    #routeTripsSection {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #routeTripsSectionHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #routeTripsSectionHeader .section-title {
+      margin-bottom: 0;
+    }
+
+    #routeTripsCount {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    #routeTripsGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    /* route trip card — same base as dep-card but accent-coloured differently */
+    .rt-trip-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 9px 10px;
+      cursor: pointer;
+      transition:
+        border-color 0.18s,
+        background 0.18s,
+        transform 0.15s,
+        box-shadow 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rt-trip-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(93,176,228,0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .rt-trip-card:hover {
+      border-color: var(--accent3);
+      background: #131c24;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(93,176,228,0.18);
+    }
+
+    .rt-trip-card:hover::before { opacity: 1; }
+    .rt-trip-card:active { transform: scale(0.98); }
+
+    .rt-trip-card.active {
+      border-color: var(--accent3);
+      background: #131c24;
+      box-shadow: 0 0 0 2px rgba(93,176,228,0.3);
+    }
+
+    .rt-trip-headsign {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent3);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rt-trip-id {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rt-trip-dir {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    #routeTripsError {
+      font-size: 12px;
+      color: var(--negative);
+      font-family: 'DM Mono', monospace;
+      padding: 6px 0;
+    }
   </style>
 </head>
 <body>
@@ -589,6 +692,27 @@
 
       <div class="divider"></div>
 
+      <!-- ── Route lookup ── -->
+      <div class="field-block">
+        <div class="input-row-label">Route</div>
+        <div class="input-group">
+          <input type="text" id="routeIdInput" placeholder="Route ID" />
+          <button id="loadRouteBtn">Search Trips</button>
+        </div>
+      </div>
+
+      <!-- Route trips results -->
+      <div id="routeTripsSection">
+        <div id="routeTripsSectionHeader">
+          <div class="section-title">Route Trips</div>
+          <span id="routeTripsCount"></span>
+        </div>
+        <div id="routeTripsError" style="display:none"></div>
+        <div id="routeTripsGrid"></div>
+      </div>
+
+      <div class="divider"></div>
+
       <!-- Nearest stops -->
       <div class="field-block">
         <div class="input-row-label">Find Nearest</div>
@@ -626,6 +750,10 @@
     // ── Departures state ──
     let allDepartures = [];
     let showingAllDeps = false;
+    let depsRefreshId = null;
+
+    // ── Route trips state ──
+    let activeRouteTripCard = null;
 
   function todayStr() {
     const d = new Date();
@@ -672,13 +800,11 @@
       }
     }
 
-    // Returns current time in seconds since midnight (handles "today" based on the selected date)
     function nowInSeconds() {
       const now = new Date();
       return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
     }
 
-    // Filter to departures within the next 3 hours from current time
     function filterNext3h(departures) {
       const now = nowInSeconds();
       const cutoff = now + 3 * 3600;
@@ -697,7 +823,17 @@
 
     function loadTrip(tripId, cardEl) {
       if (activeDepCard) activeDepCard.classList.remove('active');
-      if (cardEl) { cardEl.classList.add('active'); activeDepCard = cardEl; }
+      if (activeRouteTripCard) activeRouteTripCard.classList.remove('active');
+
+      if (cardEl) {
+        cardEl.classList.add('active');
+        // track which pool it belongs to
+        if (cardEl.classList.contains('rt-trip-card')) {
+          activeRouteTripCard = cardEl;
+        } else {
+          activeDepCard = cardEl;
+        }
+      }
 
       fetch(`/api/trip/${tripId}`)
         .then(r => r.json())
@@ -745,7 +881,6 @@
       rtLastVehTs = null;
       document.getElementById('rtPanel').style.display = 'block';
       document.getElementById('rtPulse').className = '';
-      document.getElementById('rtPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
       fetchRTLocation();
       rtIntervalId = setInterval(fetchRTLocation, 10000);
@@ -949,6 +1084,66 @@
       document.getElementById('departuresSection').style.display = 'block';
     }
 
+    // ── Route trips ─────────────────────────────────────────────────────────
+
+    function loadRouteTrips(routeId) {
+      const dateVal = document.getElementById('dateInput').value || todayStr();
+      const [year, month, day] = dateVal.split('-');
+
+      const section  = document.getElementById('routeTripsSection');
+      const grid     = document.getElementById('routeTripsGrid');
+      const errEl    = document.getElementById('routeTripsError');
+      const countEl  = document.getElementById('routeTripsCount');
+
+      // Reset UI
+      grid.innerHTML = '';
+      errEl.style.display = 'none';
+      countEl.textContent = 'Loading…';
+      section.style.display = 'flex';
+      section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      fetch(`/api/route/${routeId}/${year}/${month}/${day}`)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(data => renderRouteTrips(data, routeId))
+        .catch(err => {
+          countEl.textContent = '';
+          errEl.textContent = `Error: ${err.message}`;
+          errEl.style.display = 'block';
+        });
+    }
+
+    function renderRouteTrips(data, routeId) {
+      const grid    = document.getElementById('routeTripsGrid');
+      const countEl = document.getElementById('routeTripsCount');
+
+      grid.innerHTML = '';
+
+      // Response shape: { query_route_id, trips: [1958131, 1958132, ...] }
+      const trips = Array.isArray(data) ? data : (data.trips || []);
+
+      if (trips.length === 0) {
+        countEl.textContent = '0 trips';
+        grid.innerHTML = `<div style="font-size:12px;color:var(--text-muted);grid-column:1/-1;padding:4px 0">No trips found for this date.</div>`;
+        return;
+      }
+
+      countEl.textContent = `${trips.length} trip${trips.length !== 1 ? 's' : ''}`;
+
+      trips.forEach(tripId => {
+        const card = document.createElement('div');
+        card.className = 'rt-trip-card';
+        card.dataset.tripId = tripId;
+
+        card.innerHTML = `<div class="rt-trip-id" style="font-size:12px;color:var(--text)">${tripId}</div>`;
+
+        card.addEventListener('click', () => loadTrip(tripId, card));
+        grid.appendChild(card);
+      });
+    }
+
     // ───────────────────────────────────────────────────────────────────────
 
     function loadStop(stopId) {
@@ -964,8 +1159,21 @@
         });
     }
 
-    // Holds the current stop ID so the "Show all" button can re-render
     let currentStopId = null;
+
+    function startDepsRefresh(stopId) {
+      if (depsRefreshId !== null) clearInterval(depsRefreshId);
+      depsRefreshId = setInterval(() => {
+        // Re-filter + re-render the departure cards as time advances
+        updateDeparturesView(stopId);
+        // Re-fetch live RT delay badges
+        loadRTStopUpdates(stopId);
+      }, 15000);
+    }
+
+    function stopDepsRefresh() {
+      if (depsRefreshId !== null) { clearInterval(depsRefreshId); depsRefreshId = null; }
+    }
 
     function displayStop(data) {
       if (window.stopMarker) map.removeLayer(window.stopMarker);
@@ -980,11 +1188,11 @@
         parseTime(a.arrival_time) - parseTime(b.arrival_time)
       );
 
-      // Reset to filtered view whenever a new stop is loaded
       showingAllDeps = false;
       currentStopId = data.stop_id;
 
       updateDeparturesView(data.stop_id);
+      startDepsRefresh(data.stop_id);
 
       window.stopMarker = L.marker([data.lat, data.lon]).addTo(map);
       window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
@@ -1093,6 +1301,16 @@
     dateInput.addEventListener('change', () => {
       const v = document.getElementById('stopIdInput').value.trim();
       if (v) loadStop(v);
+    });
+
+    // ── Route button wiring ──
+    document.getElementById('loadRouteBtn').addEventListener('click', () => {
+      const v = document.getElementById('routeIdInput').value.trim();
+      if (v) loadRouteTrips(v);
+      else alert('Please enter a Route ID.');
+    });
+    document.getElementById('routeIdInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') document.getElementById('loadRouteBtn').click();
     });
 
     document.getElementById('showLocationBtn').addEventListener('click', showUserLocation);
