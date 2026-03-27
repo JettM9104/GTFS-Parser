@@ -83,19 +83,32 @@ def get_rt_stop(stopID):
 @app.route('/')
 @require_token
 def index():
-    return send_from_directory('.', 'tokenindex.html')
+    return send_from_directory('.', 'index.html')
 
 @app.route('/<path:path>')
 @require_token
 def static_files(path):
     return send_from_directory('.', path)
 
+# OPTIONAL: OFFLINE TILES
 @app.route('/tiles/<int:z>/<int:x>/<int:y>.png')
 @require_token
 def tiles(z, x, y):
     return send_from_directory(f'tiles/{z}/{x}', f'{y}.png')
 
-# remove or also protect /crash in production!
+@app.route('/api/route/<route_id>/<year>/<month>/<day>')
+@require_token
+def get_trip_root(route_id, year, month, day):
+    try:
+        result = subprocess.run(['./getTrips', route_id, year, month, day], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == '__main__':
-    app.run(debug=False, port=5015, host='0.0.0.0')
+    app.run(debug=True, port=5015, host = '0.0.0.0')
