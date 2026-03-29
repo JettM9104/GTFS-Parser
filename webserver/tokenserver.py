@@ -83,7 +83,7 @@ def get_rt_stop(stopID):
 @app.route('/')
 @require_token
 def index():
-    return send_from_directory('.', 'index.html')
+    return send_from_directory('.', 'tokenindex.html')
 
 @app.route('/<path:path>')
 @require_token
