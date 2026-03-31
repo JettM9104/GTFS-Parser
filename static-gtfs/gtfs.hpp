@@ -1,6 +1,4 @@
-#define CONFINFOEXISTS 1
-// switch this to 0 if you are building
-
+#define CONFINFOEXISTS 1 // switch this to 0 if you are building
 #ifndef GTFS_HPP
 #define GTFS_HPP
 
@@ -18,8 +16,6 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <cmath>
-
-//line 20
 
 #if CONFINFOEXISTS == 1
 #include "confidential_info.hpp"
