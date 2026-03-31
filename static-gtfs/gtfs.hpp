@@ -5,6 +5,7 @@
 #define GTFS_HPP
 
 #pragma region LIBRARIES AND NAMESPACES
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,6 +26,7 @@
 #endif
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::stoi;
+
 #pragma endregion
 
 namespace gtfs { // MARK: BEGINNING OF NAMESPACE GTFS
@@ -604,6 +606,7 @@ struct service {
 #pragma endregion
 
 #pragma region FUNCTION DECLARATIONS AND DESCRIPTIONS
+
 double getDistanceKM(double pos1_lat, double pos1_lon, double pos2_lat, double pos2_lon);
 double dist(double a, double b, double c, double d);
 int levenshtein(const string &a, const string &b);                                      // levenshtien distance between two words, used in Alg2
@@ -640,9 +643,11 @@ std::vector<tripSegment> getAllStops(int tripID);                               
 std::vector<stop> getNearestStops(double lat, double lon);                                                                      // given location in lat, lon, return nearest stops
 std::vector<trip> getAllTrips(int routeID); 
 service getServiceInfo(string serviceID);                                   
+
 #pragma endregion
 
 #pragma region HELPER FUNCTIONS
+
 double getDistanceKM(double lat1, double lon1, double lat2, double lon2) {
     const double earth_radius = 6371.0;
 
@@ -2131,6 +2136,7 @@ service getServiceInfo(string serviceID) {
     calendarDatesFile.close();
     return output;
 }
+
 #pragma endregion
 
 }; // MARK: END OF NAMESPACE GTFS
