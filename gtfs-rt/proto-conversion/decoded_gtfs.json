@@ -1,0 +1,479 @@
+{
+ "header": {
+  "gtfs_realtime_version": "2.0",
+  "incrementality": "FULL_DATASET",
+  "timestamp": "1775072252",
+  "feed_version": ""
+ },
+ "entity": [
+  {
+   "id": "d1f54a68-c655-4167-9608-79f4e35a50d5",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1756785600",
+      "end": "0"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "411",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "416",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "DETOUR",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Detour - Construction",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "When: Tuesday, September 2, 2025, until construction is complete\nWhere: Church Street from Wootten Way North to Ninth Line, City of Markham\nReason: Storm sewer construction\nRoutes affected: 411, 416 – Markham District School Specials\n\nDetour\nRoute 411 morning service:\nMorning service will detour northbound Ninth Line, westbound Highway 7, northbound Wooten Way North and back to regular routing on Parkway Avenue.\n\nRoutes 416 morning service:\nMorning service will detour westbound Church Street, southbound Ninth Line, westbound Highway 7, northbound Wooten Way North and back to regular routing on Parkway Avenue.\n\nRoutes 411 and 416 afternoon service:\nAfternoon service will follow the reverse routing.\n\nStops missed:\n- 1548, 4711, 4723 and 5590 will be missed in the morning\n- 5851, 1561 and 6155 will be missed in the afternoon\n\nAlternate stop:\n- Temporary stop on Church Street at Wootten Way North \n\nPlease plan ahead and allow yourself extra travel time. For trip planning assistance, call the YRT Contact Centre at 1-866-668-3978.",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  },
+  {
+   "id": "65b360f1-23cb-4ab6-9ee2-9fe0d80eb92c",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1751428800",
+      "end": "0"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "522",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "DETOUR",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Detour - Construction",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "When: Wednesday, July 2, 2025 until construction is complete\nWhere: Ninth Line and Church Street, City of Markham\nReason: Storm sewer construction\nRoutes affected: 522 - Markham Local\n\nWestbound:\nBuses will travel south on Ninth Line, passing Church Street, right onto westbound Highway 7, right onto northbound Markham Road and back to regular routing on Robinson Street.  Stops 4723, 5590 and 5326 will not be serviced.\n\nAlternate stops:\nWestbound:\n- Stop 6561 on Ninth Line at Church Street\n- Temporary stop on Markham Road and Dublin Street\n\nPlease plan ahead and allow yourself extra travel time. For trip planning assistance, call the YRT Contact Centre at 1-866-668-3978.",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  },
+  {
+   "id": "7157682f-e93b-40ed-be70-4d85135347d3",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1764223298",
+      "end": "0"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "85",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "SIGNIFICANT_DELAYS",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Delays on Rutherford Road between Creditstone Road/Melville Avenue and Greenock Drive",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "When: Thursday, November 27, 2025, until fall 2026\nWhere: Rutherford Road, over the CN Rail tracks\nWhy: Construction related to York Region’s Rutherford Road Improvements; expected completion in fall 2026.\nRoutes affected: Route 85 - Rutherford\n\nRutherford Road will be reduced to one lane in each direction between Creditstone Road/Melville Avenue and Greenock Drive to accommodate work on the rail bridge.\n\nExpect delays for the duration of this project or until further notice.\nFor more information on the project, visit york.ca/RutherfordRoad",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  },
+  {
+   "id": "88f8920d-44e9-4229-8345-15e96a315a83",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1754884800",
+      "end": "0"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "91",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "DETOUR",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Detour - Construction",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "When: August 11, 2025, through Spring 2026\nWhere: Bayview Avenue and Steeles Avenue East\nWhy: Construction\nRoutes affected: Routes 91 - Bayview - Southbound\n\nDetour:\nRoutes 91 will detour on Proctor Avenue, southbound Henderson Avenue and back to regular routing on westbound Steeles Avenue East.\n\nStops 5234, 2889, 3577, 3579 and 3581 will be missed.\n\nAlternate stops:\n- Stop 2888 on Bayview Avenue at Proctor Avenue\n- Stop 3583 on Steeles Avenue East west of Henderson Avenue\n\nPlease plan ahead and allow yourself extra travel time. For trip planning assistance, call the YRT Contact Centre at 1-866-668-3978.",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  },
+  {
+   "id": "59a173f7-fadf-4226-83a8-53975f81f1fd",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1771304429",
+      "end": "1787889600"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "52",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "425",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "DETOUR",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Detour - Construction",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "When: Tuesday, February 17 to August 28, 2026\nWhere: Yonge Street, between Holland Landing Road and Doane Road\nEvent: Construction\nRoutes affected: 52 - Holland Landing, 425 – Huron Heights School Special\n\nRoute 52 detour:\nNorthbound morning trips will service stop 2528 on Yonge Street at Mount Albert Road and turn right on eastbound Mount Albert Road. Northbound trips will turn left on Stonehill Boulevard, left on westbound Thompson Drive and service the temporary stop on Thompson Drive at Yonge Street. Detour will continue on Bradford Street, right on Olive Street, right on Dutch Settlers Court, and back to regular routing on northbound Yonge Street.\n\nStops 2541 and 2543 will be missed.\n\nSouthbound morning trips will follow regular routing to stop 2561 on Toll Road at Bradford Street, left on eastbound Bradford Street, service the temporary stop on Bradford Street at Olive Street, right on southbound Olive Street, continue on Queen Street, service the temporary stop on Queen Street at Yonge Street, continue eastbound on Mount Albert Road, and back to regular route to service Grist Mill Road.\n\nStops 2562 and 2523 will be missed.\n\nNorthbound afternoon trips will travel westbound on Mount Albert Road, service stop 2538 on Mount Albert Road at Stonehill Boulevard, right on northbound Stonehill Boulevard and left on westbound Thompson Drive.  Detour will continue on Bradford Street, right on Olive Street, right on Dutch Settlers Court and back to regular routing on northbound Yonge Street.\n\nStops 2541 and 2543 will be missed.\n\nSouthbound afternoon trips will follow regular routing to stop 2561 on Toll Road at Bradford Street, left on eastbound Bradford Street, service the temporary stop on Bradford Street at Olive Street, right on Olive Street, continue on Queen Street, service the temporary stop on the southwest corner of Queen Street and Yonge Street and back to regular routing on southbound Yonge Street.\n\nStops 2562 and 2523 will be missed.\n\nAlternate stops:\nNorthbound\n\nStop 2528 on Yonge Street at Mount Albert Road, on the southeast corner\nStop 2538 on Mount Albert Road at Stonehill Boulevard, on the northeast corner\nTemporary stop on Thompson Drive at Yonge Street on the northeast corner\nSouthbound\n\nTemporary stop on Bradford Street at Olive Street\nTemporary stop on Queen Street at Yonge Street\nRoute 425 detour:\nMorning detour part 1:\n\nBuses will service stop 2528 on northbound Yonge Street at Mount Albert Road, right on eastbound Mount Albert Road, left on northbound Stonehill Boulevard and left on westbound Thompson Drive. Detour will continue on Bradford Street, right on Olive Street, right on Dutch Settlers Court and back to regular routing on northbound Yonge Street.\n\nStops 2541 and 2543 will be missed.\n\nMorning detour part 2:\n\nBuses traveling eastbound on Bradford Street will service the temporary stop on Bradford Street at Olive Street, right on Olive Street, continue on Queen Street, service the temporary stop on Queen Street at Yonge Street and back to regular routing Mount Albert Road.\n\nStops 2562 and 2523 will be missed.\n\nAfternoon buses will turn right on northbound Stonehill Boulevard, left on westbound Thompson Drive, continue on Bradford Street, right on Olive Street, right on Dutch Settlers Court and back to regular routing on northbound Yonge Street.\n\nStops 2539, 2540, 2541, 2543, 2562 and 2523 will be missed.\n\nAlternate stops:\nMorning trip\n\nTemporary stop on Bradford Street at Olive Street\nTemporary stop on Queen Street at Yonge Street\nAfternoon trip\n\nStop 2528 on Yonge Street at Mount Albert Road on the southeast corner, at its regularly scheduled time\nTemporary stop on Thompson Drive at Yonge Street on the northeast corner \n\nPlease plan ahead and allow yourself extra travel time. For trip planning assistance, call the YRT Contact Centre at 1-866-668-3978.",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  },
+  {
+   "id": "a85e72d8-c760-409d-89c4-0f0731419f51",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1772204475",
+      "end": "0"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "2",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "91",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "9899",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "99",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "300",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "301",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "302",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "303",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "304",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "305",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "5",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "23",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "77",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "88",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "360",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "601",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "60102",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "STOP_MOVED",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Platform changes at Finch GO Bus Terminal due to construction",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "Platforms 1 to 12 at Finch GO Bus Terminal are currently closed until further notice for emergency hydro tower work.  All YRT routes will continue to service the terminal; however, your bus may be servicing a different platform during this time.\n\nAs a result of the construction, your bus may experience some delays as several routes may have to service the same platform. Real-time schedule information for buses servicing the terminal will not be available during this time.\n\nPlease plan ahead and allow yourself extra travel time whenever possible. For your safety, please use the pedestrian walkways and obey all road signage. We apologize for any inconvenience this may cause and appreciate your patience during this time.\n\nFor more details, visit yrt.ca",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  },
+  {
+   "id": "e1a4c815-f54f-4064-83e2-8512524d39cb",
+   "is_deleted": false,
+   "alert": {
+    "active_period": [
+     {
+      "start": "1775210436",
+      "end": "1775386800"
+     }
+    ],
+    "informed_entity": [
+     {
+      "agency_id": "",
+      "route_id": "2",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "5",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "77",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "88",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "91",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "9899",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "99",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "360",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "601",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     },
+     {
+      "agency_id": "",
+      "route_id": "60102",
+      "route_type": 0,
+      "stop_id": "",
+      "direction_id": 0
+     }
+    ],
+    "cause": "CONSTRUCTION",
+    "effect": "DETOUR",
+    "header_text": {
+     "translation": [
+      {
+       "text": "Detour - Hydro One Construction at Finch GO Bus Terminal",
+       "language": "en"
+      }
+     ]
+    },
+    "description_text": {
+     "translation": [
+      {
+       "text": "When: \n- Friday, April 3, from 3 p.m. to Saturday, April 4, at 6 a.m.\n- Saturday, April 4, from 3 p.m. to Sunday, April 5, at 6 a.m.\nWhere: Finch GO Bus Terminal, City of Toronto\nReason: Hydro One Construction\nRoutes affected: 2 - Milliken, 5 - Clark, 77 - Highway 7, 88 - Bathurst, 91 - Bayview, 99 - Yonge, 98/99 - Yonge (late night), 360 - Vaughan Mills/Wonderland and Viva blue/blue B\n\nVisit yrt.ca/ServiceAdvisory for full details.",
+       "language": "en"
+      }
+     ]
+    },
+    "severity_level": "UNKNOWN_SEVERITY"
+   }
+  }
+ ]
+}

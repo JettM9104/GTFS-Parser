@@ -12,7 +12,7 @@ int main() {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     // Open the GTFS-realtime feed
-    fstream input("FileName.pb", ios::in | ios::binary);
+    fstream input("Convert.pb", ios::in | ios::binary);
     if (!input) {
         cerr << "Error: could not open TripUpdates.pb" << endl;
         return 1;

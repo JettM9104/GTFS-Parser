@@ -1023,11 +1023,11 @@
           badge.className = 'rt-delay-badge rt-live-only';
         } else if (delay <= 0) {
           const mins = Math.abs(Math.round(delay / 60));
-          badge.textContent = mins > 0 ? `${mins}m early` : 'On time';
+          badge.textContent = mins > 0 ? `▲ ${mins}m early` : 'On time';
           badge.className = 'rt-delay-badge rt-ontime';
         } else {
           const mins = Math.round(delay / 60);
-          badge.textContent = `+${mins}m delay`;
+          badge.textContent = `▼ ${mins}m delay`;
           badge.className = 'rt-delay-badge rt-delayed';
         }
       });
