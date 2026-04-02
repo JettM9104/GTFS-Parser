@@ -102,3 +102,5 @@ webserver/t_confidental_info.py
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_stop.pb
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
 webserver/getTrips
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_stop.pb
