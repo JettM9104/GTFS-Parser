@@ -31,7 +31,7 @@ namespace gtfs { // MARK: BEGINNING OF NAMESPACE GTFS
 
 typedef enum {ident, code} stopType;
 typedef enum {am, pm} tod;
-typedef enum {mon, tue, wed, thu, fri, sat, sun} week;
+typedef enum {mon = 0, tue, wed, thu, fri, sat, sun} week;
 typedef enum {in_use = 0, expired = -1, upcoming = 1, no_result = 10, no_result_a = 11, no_result_b = 12} feedStatus;
 typedef enum {addition = 1, removal = 2} exceptionType;
 
@@ -771,125 +771,67 @@ week convertDateToWeek(int year, int month, int day) {
 }
 
 bool isValid(int tripID, int year, int month, int date) {
-    week day = convertDateToWeek(year, month, date);
-    ifstream trip(tripPath);
+    week dayOfWeek = convertDateToWeek(year, month, date);
+
+    string serviceID = getTripInfo(tripID).service_id;
+
+    bool output = false;
+
+    ifstream calendarFile = ifstream(calendarPath);
     string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
 
-    std::vector<string> parsedLine;
-
-    string serviceID;
-
-    string tidString = std::to_string(tripID);
-
-    while (getline(trip, currentLine)) {
-        parsedLine = parseDataCSV(currentLine);
-        if (parsedLine[2] == tidString) {
-            serviceID = parsedLine[1];
+    bool firstLine = true;
+    while (getline(calendarFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            firstLine = false;
+            continue;
+        }
+        if (parsedCurrentLine[refs["service_id"]] == serviceID) {
+            if (std::stoi(parsedCurrentLine[static_cast<int>(dayOfWeek) + refs["monday"]])) {
+                output = true;
+            }
             break;
         }
     }
+    calendarFile.close();
 
-    trip.close();
+    firstLine = true;
 
-    ifstream calendar(calendarPath);
-    bool found = false;
+    ifstream calendarDateFile = ifstream(calendarDatesPath);
 
-    while (getline(calendar, currentLine)) {
-        parsedLine = parseDataCSV(currentLine);
+    currentLine = "";
+    parsedCurrentLine = std::vector<string>(0);
+    refs.clear();
 
-        if (parsedLine[0] == serviceID) {
-            found = true;
-            break;
+    string construcDate = std::to_string(year) + (month < 10 ? "0" : "") + std::to_string(month) + (date < 10 ? "0" : 0) + std::to_string(date);
+
+    while (getline(calendarDateFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            firstLine = false;
+            continue;
+        }
+
+        if ((parsedCurrentLine[refs["date"]] == construcDate) && (parsedCurrentLine[refs["service_id"]] == serviceID)) {
+            if (parsedCurrentLine[refs["exception_type"]] == "1") {
+                output = true;
+            } else {
+                output = false;
+            }
         }
     }
 
-    
-
-    if (found) {
-        ifstream dates(calendarPath);
-
-        string combined = std::to_string(year);
-
-        string mo = std::to_string(month);
-
-        string da = std::to_string(date);
-
-        if (mo.length() <= 1) mo = "0" + mo;
-        if (da.length() <= 1) mo = "0" + da;
-
-        combined += mo;
-        combined += da;
-
-
-        while (getline(dates, currentLine)) {
-            parsedLine = parseDataCSV(currentLine);
-            if (parsedLine[0] == serviceID) break;
-        }
-        switch (day) {
-            case mon:
-                if (stoi(parsedLine[1]) == 1) return true;
-                else return false;
-                break;
-            
-            case tue:
-                if (stoi(parsedLine[2]) == 1) return true;
-                else return false;
-                break;
-            
-            case wed:
-                if (stoi(parsedLine[3]) == 1) return true;
-                else return false;
-                break;
-            
-            case thu:
-                if (stoi(parsedLine[4]) == 1) return true;
-                else return false;
-                break;
-
-            case fri:
-                if (stoi(parsedLine[5]) == 1) return true;
-                else return false;
-                break;
-
-            case sat:
-                if (stoi(parsedLine[6]) == 1) return true;
-                else return false;
-                break;
-            
-            case sun:
-                if (stoi(parsedLine[7]) == 1) return true;
-                else return false;
-                break;
-            
-            default:
-                cout << "what kind of sorcery is this bro";
-                return false;
-            
-        }
-
-        calendar.close();
-    }
-    else {
-        ifstream dates(calendarDatesPath);
-
-        string combined = std::to_string(year);
-
-        string mo = std::to_string(month);
-
-        string da = std::to_string(date);
-
-        if (mo.length() <= 1) mo = "0" + mo;
-        if (da.length() <= 1) mo = "0" + da;
-
-        combined += mo;
-        combined += da;
-
-        while (getline(dates, currentLine)) {
-            parsedLine = parseDataCSV(currentLine);
-            if (parsedLine[1] == serviceID && parsedLine[2] == "1") return true;
-        }
-    }
-    return false;
+    calendarDateFile.close();
+    return output;
 }
 
 bool isValid(int tripID, calendarDate calendarDay) {
