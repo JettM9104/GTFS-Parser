@@ -755,7 +755,6 @@
 
     // ── Route trips state ──
     let activeRouteTripCard = null;
-    
     const token = new URLSearchParams(window.location.search).get('token');
 
     function apiFetch(url, options = {}) {
@@ -764,6 +763,8 @@
         headers: { ...options.headers, 'X-Auth-Token': token }
         });
     }
+
+
 
     function todayStr() {
       const d = new Date();
