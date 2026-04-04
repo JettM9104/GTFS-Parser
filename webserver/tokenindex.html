@@ -275,7 +275,8 @@
       position: relative;
       z-index: 1;
     }
-    .rt-ontime   { background: rgba(91,240,176,0.15); color: var(--positive); }
+    .rt-ontime   { background: rgba(17, 123, 180, 0.15); color: var(--accent3); }
+    .rt-early   { background: rgba(91,138,240,0.15); color: var(--positive); }
     .rt-delayed  { background: rgba(240,91,138,0.15); color: var(--negative); }
     .rt-live-only { background: rgba(91,138,240,0.15); color: var(--positive); }
 
@@ -754,23 +755,23 @@
 
     // ── Route trips state ──
     let activeRouteTripCard = null;
-
+    
     const token = new URLSearchParams(window.location.search).get('token');
 
     function apiFetch(url, options = {}) {
-      return fetch(url, {
+        return fetch(url, {
         ...options,
         headers: { ...options.headers, 'X-Auth-Token': token }
-      });
+        });
     }
 
-  function todayStr() {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
+    function todayStr() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
 
     function parseTime(t) {
       const parts = t.split(':').map(Number);
@@ -824,7 +825,7 @@
     }
 
     function initMap() {
-      map = L.map('map').setView([43.7, -79.4], 12);
+      map = L.map('map').setView([43.88, -79.34], 10);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
@@ -1032,12 +1033,24 @@
           badge.className = 'rt-delay-badge rt-live-only';
         } else if (delay <= 0) {
           const mins = Math.abs(Math.round(delay / 60));
-          badge.textContent = mins > 0 ? `${mins}m early` : 'On time';
-          badge.className = 'rt-delay-badge rt-ontime';
+
+          if (mins > 0) {
+            badge.textContent = `▲ ${mins}m early`;
+            badge.className = 'rt-delay-badge rt-early';
+          } else {
+            badge.textContent = 'On time';
+            badge.className = 'rt-delay-badge rt-ontime';
+          }
         } else {
-          const mins = Math.round(delay / 60);
-          badge.textContent = `+${mins}m delay`;
-          badge.className = 'rt-delay-badge rt-delayed';
+          if (delay > 60) {
+            const mins = Math.round(delay / 60);
+            badge.textContent = `▼ ${mins}m delay`;
+            badge.className = 'rt-delay-badge rt-delayed';
+          } else {
+            const secs = delay;
+            badge.textContent = `▼ ${secs}s delay`;
+            badge.className = 'rt-delay-badge rt-delayed';
+          }
         }
       });
     }
