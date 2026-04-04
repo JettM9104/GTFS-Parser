@@ -835,203 +835,38 @@ bool isValid(int tripID, int year, int month, int date) {
 }
 
 bool isValid(int tripID, calendarDate calendarDay) {
-    int date = calendarDay.day;
-    int month = calendarDay.month;
-    int year = calendarDay.year;
-
-    week day = convertDateToWeek(year, month, date);
-    ifstream trip(tripPath);
-    string currentLine;
-
-    std::vector<string> parsedLine;
-
-    string serviceID;
-
-    string tidString = std::to_string(tripID);
-
-    while (getline(trip, currentLine)) {
-        parsedLine = parseDataCSV(currentLine);
-        if (parsedLine[2] == tidString) {
-            serviceID = parsedLine[1];
-            break;
-        }
-    }
-
-    trip.close();
-
-    ifstream calendar(calendarPath);
-    bool found = false;
-
-    while (getline(calendar, currentLine)) {
-        parsedLine = parseDataCSV(currentLine);
-
-        if (parsedLine[0] == serviceID) {
-            found = true;
-            break;
-        }
-    }
-    if (found) {
-        ifstream dates(calendarPath);
-
-        string combined = std::to_string(year);
-
-        string mo = std::to_string(month);
-
-        string da = std::to_string(date);
-
-        if (mo.length() <= 1) mo = "0" + mo;
-        if (da.length() <= 1) mo = "0" + da;
-
-        combined += mo;
-        combined += da;
-
-        while (getline(dates, currentLine)) {
-            parsedLine = parseDataCSV(currentLine);
-            if (parsedLine[0] == serviceID) break;
-        }
-        switch (day) {
-            case mon:
-                if (stoi(parsedLine[1]) == 1) return true;
-                else return false;
-                break;
-            
-            case tue:
-                if (stoi(parsedLine[2]) == 1) return true;
-                else return false;
-                break;
-            
-            case wed:
-                if (stoi(parsedLine[3]) == 1) return true;
-                else return false;
-                break;
-            
-            case thu:
-                if (stoi(parsedLine[4]) == 1) return true;
-                else return false;
-                break;
-
-            case fri:
-                if (stoi(parsedLine[5]) == 1) return true;
-                else return false;
-                break;
-
-            case sat:
-                if (stoi(parsedLine[6]) == 1) return true;
-                else return false;
-                break;
-            
-            case sun:
-                if (stoi(parsedLine[7]) == 1) return true;
-                else return false;
-                break;
-            
-            default:
-                cout << "what kind of sorcery is this bro";
-                return false;
-            
-        }
-        calendar.close();
-    }
-    else {
-        ifstream dates(calendarDatesPath);
-
-        string combined = std::to_string(year);
-
-        string mo = std::to_string(month);
-
-        string da = std::to_string(date);
-
-        if (mo.length() <= 1) mo = "0" + mo;
-        if (da.length() <= 1) mo = "0" + da;
-
-        combined += mo;
-        combined += da;
-
-        while (getline(dates, currentLine)) {
-            parsedLine = parseDataCSV(currentLine);
-            if (parsedLine[1] == serviceID && parsedLine[2] == "1") return true;
-        }
-    }
-    return false;
+    return isValid(tripID, calendarDay.year, calendarDay.month, calendarDay.day);
 }
 
-bool isValid(int tripID, week day) {
-    ifstream trip(tripPath);
+bool isValid(int tripID, week dayOfWeek) {
+    string serviceID = getTripInfo(tripID).service_id;
+
+    bool output = false;
+
+    ifstream calendarFile = ifstream(calendarPath);
     string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
 
-    std::vector<string> parsedLine;
-
-    string serviceID;
-
-    string tidString = std::to_string(tripID);
-
-    while (getline(trip, currentLine)) {
-        parsedLine = parseDataCSV(currentLine);
-        if (parsedLine[2] == tidString) {
-            serviceID = parsedLine[1];
+    bool firstLine = true;
+    while (getline(calendarFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            for (int i = 0; i < parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+            firstLine = false;
+            continue;
+        }
+        if (parsedCurrentLine[refs["service_id"]] == serviceID) {
+            if (std::stoi(parsedCurrentLine[static_cast<int>(dayOfWeek) + refs["monday"]])) {
+                output = true;
+            }
             break;
         }
     }
-
-    trip.close();
-
-    ifstream calendar(calendarPath);
-    bool found = false;
-
-    while (getline(calendar, currentLine)) {
-        parsedLine = parseDataCSV(currentLine);
-
-        if (parsedLine[0] == serviceID) {
-            found = true;
-            break;
-        }
-    }
-    if (found) {
-        switch (day) {
-            case mon:
-                if (stoi(parsedLine[1]) == 1) return true;
-                else return false;
-                break;
-            
-            case tue:
-                if (stoi(parsedLine[2]) == 1) return true;
-                else return false;
-                break;
-            
-            case wed:
-                if (stoi(parsedLine[3]) == 1) return true;
-                else return false;
-                break;
-            
-            case thu:
-                if (stoi(parsedLine[4]) == 1) return true;
-                else return false;
-                break;
-
-            case fri:
-                if (stoi(parsedLine[5]) == 1) return true;
-                else return false;
-                break;
-
-            case sat:
-                if (stoi(parsedLine[6]) == 1) return true;
-                else return false;
-                break;
-            
-            case sun:
-                if (stoi(parsedLine[7]) == 1) return true;
-                else return false;
-                break;
-            
-            default:
-                cout << "what kind of sorcery is this bro";
-                return false;
-            
-        }
-
-        calendar.close();
-    }
-    return 0;
+    calendarFile.close();
+    return output;
 }
 
 time24 parseFormattedTime(string input) {
@@ -1140,46 +975,7 @@ feedStatus verifyGTFS(int year, int month, int day) {
 }
 
 feedStatus verifyGTFS(calendarDate inputDate) {
-    cout << root << " " << feedInfoFile << std::endl;
-    ifstream feedInfo(feedInfoFile);
-    string currentLine;
-    std::vector<string> parsedCurrentLine;
-
-    int lineNumber = 0;
-    
-    std::unordered_map<string, int> refs;
-
-    while (getline(feedInfo, currentLine)) {
-        lineNumber++;
-
-        parsedCurrentLine = parseDataCSV(currentLine);
-
-        if (lineNumber == 1) {
-            for (int i = 0; i < parsedCurrentLine.size(); i++) {
-                refs[parsedCurrentLine[i]] = i;
-            }
-        }
-
-        if (lineNumber == 2) {
-
-            calendarDate x;
-            calendarDate y;
-
-            if (refs["feed_end_date"] == 0) return no_result_a; // assume it is automatically valid
-            else x = parseFormattedDate(parsedCurrentLine[refs["feed_end_date"]]);
-
-            if (refs["feed_start_date"] == 0) return no_result_b; // assume it is automatically valid
-            else y = parseFormattedDate(parsedCurrentLine[refs["feed_start_date"]]);
-
-            if (x >= inputDate && y <= inputDate) return in_use;
-            else if (x <= inputDate) return expired; // expired
-            else return upcoming; // upcoming
-            
-            break;
-        }
-
-    }
-    return no_result;
+    return verifyGTFS(inputDate.year, inputDate.month, inputDate.day);
 }
 
 double getScore(string input) {
@@ -1437,100 +1233,7 @@ std::vector<tripSegment> getDayTimesAtStop(int year, int month, int day, const u
 }
 
 std::vector<tripSegment> getDayTimesAtStop(calendarDate calendarDay, const unsigned short int id) {
-    int year = calendarDay.year;
-    int month = calendarDay.month;
-    int day = calendarDay.day;
-
-    ifstream timeFile(stopTimesPath);
-
-    string id_str = std::to_string(id);
-
-    std::vector<tripSegment> output;
-    std::vector<string> parsedData;
-
-    std::vector<long> allTripIDs;
-
-    std::unordered_map<string, int> refs;
-
-    string currentLine;
-    int lineNumber = 0;
-    int stopNumberIndex = -1;
-
-    while (getline(timeFile, currentLine)) {
-        lineNumber++;
-        if (lineNumber == 1) [[unlikely]] {
-            parsedData = parseDataCSV(currentLine);
-            for (int i = 0; i < parsedData.size(); i++) {
-                refs[parsedData[i]] = i;
-                if (parsedData[i] == "stop_id") { stopNumberIndex = i;}
-            }
-            break;
-        }
-        if (lineNumber == 2) {
-            stopNumberIndex = 0;
-            cout << "stop index not found";
-            break;
-        }
-    }
-    timeFile.close();
-
-    ifstream timeReviewFile(stopTimesPath);
-
-    while (getline(timeReviewFile, currentLine)) {
-        parsedData = parseDataCSV(currentLine);
-        if (parsedData[stopNumberIndex] == id_str) {
-            int tripID = stoi(parsedData[0]);
-            allTripIDs.push_back(tripID);
-
-            tripSegment localVar;
-
-            // required fields
-            localVar.trip_id = tripID;
-            localVar.arrival_time = parseFormattedTime(parsedData[1]);
-            localVar.departure_time = parseFormattedTime(parsedData[2]);
-            localVar.stop_id = stoi(parsedData[3]);
-            localVar.stop_sequence = stoi(parsedData[4]);
-
-            localVar.stop_headsign = ((refs["stop_headsign"] != 0) && (parsedData[refs["stop_headsign"]] != "" && parsedData[refs["stop_headsign"]] != " ")) ? stoi(parsedData[refs["stop_headsign"]]) : 0;
-            localVar.pickup_type = ((refs["pickup_type"] != 0) && (parsedData[refs["pickup_type"]] != "" && parsedData[refs["pickup_type"]] != " ")) ? stoi(parsedData[refs["pickup_type"]]) : 0;
-            localVar.drop_off_type = ((refs["drop_off_type"] != 0) && (parsedData[refs["drop_off_type"]] != "" && parsedData[refs["drop_off_type"]] != " ")) ? stoi(parsedData[refs["drop_off_type"]]) : 0;
-            localVar.shape_dist_traveled = ((refs["shape_dist_traveled"] != 0) && (parsedData[refs["shape_dist_traveled"]] != "" && parsedData[refs["shape_dist_traveled"]] != " ")) ? stoi(parsedData[refs["shape_dist_traveled"]]) : 0;
-            localVar.timepoint = ((refs["timepoint"] != 0) && (parsedData[refs["timepoint"]] != "" && parsedData[refs["timepoint"]] != " ")) ? stoi(parsedData[refs["timepoint"]]) : 0;
-
-            output.push_back(localVar);
-        }
-    }
-    lineNumber = 0;
-    timeReviewFile.close();
-
-    ifstream tripsFile(tripPath);
-
-    while (getline(tripsFile, currentLine)) {
-        lineNumber++;
-        parsedData = parseDataCSV(currentLine);
-        if (lineNumber == 1) {
-            refs.clear();
-            for (int i = 0; i < parsedData.size(); i++) {
-                refs[parsedData[i]] = i;
-            }
-        }
-        for (int i = 0; i < output.size(); i++) {
-            if (std::to_string(output[i].trip_id) == parsedData[refs["trip_id"]]) {
-                output[i].route_id = stoi(parsedData[refs["route_id"]]);
-            }
-        }        
-        
-    }
-
-    for (int i = 0; i < output.size(); i++) {
-        if (!isValid(output[i].trip_id, year, month, day)) {
-            output.erase(output.begin() + i);
-        }
-    }
-    tripsFile.close();
-    
-
-    return output;
+    return getDayTimesAtStop(calendarDay.year, calendarDay.month, calendarDay.day, id);
 }
 
 std::vector<tripSegment> getDayTimesAtStop(week day, const unsigned short int id) {
@@ -1724,14 +1427,7 @@ std::vector<tripSegment> getRemainingDayStops(int year, int month, int day, cons
 }
 
 std::vector<tripSegment> getRemainingDayStops(calendarDate calendarDay, const unsigned short int id, time24 time) {
-    int year = calendarDay.year;
-    int month = calendarDay.month;
-    int day = calendarDay.day;
-
-    std::vector<tripSegment> out = getDayTimesAtStop(year, month, day, id);
-
-    out.erase(std::remove_if(out.begin(), out.end(), [time](tripSegment x){ return (x.departure_time < time); }), out.end());
-    return out;
+    return getRemainingDayStops(calendarDay.year, calendarDay.month, calendarDay.day, id, time);
 }
 
 std::vector<stop> searchStopByName(string name) {
