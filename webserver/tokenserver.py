@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, send_from_directory, request, abort
+from flask import Flask, jsonify, send_from_directory, request, abort # type: ignore
 import subprocess
 import json
 import os
 from functools import wraps
 from t_confidental_info import token
+
 
 app = Flask(__name__)
 
@@ -17,7 +18,6 @@ def require_token(f):
             abort(401)
         return f(*args, **kwargs)
     return decorated
-
 
 @app.route('/api/trip/<trip_id>')
 @require_token
@@ -108,6 +108,11 @@ def get_trip_root(route_id, year, month, day):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route("/crash")
+@require_token
+def home():
+    raise Exception("test error") 
 
 
 if __name__ == '__main__':

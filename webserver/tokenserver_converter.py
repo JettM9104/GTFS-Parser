@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""
+sync_tokenserver.py
+Generates tokenserver.py from server.py automatically.
+Usage: python3 sync_tokenserver.py
+"""
+
+import re
+
+INPUT  = 'server.py'
+OUTPUT = 'tokenserver.py'
+
+TOKEN_IMPORTS = """from functools import wraps
+from t_confidental_info import token
+"""
+
+TOKEN_SETUP = """
+SECRET_TOKEN = token 
+
+def require_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get("X-Auth-Token") or request.args.get("token")
+        if token != SECRET_TOKEN:
+            abort(401)
+        return f(*args, **kwargs)
+    return decorated
+"""
+
+# Routes that should NOT get @require_token
+EXCLUDED_ROUTES = {
+    '',  # already unprotected in tokenserver.py
+}
+
+def main():
+    with open(INPUT, 'r') as f:
+        src = f.read()
+
+    # 1. Update imports: add functools + token import after existing imports block
+    src = src.replace(
+        'from flask import Flask, jsonify, send_from_directory # type: ignore\nimport subprocess\nimport json\nimport os',
+        'from flask import Flask, jsonify, send_from_directory, request, abort # type: ignore\nimport subprocess\nimport json\nimport os\n' + TOKEN_IMPORTS
+    )
+
+    # 2. Inject SECRET_TOKEN + require_token after app = Flask(__name__)
+    src = src.replace(
+        'app = Flask(__name__)\n',
+        'app = Flask(__name__)\n' + TOKEN_SETUP
+    )
+
+    # 3. Add @require_token under every @app.route(...) EXCEPT excluded ones
+    def inject_decorator(match):
+        route_decorator = match.group(0)
+        route_path_match = re.search(r"@app\.route\('([^']+)'", route_decorator)
+        if route_path_match and route_path_match.group(1) in EXCLUDED_ROUTES:
+            return route_decorator  # skip excluded routes
+        # Only add if not already there
+        if '@require_token' not in route_decorator:
+            return route_decorator + '@require_token\n'
+        return route_decorator
+
+    src = re.sub(r"@app\.route\([^\)]+\)\n", inject_decorator, src)
+
+    # 4. Swap index.html -> tokenindex.html for the root route only
+    src = re.sub(
+        r"(def index\(\):.*?return send_from_directory\('.', ')index\.html('\))",
+        r"\1tokenindex.html\2",
+        src,
+        flags=re.DOTALL
+    )
+
+    # 5. Fix host: localhost -> 0.0.0.0
+    src = src.replace("host = 'localhost'", "host = '0.0.0.0'")
+
+    # 6. Remove the /crash test route (not present in tokenserver.py)
+    src = re.sub(
+        r'@app\.route\("/crash"\)\ndef home\(\):\n    raise Exception\("test error"\) \n\n',
+        '',
+        src
+    )
+
+    with open(OUTPUT, 'w') as f:
+        f.write(src)
+
+    print(f"✓ {OUTPUT} generated from {INPUT}")
+
+if __name__ == '__main__':
+    main()
