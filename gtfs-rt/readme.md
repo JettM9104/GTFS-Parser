@@ -17,6 +17,7 @@ All I gave was the code. It's a big pain for you to get ready, but if you have t
 **MAC**
 
 **Step 1**: Install `protobuf@21`
+
 If you don't already have homebrew, install it by pasting this in the terminal:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -30,9 +31,9 @@ and
 ```zsh
 brew link --force protobuf@21
 ```
-  
-
+---
 **Step 2**: Convert the `.proto` file in `.cc` and `.h` files
+
 Navigate to `./gtfs-rt/proto-conversion/transit-files` and run
 ```zsh
 protoc --cpp_out=. gtfs-realtime.proto
