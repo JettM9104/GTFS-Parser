@@ -30,15 +30,11 @@ and
 ```zsh
 brew link --force protobuf@21
 ```
+  
 
-
-**Step 2**: Locate `protobuf@21`
-In terminal, run
+**Step 2**: Convert the `.proto` file in `.cc` and `.h` files
+Navigate to `./gtfs-rt/proto-conversion/transit-files` and run
 ```zsh
-brew --prefix protobuf@21
+protoc --cpp_out=. gtfs-realtime.proto
 ```
-and add `/bin/protoc` to the end of it
-
-
-**Step 3**: Convert the `.proto` file
 
