@@ -7,7 +7,7 @@
 #include <libgen.h>
 
 /* build command
-clang++ -std=c++17 decodeStop.cpp ../transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeStop
+clang++ -std=c++17 decodeStop.cpp ../transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeStop -O3
 */
 using namespace std;
 using namespace transit_realtime;
