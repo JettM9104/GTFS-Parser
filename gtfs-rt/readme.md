@@ -33,3 +33,12 @@ brew link --force protobuf@21
 
 
 **Step 2**: Locate `protobuf@21`
+In terminal, run
+```zsh
+brew --prefix protobuf@21
+```
+and add `/bin/protoc` to the end of it
+
+
+**Step 3**: Convert the `.proto` file
+
