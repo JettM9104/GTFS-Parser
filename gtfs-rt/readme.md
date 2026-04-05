@@ -17,7 +17,12 @@ All I gave was the code. It's a big pain for you to get ready, but if you have t
 **MAC**
 
 **Step 1**: Install `protobuf@21`
-Using homebrew, open the terminal and run
+If you don't already have homebrew, install it by pasting this in the terminal:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Using homebrew, run
 ```zsh
 brew install protobuf@21
 ```
@@ -26,8 +31,5 @@ and
 brew link --force protobuf@21
 ```
 
-If you don't have homebrew, install it with 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+
 **Step 2**: Locate `protobuf@21`
