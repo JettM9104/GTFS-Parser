@@ -2,6 +2,8 @@
 ## What is GTFS?
 **GTFS**, or *General Transit Feed Specification* (look at repository [`google/transit`](https://github.com/google/transit) and the reference [here](https://gtfs.org/documentation/schedule/reference/)) is the general (and only) worldwide standard for transit agency arrival, departure, and shape data (and more!). A *GTFS dataset* is created by a transit agency and used by other software to tell when the bus/vehicle is scheduled arrive on time. There is another kind of GTFS called **GTFS-RT** which stands for GTFS Realtime. It includes live locations and live schedules for busses and other transit routes. Some transit agencies may not use this.
 
+<img width="1914" height="956" alt="image" src="https://github.com/user-attachments/assets/08733e08-7a5b-4e54-ba88-a782d231d065" />
+
 ## How do I use this?
 1. Make a new folder, right click the folder and press `Open Terminal at Folder` (Linux/Mac) or open `Command Prompt` on Windows and use cd to navigate to your folder
 2. run `git clone https://github.com/JettM9104/GTFS-Parser/`
