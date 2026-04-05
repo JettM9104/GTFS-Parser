@@ -1,34 +1,36 @@
-# GTFS Trip Visualizer
+# GTFS Webserver
+## Description
+This is a lil side project from the main API but here it is i guess!
 
-A web application to visualize GTFS bus trips on a map.
+## Instructions for use
+**MAC**
 
-## Setup
+Navigate to the directory. 
 
-1. Compile the C++ program:
-   ```
-   clang++ tripjson.cpp -std=c++17 -o tripjson
-   ```
+**Step 1**: Create a virtual enviroment (optional)
 
-2. Install Python dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+In the terminal, run:
+```zsh
+python3 -m venv .venv
+```
+Activate it:
+```zsh
+source .venv/bin/activate
+```
 
-3. Run the server:
-   ```
-   python3 server.py
-   ```
+**Step 2**: Install dependencies
 
-4. Open http://localhost:5015 in your browser.
+Run:
+```
+python3 -m pip install flask
+```
 
-## Usage
+**Step 3**: Build all C++ files in this folder
 
-- Enter a Trip ID in the input field.
-- Click "Load Trip" or press Enter.
-- The map will display the route and stops for that trip.
+```zsh
+find . -name "*.cpp" | xargs -I{} bash -c 'clang++ -std=c++17 -O3 -o "${0%.cpp}" "$0"' {}
+```
 
-## Offline Map Usage
+**Step 4**: Build RT Files
 
-Use something like **Mobile Atlas Creator** and create/download a folder with all the OSM images. Create a folder called `tiles` and inside it, it should look like:
-`/tiles/{z}/{x}/{y}.png`
-
+Read the (README)[]
