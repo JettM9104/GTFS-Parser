@@ -18,7 +18,10 @@ All I gave was the code. It's a big pain for you to get ready, but if you have t
 
 **Step 1**: Install `protobuf@21`
 Using homebrew, open the terminal and run
-```bash
+```zsh
 brew install protobuf@21
 ```
-
+If you don't have homebrew, install it with 
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
