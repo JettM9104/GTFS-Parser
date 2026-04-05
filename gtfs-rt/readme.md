@@ -38,4 +38,20 @@ Navigate to `./gtfs-rt/proto-conversion/transit-files` and run
 ```zsh
 protoc --cpp_out=. gtfs-realtime.proto
 ```
+---
+**Step 3**: Compile the files
 
+Navigate to `./gtfs-rt/proto-conversion/webserver-implementation`
+Run 
+```zsh
+brew --prefix protobuf@21
+```
+and paste the output wherever it says (paste here):
+```zsh
+clang++ -std=c++17 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeTrip -O3
+```
+and
+
+```zsh
+clang++ -std=c++17 decodeStop.cpp ../transit-files/gtfs-realtime.pb.cc -I**(paste here)**/include -L**(paste here)**/lib -lprotobuf -o decodeStop -O3
+```
