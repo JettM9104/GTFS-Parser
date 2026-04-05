@@ -41,8 +41,7 @@ protoc --cpp_out=. gtfs-realtime.proto
 ---
 **Step 3**: Compile the files
 
-Navigate to `./gtfs-rt/proto-conversion/webserver-implementation`
-Run 
+Navigate to `./gtfs-rt/proto-conversion/webserver-implementation` and run 
 ```zsh
 brew --prefix protobuf@21
 ```
