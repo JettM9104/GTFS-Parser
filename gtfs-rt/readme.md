@@ -21,7 +21,13 @@ Using homebrew, open the terminal and run
 ```zsh
 brew install protobuf@21
 ```
+and
+```zsh
+brew link --force protobuf@21
+```
+
 If you don't have homebrew, install it with 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
+**Step 2**: Locate `protobuf@21`
