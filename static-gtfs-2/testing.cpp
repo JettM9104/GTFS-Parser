@@ -5,8 +5,9 @@ using namespace gtfs;
 using namespace std;
 
 int main() {
-    stop ohio = getStopInfo("6769");
+    std::vector<trip_segment> a = getAllStops("1971073");
 
-    cout << ohio.stop_name << endl;
-
+    for (trip_segment b : a) {
+        cout << b.stop.arrival_time.roundedTime() << endl;
+    }
 }

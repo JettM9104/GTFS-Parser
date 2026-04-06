@@ -17,7 +17,7 @@
 #include <cmath>
 
 
-using std::cout, std::string, std::ifstream, std::ofstream, std::stoi, std::cerr, std::to_string, std::endl;
+using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl;
 
 
 namespace gtfs { // MARK: BEGINNING OF NAMESPACE GTFS
@@ -39,7 +39,7 @@ const string tripsPath = root + "trips.txt";
 const string stopTimesPath = root + "stop_times.txt";
 const string tripPath = root + "trips.txt";
 const string calendarPath = root + "calendar.txt";
-const string calenderDatesPath = root + "calendar_dates.txt";
+const string calendarDatesPath = root + "calendar_dates.txt";
 const string agencyPath = root + "agency.txt";
 const string shapePath = root + "shapes.txt";
 const string feedInfoFile = root + "feed_info.txt";
@@ -314,6 +314,21 @@ public:
     }
 };
 
+struct intstr {
+    int num;
+    string str;
+
+    intstr() = default;
+    intstr(int a, string b) : num(a), str(std::move(b)) {}
+    intstr(string a, int b) : num(b), str(std::move(a)) {}
+    intstr(int a)           : num(a) {}
+    intstr(string a)        : str(std::move(a)) {}
+};
+struct matchsearch {
+    intstr text;
+    int score;
+};
+
 struct route {
     enum continuous_pickup_dropoff {continuous = 0, no_continuous = 1, phone_agency = 2, driver_coordinate = 3};
     enum cemv {no_info = 0, with_cemv = 1, no_cemv = 2}; // cemv support in route will take precedence
@@ -402,7 +417,7 @@ struct agency {
     string agency_url;
     string agency_timezone;
     string agency_lang;
-    char agency_phone[20];
+    string agency_phone;
     string agency_fare_url;
     string agency_email;
     cemv cemv_support;
@@ -449,7 +464,26 @@ struct trip_segment {
     stop_time stop;
     string route_id;
 };
+struct service {
+    calendar schedule;
+    std::vector<calendar_date> exceptions;
+};
 
+int to_integer(string input) {
+    if (input == "" || input == " ") return 0;
+
+    return std::stoi(input);
+}
+double to_double(string input) {
+    if (input == "" || input == " ") return 0;
+
+    return std::stod(input);
+}
+float to_float(string input) {
+    if (input == "" || input == " ") return 0;
+
+    return std::stof(input);
+}
 
 double getDistanceKM(double lat1, double lon1, double lat2, double lon2) {
     const double earth_radius = 6371.0;
@@ -550,6 +584,8 @@ week convertDateToWeek(int year, int month, int day) {
     return static_cast<week>(dayIndex);
 }
 time parseFormattedTime(string input) {
+    if (input == "" || input == " ") return time(-1, -1, -1);
+
     time output;
     string h, m, s;
     short int segment = 1;
@@ -750,7 +786,7 @@ bool isTripValid(string trip_id, int year, int month, int day, bool noException 
                 output = false;
                 break;
             }
-            if (static_cast<bool>(std::stoi(parsedCurrentLine[refs[test]]))) {
+            if (static_cast<bool>(to_integer(parsedCurrentLine[refs[test]]))) {
                 output = true;
             }
             break;
@@ -758,7 +794,7 @@ bool isTripValid(string trip_id, int year, int month, int day, bool noException 
     }
     calendarFile.close();
 
-    ifstream calendarDatesFile = ifstream(calenderDatesPath);
+    ifstream calendarDatesFile = ifstream(calendarDatesPath);
 
     if (noException) return output;
 
@@ -861,7 +897,7 @@ route getRouteInfo(string route_id) { // requirements: routes.txt
         if (parsedCurrentLine[refs["route_id"]] == route_id) {
             // required fields
             output.route_id = route_id;
-            output.route_type = static_cast<route::type>(std::stoi(parsedCurrentLine[refs["route_type"]]));
+            output.route_type = static_cast<route::type>(to_integer(parsedCurrentLine[refs["route_type"]]));
 
             // optional/conditionally required/conditionally forbidden fields
             { auto find = refs.find("agency_id");
@@ -886,19 +922,19 @@ route getRouteInfo(string route_id) { // requirements: routes.txt
             if (find != refs.end()) output.route_text_color = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("route_sort_order");
-            if (find != refs.end()) output.route_sort_order = (parsedCurrentLine[find->second] == "" || parsedCurrentLine[find->second] == " ") ? 25565 : std::stoi(parsedCurrentLine[find->second]); }
+            if (find != refs.end()) output.route_sort_order = (parsedCurrentLine[find->second] == "" || parsedCurrentLine[find->second] == " ") ? 25565 : to_integer(parsedCurrentLine[find->second]); }
 
             { auto find = refs.find("continuous_pickup");
-            if (find != refs.end()) output.continuous_pickup = static_cast<route::continuous_pickup_dropoff>(std::stoi(parsedCurrentLine[find->second])); }
+            if (find != refs.end()) output.continuous_pickup = static_cast<route::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
             
             { auto find = refs.find("continuous_drop_off");
-            if (find != refs.end()) output.continuous_drop_off = static_cast<route::continuous_pickup_dropoff>(std::stoi(parsedCurrentLine[find->second])); }
+            if (find != refs.end()) output.continuous_drop_off = static_cast<route::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
 
             { auto find = refs.find("network_id");
             if (find != refs.end()) output.network_id = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("cemv_support");
-            if (find != refs.end()) output.cemv_support = static_cast<route::cemv>(std::stoi(parsedCurrentLine[find->second])); }
+            if (find != refs.end()) output.cemv_support = static_cast<route::cemv>(to_integer(parsedCurrentLine[find->second])); }
 
             break;
         }
@@ -943,10 +979,10 @@ stop getStopInfo(string stop_id) { // requirements: stops.txt
             if (find != refs.end()) output.stop_desc = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("stop_lat");
-            if (find != refs.end()) output.stop_lat = (parsedCurrentLine[find->second] == "" || parsedCurrentLine[find->second] == " ") ? 0.0 : std::stod(parsedCurrentLine[find->second]); }
+            if (find != refs.end()) output.stop_lat = to_double(parsedCurrentLine[find->second]); }
 
             { auto find = refs.find("stop_lon");
-            if (find != refs.end()) output.stop_lon = (parsedCurrentLine[find->second] == "" || parsedCurrentLine[find->second] == " ") ? 0.0 : std::stod(parsedCurrentLine[find->second]); }
+            if (find != refs.end()) output.stop_lon = to_double(parsedCurrentLine[find->second]); }
 
             { auto find = refs.find("zone_id");
             if (find != refs.end()) output.zone_id = parsedCurrentLine[find->second]; }
@@ -955,7 +991,7 @@ stop getStopInfo(string stop_id) { // requirements: stops.txt
             if (find != refs.end()) output.stop_url = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("location_type");
-            if (find != refs.end()) output.location_type = static_cast<stop::location>(std::stoi(parsedCurrentLine[find->second])); }
+            if (find != refs.end()) output.location_type = static_cast<stop::location>(to_integer(parsedCurrentLine[find->second])); }
 
             { auto find = refs.find("parent_station");
             if (find != refs.end()) output.parent_station = parsedCurrentLine[find->second]; }
@@ -964,7 +1000,7 @@ stop getStopInfo(string stop_id) { // requirements: stops.txt
             if (find != refs.end()) output.stop_timezone = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("wheelchair_boarding");
-            if (find != refs.end()) output.wheelchair_boarding = static_cast<stop::wheelchair>(std::stoi(parsedCurrentLine[find->second])); }
+            if (find != refs.end()) output.wheelchair_boarding = static_cast<stop::wheelchair>(to_integer(parsedCurrentLine[find->second])); }
 
             { auto find = refs.find("level_id");
             if (find != refs.end()) output.level_id = parsedCurrentLine[find->second]; }
@@ -973,7 +1009,7 @@ stop getStopInfo(string stop_id) { // requirements: stops.txt
             if (find != refs.end()) output.platform_code = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("stop_access");
-            if (find != refs.end()) output.stop_access = static_cast<stop::access>(std::stoi(parsedCurrentLine[find->second])); }
+            if (find != refs.end()) output.stop_access = static_cast<stop::access>(to_integer(parsedCurrentLine[find->second])); }
             break;
         }
     }
@@ -982,7 +1018,6 @@ stop getStopInfo(string stop_id) { // requirements: stops.txt
     stopFile.close();
     return output;
 }
-
 std::vector<trip_segment> getDayTimesAtStop(string stop_id, int year, int month, int day) { // requirements: stop_times.txt, routes.txt
     ifstream stopTimesFile = ifstream(stopTimesPath);
     std::vector<trip_segment> output;
@@ -1002,13 +1037,530 @@ std::vector<trip_segment> getDayTimesAtStop(string stop_id, int year, int month,
 
         if (parsedCurrentLine[refs["stop_id"]] == stop_id) {
             trip_segment x;
+
+            // required fields
             x.stop.stop_id = stop_id;
+            x.stop.trip_id = parsedCurrentLine[refs["trip_id"]];
+            x.stop.stop_sequence = to_integer(parsedCurrentLine[refs["stop_sequence"]]);
+
+            // optional/conditionally required/conditionally forbidden fields
+            { auto find = refs.find("arrival_time");
+            if (find != refs.end()) x.stop.arrival_time = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("departure_time");
+            if (find != refs.end()) x.stop.departure_time = parseFormattedTime(parsedCurrentLine[find->second]); }
+            
+            { auto find = refs.find("location_group_id");
+            if (find != refs.end()) x.stop.location_group_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("location_id");
+            if (find != refs.end()) x.stop.location_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("stop_sequence");
+            if (find != refs.end()) x.stop.stop_sequence = to_integer(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("stop_headsign");
+            if (find != refs.end()) x.stop.stop_headsign = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("start_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.start_pickup_drop_off_window = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("end_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.end_pickup_drop_off_window = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("pickup_type");
+            if (find != refs.end()) x.stop.pickup_type = static_cast<stop_time::pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("drop_off_type");
+            if (find != refs.end()) x.stop.drop_off_type = static_cast<stop_time::pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("continuous_pickup");
+            if (find != refs.end()) x.stop.continuous_pickup = static_cast<stop_time::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("continuous_drop_off");
+            if (find != refs.end()) x.stop.continuous_drop_off = static_cast<stop_time::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("shape_dist_traveled");
+            if (find != refs.end()) x.stop.shape_dist_traveled = to_float(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("timepoint");
+            if (find != refs.end()) x.stop.timepoint = static_cast<stop_time::timepoint_type>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("pickup_booking_rule_id");
+            if (find != refs.end()) x.stop.pickup_booking_rule_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("drop_off_booking_rule_id");
+            if (find != refs.end()) x.stop.drop_off_booking_rule_id = parsedCurrentLine[find->second]; }
 
             output.push_back(x);
         }
     }
-
     stopTimesFile.close();
+
+
+
+    ifstream tripsFile = ifstream(tripsPath);
+    currentLine = "";
+    parsedCurrentLine = std::vector<string>(0);
+    firstLine = true;
+    refs.clear();
+
+    while (getline(tripsFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        for (trip_segment& a : output) {
+            if (a.stop.trip_id == parsedCurrentLine[refs["trip_id"]]) {
+                a.route_id = parsedCurrentLine[refs["route_id"]];
+            }
+        }
+    }
+
+    tripsFile.close();
+    output.erase(std::remove_if(output.begin(), output.end(), [year, month, day](trip_segment x){ return (!isTripValid(x.stop.trip_id, year, month, day)); }), output.end());
+    return output;
+}
+std::vector<trip_segment> getDayTimesAtStop(string stop_id, calendar_day date) { // requirements: stop_times.txt, routes.txt
+    return getDayTimesAtStop(stop_id, date.year, date.month, date.day);
+}
+std::vector<agency> getAgencyInfo() { // requiremnts: agency.txt
+    std::vector<agency> output;
+    ifstream agencyFile = ifstream(agencyPath);
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
+    int lineNo = 0;
+
+    while (getline(agencyFile, currentLine)) {
+        lineNo++;
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (parsedCurrentLine.empty() || (parsedCurrentLine.size() == 0 && parsedCurrentLine[0].empty())) continue;
+
+        if (lineNo == 1) {
+            refs = createMapFromVector(parsedCurrentLine);
+            continue;
+        } 
+        agency temp;
+        // required fields
+        temp.agency_name = parsedCurrentLine[refs["agency_name"]];
+        temp.agency_url = parsedCurrentLine[refs["agency_url"]];
+        temp.agency_timezone = parsedCurrentLine[refs["agency_timezone"]];
+
+        // optional/conditionally required/conditionally forbidden fields
+        { auto find = refs.find("agency_id");
+        if (find != refs.end()) temp.agency_id = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("agency_lang");
+        if (find != refs.end()) temp.agency_lang = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("agency_phone");
+        if (find != refs.end()) temp.agency_phone = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("agency_fare_url");
+        if (find != refs.end()) temp.agency_fare_url = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("agency_email");
+        if (find != refs.end()) temp.agency_email = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("cemv_support");
+        if (find != refs.end()) temp.cemv_support = static_cast<agency::cemv>(to_integer(parsedCurrentLine[find->second])); }
+        
+        output.push_back(temp);        
+    }
+
+    agencyFile.close();
+    return output;
+}
+std::vector<shape> getShapeInfo(string shape_id) { // requirements: shape.txt
+    std::vector<shape> output;
+    ifstream shapeFile = ifstream(shapePath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
+    bool firstLine = true;
+
+    while (getline(shapeFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+        
+        if (parsedCurrentLine[refs["shape_id"]] == shape_id) {
+            shape temp;
+
+            // requried fields
+            temp.shape_id = shape_id;
+            temp.shape_pt_lat = to_double(parsedCurrentLine[refs["shape_pt_lat"]]);
+            temp.shape_pt_lon = to_double(parsedCurrentLine[refs["shape_pt_lon"]]);
+            temp.shape_pt_sequence = to_integer(parsedCurrentLine[refs["shape_pt_sequence"]]);
+
+            // optional field
+            { auto find = refs.find("shape_dist_traveled");
+            if (find != refs.end()) temp.shape_dist_traveled = to_float(parsedCurrentLine[find->second]); }
+
+            output.push_back(temp);
+        }
+    }
+
+    shapeFile.close();
+    return output;
+}
+std::vector<trip_segment> getRemainingDayStops(string stop_id, time intime, int year, int month, int day) { // stop_times.txt, routes.txt
+    std::vector<trip_segment> out = getDayTimesAtStop(stop_id, year, month, day);
+    
+    out.erase(std::remove_if(out.begin(), out.end(), [intime](trip_segment x){ return (x.stop.departure_time < intime); }), out.end());
+    return out;
+}
+std::vector<trip_segment> getRemainingDayStops(string stop_id, time intime, calendar_day date) { // stop_times.txt, routes.txt
+    return getRemainingDayStops(stop_id, intime, date.year, date.month, date.day);
+}
+std::vector<matchsearch> searchStop(const string& name) { // stops.txt
+    ifstream stopFile(stopPath);
+
+    string currentLine;
+    std::map<string, int> refs;
+    std::vector<intstr> stopNames;
+    int lineNumber = 0;
+
+    while (getline(stopFile, currentLine)) {
+        auto parsedCurrentLine = parseDataCSV(currentLine);
+        ++lineNumber;
+
+        if (lineNumber == 1) [[unlikely]] {
+            for (int i = 0; i < (int)parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        } else {
+            stopNames.emplace_back(
+                stoi(parsedCurrentLine[refs.at("stop_id")]),
+                parsedCurrentLine[refs.at("stop_name")]
+            );
+        }
+    }
+
+    std::vector<matchsearch> results;
+    results.reserve(stopNames.size());
+
+    for (const auto& item : stopNames) {
+        int dist   = levenshtein(item.str, name);
+        int maxLen = (int)std::max(item.str.size(), name.size());
+        int score  = (maxLen > 0) ? (100 - (dist * 100 / maxLen)) : 100;
+
+        results.push_back({ item, score });
+    }
+
+    std::sort(results.begin(), results.end(),
+        [](const matchsearch& a, const matchsearch& b) {
+            return a.score > b.score;
+        });
+
+    return results;
+}
+std::vector<trip_segment> getAllStops(string trip_id) { // stop_times.txt, routes.txt
+    std::vector<trip_segment> output;
+    ifstream stopTimesFile = ifstream(stopTimesPath);
+
+    string currentLine;
+    bool firstLine = true;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
+
+    while (getline(stopTimesFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+        if (parsedCurrentLine[refs["trip_id"]] == trip_id) {
+            trip_segment x;
+
+            // required fields
+            x.stop.trip_id = trip_id;
+            x.stop.stop_sequence = to_integer(parsedCurrentLine[refs["stop_sequence"]]);
+
+            // optional/conditionally required/conditionally forbidden fields
+            { auto find = refs.find("stop_id");
+            if (find != refs.end()) x.stop.stop_id = parsedCurrentLine[refs["stop_id"]]; }
+
+            { auto find = refs.find("arrival_time");
+            if (find != refs.end()) x.stop.arrival_time = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("departure_time");
+            if (find != refs.end()) x.stop.departure_time = parseFormattedTime(parsedCurrentLine[find->second]); }
+            
+            { auto find = refs.find("location_group_id");
+            if (find != refs.end()) x.stop.location_group_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("location_id");
+            if (find != refs.end()) x.stop.location_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("stop_sequence");
+            if (find != refs.end()) x.stop.stop_sequence = to_integer(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("stop_headsign");
+            if (find != refs.end()) x.stop.stop_headsign = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("start_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.start_pickup_drop_off_window = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("end_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.end_pickup_drop_off_window = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("pickup_type");
+            if (find != refs.end()) x.stop.pickup_type = static_cast<stop_time::pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("drop_off_type");
+            if (find != refs.end()) x.stop.drop_off_type = static_cast<stop_time::pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("continuous_pickup");
+            if (find != refs.end()) x.stop.continuous_pickup = static_cast<stop_time::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("continuous_drop_off");
+            if (find != refs.end()) x.stop.continuous_drop_off = static_cast<stop_time::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("shape_dist_traveled");
+            if (find != refs.end()) x.stop.shape_dist_traveled = to_float(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("timepoint");
+            if (find != refs.end()) x.stop.timepoint = static_cast<stop_time::timepoint_type>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("pickup_booking_rule_id");
+            if (find != refs.end()) x.stop.pickup_booking_rule_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("drop_off_booking_rule_id");
+            if (find != refs.end()) x.stop.drop_off_booking_rule_id = parsedCurrentLine[find->second]; }
+
+            output.push_back(x);
+        }
+
+    }
+    stopTimesFile.close();
+
+    ifstream tripsFile = ifstream(tripsPath);
+    currentLine = "";
+    parsedCurrentLine = std::vector<string>(0);
+    firstLine = true;
+    refs.clear();
+
+    while (getline(tripsFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        for (trip_segment& a : output) {
+            if (a.stop.trip_id == parsedCurrentLine[refs["trip_id"]]) {
+                a.route_id = parsedCurrentLine[refs["route_id"]];
+            }
+        }
+    }
+
+    tripsFile.close();
+
+    return output;
+}
+std::vector<stop> getNearestStops(double lat, double lon, int maxResults = 10, double maxDistanceKM = 5.0) {
+    std::vector<std::pair<double, stop>> candidates;
+    ifstream stopFile = ifstream(stopPath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    bool firstLine = true; // bug fix: was uninitialized
+    std::unordered_map<string, int> refs;
+
+    while (getline(stopFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        // skip stops without coordinates
+        auto latFind = refs.find("stop_lat");
+        auto lonFind = refs.find("stop_lon");
+        if (latFind == refs.end() || lonFind == refs.end()) continue;
+
+        double sLat = to_double(parsedCurrentLine[latFind->second]);
+        double sLon = to_double(parsedCurrentLine[lonFind->second]);
+        if (sLat == 0.0 && sLon == 0.0) continue; // likely missing/unpopulated
+
+        double d = getDistanceKM(lat, lon, sLat, sLon);
+        if (d > maxDistanceKM) continue;
+
+        stop temp;
+        temp.stop_id = parsedCurrentLine[refs["stop_id"]];
+        temp.stop_lat = sLat;
+        temp.stop_lon = sLon;
+
+        { auto find = refs.find("stop_code");
+        if (find != refs.end()) temp.stop_code = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("stop_name");
+        if (find != refs.end()) temp.stop_name = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("tts_stop_name");
+        if (find != refs.end()) temp.tts_stop_name = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("stop_desc");
+        if (find != refs.end()) temp.stop_desc = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("zone_id");
+        if (find != refs.end()) temp.zone_id = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("stop_url");
+        if (find != refs.end()) temp.stop_url = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("location_type");
+        if (find != refs.end()) temp.location_type = static_cast<stop::location>(to_integer(parsedCurrentLine[find->second])); }
+
+        { auto find = refs.find("parent_station");
+        if (find != refs.end()) temp.parent_station = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("stop_timezone");
+        if (find != refs.end()) temp.stop_timezone = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("wheelchair_boarding");
+        if (find != refs.end()) temp.wheelchair_boarding = static_cast<stop::wheelchair>(to_integer(parsedCurrentLine[find->second])); }
+
+        { auto find = refs.find("level_id");
+        if (find != refs.end()) temp.level_id = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("platform_code");
+        if (find != refs.end()) temp.platform_code = parsedCurrentLine[find->second]; }
+
+        { auto find = refs.find("stop_access");
+        if (find != refs.end()) temp.stop_access = static_cast<stop::access>(to_integer(parsedCurrentLine[find->second])); }
+
+        candidates.emplace_back(d, std::move(temp));
+    }
+
+    stopFile.close();
+
+    std::sort(candidates.begin(), candidates.end(),
+        [](const std::pair<double, stop>& a, const std::pair<double, stop>& b) {
+            return a.first < b.first;
+        });
+
+    std::vector<stop> output;
+    int limit = std::min((int)candidates.size(), maxResults);
+    output.reserve(limit);
+    for (int i = 0; i < limit; i++) {
+        output.push_back(std::move(candidates[i].second));
+    }
+
+    return output;
+}
+std::vector<trip> getAllTrips(string route_id) {
+    std::vector<trip> output;
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    bool firstLine = true;
+    std::unordered_map<string, int> refs;
+
+
+    ifstream routeFile = ifstream(routePath);
+
+    while (getline(routeFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["route_id"]] == route_id) {
+            trip temp;
+            temp.trip_id = parsedCurrentLine[refs["trip_id"]];
+
+            output.push_back(temp);
+        }
+    }
+
+    routeFile.close();
+    return output;
+}
+service getServiceInfo(string service_id) {
+    service output;
+    output.schedule.service_id = service_id;
+
+    ifstream calendarFile = ifstream(calendarPath);
+    ifstream calendarDatesFile = ifstream(calendarDatesPath);
+
+    bool firstLine = true;
+    string currentLine;
+
+    std::vector<string> parsedCurrentLine;
+
+    std::unordered_map<string, int> refs;
+    while (getline(calendarFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["service_id"]] == service_id) {
+            output.schedule.start_date = parseFormattedDate(parsedCurrentLine[refs["start_date"]]);
+            output.schedule.end_date = parseFormattedDate(parsedCurrentLine[refs["end_date"]]);
+
+            output.schedule.monday = static_cast<bool>(stoi(parsedCurrentLine[refs["monday"]]));
+            output.schedule.tuesday = static_cast<bool>(stoi(parsedCurrentLine[refs["tuesday"]]));
+            output.schedule.wednesday = static_cast<bool>(stoi(parsedCurrentLine[refs["wednesday"]]));
+            output.schedule.thursday = static_cast<bool>(stoi(parsedCurrentLine[refs["thursday"]]));
+            output.schedule.friday = static_cast<bool>(stoi(parsedCurrentLine[refs["friday"]]));
+            output.schedule.saturday = static_cast<bool>(stoi(parsedCurrentLine[refs["saturday"]]));
+            output.schedule.sunday = static_cast<bool>(stoi(parsedCurrentLine[refs["sunday"]]));
+            break; // accoring to google the service id SHOULD show up only once in calendar.txt
+        }
+    }
+
+    calendarFile.close();
+
+    currentLine = "";
+    parsedCurrentLine = std::vector<string>(0);
+    firstLine = true;
+
+    refs = std::unordered_map<string, int>();
+
+    while (getline(calendarDatesFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["service_id"]] == service_id) {
+            calendar_date::exception x = static_cast<calendar_date::exception>(std::stoi(parsedCurrentLine[refs["exception_type"]]));
+            calendar_day y = parseFormattedDate(parsedCurrentLine[refs["date"]]);
+            
+            calendar_date temp;
+            temp.exception_type = x;
+            temp.date = y;
+            temp.service_id = service_id;
+            continue;
+        }
+    }
+    calendarDatesFile.close();
     return output;
 }
 };
