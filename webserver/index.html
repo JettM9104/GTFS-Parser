@@ -753,6 +753,16 @@
     let showingAllDeps = false;
     let depsRefreshId = null;
 
+    // ── RT stop badge cache ──
+    // Stores the last successfully received RT data for a stop,
+    // plus a wall-clock timestamp of when it arrived.
+    let rtStopCache = {
+      stopId: null,
+      data: null,
+      receivedAt: null   // Date.now() ms
+    };
+    const RT_STALE_MS = 60 * 1000; // 60 seconds
+
     // ── Route trips state ──
     let activeRouteTripCard = null;
 
@@ -992,8 +1002,37 @@
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
         })
-        .then(applyRTtoDepartures)
-        .catch(() => {});
+        .then(data => {
+          // Cache the fresh response with a wall-clock timestamp
+          rtStopCache = { stopId, data, receivedAt: Date.now() };
+          applyRTtoDepartures(data);
+        })
+        .catch(() => {
+          // On error: check if cached data is still fresh enough to re-apply
+          if (
+            rtStopCache.stopId === stopId &&
+            rtStopCache.data !== null &&
+            (Date.now() - rtStopCache.receivedAt) < RT_STALE_MS
+          ) {
+            applyRTtoDepartures(rtStopCache.data);
+          }
+          // If stale or no cache: do nothing — badges were already cleared by
+          // renderDepartureCards, which is correct behaviour.
+        });
+    }
+
+    // Re-applies the cached RT data to freshly rendered cards.
+    // Called immediately after renderDepartureCards so badges are never
+    // missing while a new fetch is still in-flight.
+    function reapplyCachedRT(stopId) {
+      if (
+        rtStopCache.stopId === stopId &&
+        rtStopCache.data !== null &&
+        (Date.now() - rtStopCache.receivedAt) < RT_STALE_MS
+      ) {
+        applyRTtoDepartures(rtStopCache.data);
+      }
+      // If stale (> 60 s old) we deliberately show no badges — data is too old.
     }
 
     function applyRTtoDepartures(data) {
@@ -1072,6 +1111,9 @@
         grid.appendChild(card);
       });
 
+      // Immediately restore badges from cache (prevents flicker during re-renders).
+      // Then kick off a fresh network fetch in the background.
+      reapplyCachedRT(stopId);
       loadRTStopUpdates(stopId);
     }
 
@@ -1190,6 +1232,11 @@
 
     function displayStop(data) {
       if (window.stopMarker) map.removeLayer(window.stopMarker);
+
+      // Clear RT cache when switching to a new stop
+      if (rtStopCache.stopId !== data.stop_id) {
+        rtStopCache = { stopId: null, data: null, receivedAt: null };
+      }
 
       const hdr = document.getElementById('stopHeader');
       hdr.style.display = 'block';

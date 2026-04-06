@@ -29,7 +29,8 @@ def require_token(f):
 
 # Routes that should NOT get @require_token
 EXCLUDED_ROUTES = {
-    '',  # already unprotected in tokenserver.py
+    '',
+    '/favicon.ico',  # already unprotected in tokenserver.py
 }
 
 def main():
