@@ -6,25 +6,12 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     if (argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <tripID> <year> <month> <day>\n";
+        std::cerr << "Usage: " << argv[0] << " <route_id> <year> <month> <day>\n";
         return -1;
     }
-    int tID;
+    string trip_id = argv[1];
 
-    try {
-        tID = stoi(argv[1]);
-    } catch (std::invalid_argument& err) {
-        std::cerr << "invalid coordinates\n" << std::flush;
-        return 1;
-    } catch (std::out_of_range& err) {
-        std::cerr << "invalid coordinates, out of range\n" << std::flush;
-        return 2;
-    } catch (...) {
-        std::cerr << "...\n" << std::flush;
-        return -1;
-    }
-
-    vector<trip> x = getAllTrips(tID);
+    vector<trip> x = getAllTrips(trip_id);
 
     for (trip& x_trip : x) {
         x_trip = getTripInfo(x_trip.trip_id);
@@ -41,24 +28,24 @@ int main(int argc, char* argv[]) {
         service& service_y = y[i];
         bool remove = false;
 
-        if (service_y.start_date > getToday() || service_y.end_date < getToday()) {
+        if (service_y.schedule.start_date > getToday() || service_y.schedule.end_date < getToday()) {
             remove = true;
         }
 
         switch (convertDateToWeek(stoi(argv[2]), stoi(argv[3]), stoi(argv[4]))) {
-            case mon: if (!service_y.mon) remove = true; break;
-            case tue: if (!service_y.tue) remove = true; break;
-            case wed: if (!service_y.wed) remove = true; break;
-            case thu: if (!service_y.thu) remove = true; break;
-            case fri: if (!service_y.fri) remove = true; break;
-            case sat: if (!service_y.sat) remove = true; break;
-            case sun: if (!service_y.sun) remove = true; break;
+            case mon: if (!service_y.schedule.monday) remove = true; break;
+            case tue: if (!service_y.schedule.tuesday) remove = true; break;
+            case wed: if (!service_y.schedule.wednesday) remove = true; break;
+            case thu: if (!service_y.schedule.thursday) remove = true; break;
+            case fri: if (!service_y.schedule.friday) remove = true; break;
+            case sat: if (!service_y.schedule.saturday) remove = true; break;
+            case sun: if (!service_y.schedule.sunday) remove = true; break;
         }
 
-        for (pair<calendarDate, exceptionType>& special_day : service_y.special_dates) {
-            if (special_day.first == getToday()) {
-                if (special_day.second == removal)  remove = true;
-                if (special_day.second == addition) remove = false;
+        for (gtfs::calendar_date special_day : service_y.exceptions) {
+            if (special_day.date == getToday()) {
+                if (special_day.exception_type == gtfs::calendar_date::removed)  remove = true;
+                if (special_day.exception_type == gtfs::calendar_date::added) remove = false;
             }
         }
 
@@ -70,10 +57,10 @@ int main(int argc, char* argv[]) {
             i++;
         }
     }
-    cout << "{\n\t\"query_route_id\": " << argv[1] << ",\n\t\"trips\": [\n";
+    cout << "{\n\t\"query_route_id\": \"" << argv[1] << "\",\n\t\"trips\": [\n";
     for (int i = 0; i < x.size(); i++) {
         trip x_a = x[i];
-        cout << "\t\t" << x_a.trip_id << ((i == (x.size() - 1) ) ? "" : ",") << endl;
+        cout << "\t\t\"" << x_a.trip_id << ((i == (x.size() - 1) ) ? "\"" : "\",") << endl;
     }
     cout << "\t]\n}\n";
 

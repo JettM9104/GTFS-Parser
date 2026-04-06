@@ -1,2 +1,0 @@
-agency_phone,agency_fare_url,agency_url,agency_id,agency_name,agency_timezone,agency_lang
-1-866-668-3978,https://www.yrt.ca/en/fares-and-passes/fare-chart.aspx,http://www.yrt.ca,YRT,York Region Transit,America/Toronto,en

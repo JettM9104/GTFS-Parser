@@ -14,18 +14,8 @@ int main(int argc, char* argv[]) {
 
     gtfs::stop st;
 
-    try {
-        st = gtfs::getStopInfo(stoi(argv[1]), gtfs::ident);
-    } catch (std::invalid_argument& err) {
-        std::cerr << "invalid stopID\n" << std::flush;
-        return 1;
-    } catch (std::out_of_range& err) {
-        std::cerr << "invalid stopID, out of range\n" << std::flush;
-        return 2;
-    } catch (...) {
-        std::cerr << "how\n" << std::flush;
-        return -1;
-    }
+    st = gtfs::getStopInfo(argv[1]);
+
     int year, month, day;
 
     if (argc == 2) {
@@ -43,7 +33,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::vector<gtfs::tripSegment> ts = gtfs::getDayTimesAtStop(year, month, day, st.stop_id);
+    std::vector<gtfs::trip_segment> ts = gtfs::getDayTimesAtStop(st.stop_id,year, month, day);
 
     std::cout << "{\n\t\"stop_id\": " << argv[1] << ",\n"
                 << "\t\"stop_code\": " << st.stop_code << ",\n"
@@ -55,10 +45,10 @@ int main(int argc, char* argv[]) {
 
     const int tsLen = ts.size();
     for (int i = 0; i < tsLen; i++) {
-        gtfs::tripSegment x = ts[i];
+        gtfs::trip_segment x = ts[i];
         cout << "\t\t{ \"route_id\": " << x.route_id << 
-                ", \"arrival_time\": \"" << x.arrival_time.leadingRoundedTime() << 
-                "\", \"trip_id\": " << x.trip_id << 
+                ", \"arrival_time\": \"" << x.stop.arrival_time.leadingRoundedTime() << 
+                "\", \"trip_id\": " << x.stop.trip_id << 
                 (i == (tsLen-1) ? " } \n" : " }, \n");
     }
 

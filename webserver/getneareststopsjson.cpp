@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if ((arg == "-t" || arg == "--total") && i + 1 < argc) {
-            precision = std::atoi(argv[i + 1]);
+            top = std::atoi(argv[i + 1]);
             ++i;
         }
     }

@@ -24,29 +24,17 @@ int main(int argc, char* argv[]) {
 
     std::cout << std::fixed << std::setprecision(precision);
 
-    int tripID;
-    try {
-        tripID = std::stoi(argv[1]);
-    } catch (std::invalid_argument& err) {
-        std::cerr << "invalid tripID\n" << std::flush;
-        return 1;
-    } catch (std::out_of_range& err) {
-        std::cerr << "invalid tripID, out of range\n" << std::flush;
-        return 2;
-    } catch (...) {
-        std::cerr << "how did you even manage to mess up this bad\n" << std::flush;
-        return -1;
-    }
+    string trip_id = argv[1];
 
-    std::vector<gtfs::tripSegment> tripSegments = gtfs::getAllStops(tripID);
-    gtfs::trip tx = gtfs::getTripInfo(tripID);
-    gtfs::busLine bx = gtfs::getRouteInfo(tx.route_id);
+    std::vector<gtfs::trip_segment> tripSegments = gtfs::getAllStops(trip_id);
+    gtfs::trip tx = gtfs::getTripInfo(trip_id);
+    gtfs::route bx = gtfs::getRouteInfo(tx.route_id);
     std::vector<gtfs::shape> tsx = gtfs::getShapeInfo(tx.shape_id);
     
     std::vector<gtfs::stop> stops;
 
-    for (gtfs::tripSegment& x : tripSegments) {
-        stops.push_back(gtfs::getStopInfo(x.stop_id, gtfs::ident));
+    for (gtfs::trip_segment& x : tripSegments) {
+        stops.push_back(gtfs::getStopInfo(x.stop.stop_id));
     }
     int length = stops.size();
 
@@ -61,12 +49,13 @@ int main(int argc, char* argv[]) {
     std::cout << "\t\"stops\": [\n";
     for (int i = 0; i < length; i++) {
         gtfs::stop x = stops[i];
-        gtfs::tripSegment y = tripSegments[i];
+        gtfs::trip_segment y = tripSegments[i];
         std::cout << "\t\t{ \"lat\": " << x.stop_lat << 
                 ", \"lng\": " << x.stop_lon << 
-                ", \"code\": "<< x.stop_code << 
-                ", \"id\": " << x.stop_id << 
-                ", \"time\": \"" << y.arrival_time.leadingRoundedTime() << "\"" <<
+                ", \"code\": \""<< x.stop_code << 
+                "\", \"id\": \"" << x.stop_id << 
+                "\", \"time\": \"" << y.stop.arrival_time.leadingRoundedTime() << "\"" <<
+                ", \"stop_sequence\": " << y.stop.stop_sequence <<
                 (i == (length - 1) ? " }\n" : " },\n");
     } 
 
@@ -80,6 +69,7 @@ int main(int argc, char* argv[]) {
         gtfs::shape x = tsx[i];
         std::cout << "\t\t{ \"lat\": " << x.shape_pt_lat << 
                 ", \"lng\": " << x.shape_pt_lon << 
+                ", \"sequence\": " << x.shape_pt_sequence << 
                 (i == (tx_length - 1) ? " }\n" : " },\n");
     } 
     
