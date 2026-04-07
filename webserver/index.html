@@ -751,17 +751,16 @@
     // ── Departures state ──
     let allDepartures = [];
     let showingAllDeps = false;
+    let showingNext4 = false;
     let depsRefreshId = null;
 
     // ── RT stop badge cache ──
-    // Stores the last successfully received RT data for a stop,
-    // plus a wall-clock timestamp of when it arrived.
     let rtStopCache = {
       stopId: null,
       data: null,
-      receivedAt: null   // Date.now() ms
+      receivedAt: null
     };
-    const RT_STALE_MS = 60 * 1000; // 60 seconds
+    const RT_STALE_MS = 60 * 1000;
 
     // ── Route trips state ──
     let activeRouteTripCard = null;
@@ -825,6 +824,13 @@
       });
     }
 
+    function filterNext4(departures) {
+      const now = nowInSeconds();
+      return departures
+        .filter(dep => parseTime(dep.arrival_time) >= now)
+        .slice(0, 4);
+    }
+
     function initMap() {
       map = L.map('map').setView([43.88, -79.34], 10);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -838,7 +844,6 @@
 
       if (cardEl) {
         cardEl.classList.add('active');
-        // track which pool it belongs to
         if (cardEl.classList.contains('rt-trip-card')) {
           activeRouteTripCard = cardEl;
         } else {
@@ -1003,12 +1008,10 @@
           return r.json();
         })
         .then(data => {
-          // Cache the fresh response with a wall-clock timestamp
           rtStopCache = { stopId, data, receivedAt: Date.now() };
           applyRTtoDepartures(data);
         })
         .catch(() => {
-          // On error: check if cached data is still fresh enough to re-apply
           if (
             rtStopCache.stopId === stopId &&
             rtStopCache.data !== null &&
@@ -1016,14 +1019,9 @@
           ) {
             applyRTtoDepartures(rtStopCache.data);
           }
-          // If stale or no cache: do nothing — badges were already cleared by
-          // renderDepartureCards, which is correct behaviour.
         });
     }
 
-    // Re-applies the cached RT data to freshly rendered cards.
-    // Called immediately after renderDepartureCards so badges are never
-    // missing while a new fetch is still in-flight.
     function reapplyCachedRT(stopId) {
       if (
         rtStopCache.stopId === stopId &&
@@ -1032,7 +1030,6 @@
       ) {
         applyRTtoDepartures(rtStopCache.data);
       }
-      // If stale (> 60 s old) we deliberately show no badges — data is too old.
     }
 
     function applyRTtoDepartures(data) {
@@ -1111,8 +1108,6 @@
         grid.appendChild(card);
       });
 
-      // Immediately restore badges from cache (prevents flicker during re-renders).
-      // Then kick off a fresh network fetch in the background.
       reapplyCachedRT(stopId);
       loadRTStopUpdates(stopId);
     }
@@ -1122,16 +1117,25 @@
       const label = document.getElementById('depWindowLabel');
 
       if (showingAllDeps) {
+        // State 3: show everything
         renderDepartureCards(allDepartures, stopId);
         btn.textContent = 'Next 3h only';
         label.textContent = `${allDepartures.length} departure${allDepartures.length !== 1 ? 's' : ''} total`;
+      } else if (showingNext4) {
+        // State 2: show next 4
+        const next4 = filterNext4(allDepartures);
+        renderDepartureCards(next4, stopId);
+        btn.textContent = `Show all ${allDepartures.length}`;
+        label.textContent = `Next 4 departures`;
       } else {
+        // State 1: show next 3h (default)
         const filtered = filterNext3h(allDepartures);
         renderDepartureCards(filtered, stopId);
-        btn.textContent = filtered.length < allDepartures.length ? `Show all ${allDepartures.length}` : 'Show all';
         if (filtered.length === 0) {
+          btn.textContent = `Show all ${allDepartures.length}`;
           label.textContent = 'No departures in the next 3 hours';
         } else {
+          btn.textContent = `Next 4`;
           label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length !== 1 ? 's' : ''}`;
         }
       }
@@ -1150,7 +1154,6 @@
       const errEl    = document.getElementById('routeTripsError');
       const countEl  = document.getElementById('routeTripsCount');
 
-      // Reset UI
       grid.innerHTML = '';
       errEl.style.display = 'none';
       countEl.textContent = 'Loading…';
@@ -1176,7 +1179,6 @@
 
       grid.innerHTML = '';
 
-      // Response shape: { query_route_id, trips: [1958131, 1958132, ...] }
       const trips = Array.isArray(data) ? data : (data.trips || []);
 
       if (trips.length === 0) {
@@ -1219,9 +1221,7 @@
     function startDepsRefresh(stopId) {
       if (depsRefreshId !== null) clearInterval(depsRefreshId);
       depsRefreshId = setInterval(() => {
-        // Re-filter + re-render the departure cards as time advances
         updateDeparturesView(stopId);
-        // Re-fetch live RT delay badges
         loadRTStopUpdates(stopId);
       }, 15000);
     }
@@ -1233,7 +1233,6 @@
     function displayStop(data) {
       if (window.stopMarker) map.removeLayer(window.stopMarker);
 
-      // Clear RT cache when switching to a new stop
       if (rtStopCache.stopId !== data.stop_id) {
         rtStopCache = { stopId: null, data: null, receivedAt: null };
       }
@@ -1249,6 +1248,7 @@
       );
 
       showingAllDeps = false;
+      showingNext4 = false;
       currentStopId = data.stop_id;
 
       updateDeparturesView(data.stop_id);
@@ -1259,8 +1259,21 @@
       map.setView([data.lat, data.lon], 15);
     }
 
+    // Button cycles: Next 3h → Next 4 → Show all → Next 3h → …
     document.getElementById('showAllDepsBtn').addEventListener('click', () => {
-      showingAllDeps = !showingAllDeps;
+      if (!showingAllDeps && !showingNext4) {
+        // next 3h -> next 4
+        showingNext4 = true;
+        showingAllDeps = false;
+      } else if (showingNext4 && !showingAllDeps) {
+        // next 4 -> all
+        showingNext4 = false;
+        showingAllDeps = true;
+      } else {
+        // all -> next 3h
+        showingAllDeps = false;
+        showingNext4 = false;
+      }
       if (currentStopId) updateDeparturesView(currentStopId);
     });
 
@@ -1363,7 +1376,6 @@
       if (v) loadStop(v);
     });
 
-    // ── Route button wiring ──
     document.getElementById('loadRouteBtn').addEventListener('click', () => {
       const v = document.getElementById('routeIdInput').value.trim();
       if (v) loadRouteTrips(v);

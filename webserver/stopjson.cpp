@@ -46,10 +46,10 @@ int main(int argc, char* argv[]) {
     const int tsLen = ts.size();
     for (int i = 0; i < tsLen; i++) {
         gtfs::trip_segment x = ts[i];
-        cout << "\t\t{ \"route_id\": " << x.route_id << 
-                ", \"arrival_time\": \"" << x.stop.arrival_time.leadingRoundedTime() << 
-                "\", \"trip_id\": " << x.stop.trip_id << 
-                (i == (tsLen-1) ? " } \n" : " }, \n");
+        cout << "\t\t{ \"route_id\": \"" << x.route_id << 
+                "\", \"arrival_time\": \"" << x.stop.arrival_time.leadingRoundedTime() << 
+                "\", \"trip_id\": \"" << x.stop.trip_id << 
+                (i == (tsLen-1) ? "\" } \n" : "\" }, \n");
     }
 
     cout << "\t]\n}\n";
