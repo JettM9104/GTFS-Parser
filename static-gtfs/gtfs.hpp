@@ -1563,6 +1563,34 @@ service getServiceInfo(string service_id) {
     calendarDatesFile.close();
     return output;
 }
+std::vector<trip> getAllBlockId(string block_id) { // requirements: trips.txt with optional field block_id
+    std::vector<trip> output;
+    ifstream tripFile = ifstream(tripPath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
+    bool firstLine = true;
+
+    while (getline(tripFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+        
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["block_id"]] == block_id) {
+            trip temp;
+            temp.trip_id = parsedCurrentLine[refs["trip_id"]];
+
+            output.push_back(temp);
+        }
+    }
+    tripFile.close();
+    return output;
+}
 };
 
 #endif
