@@ -96,5 +96,5 @@ Check the output. Refer to this table:
 | 1              | GTFS Data read but is expired |
 | -1             | GTFS Data read but it is not yet in place |
 | 10             | GTFS Data's feed_info.txt not read |
-| 11             | GTFS Data read but feed_info.txt is missing feed_start_date field |
-| 12             | GTFS Data read but feed_info.txt is missing feed_end_date field |
+| 11             | GTFS Data read but feed_info.txt is missing feed_end_date field |
+| 12             | GTFS Data read but feed_info.txt is missing feed_start_date field |
