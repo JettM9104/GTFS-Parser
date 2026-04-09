@@ -2,6 +2,7 @@
 #ifndef GTFS_HPP
 #define GTFS_HPP
 
+#pragma region LIBRARIES AND NAMESPACES
 
 #include <iostream>
 #include <fstream>
@@ -19,8 +20,11 @@
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl;
 
+#pragma endregion
 
 namespace gtfs { // MARK: BEGINNING OF NAMESPACE GTFS
+
+#pragma region ENUMS AND VARIABLES    
 
 typedef enum {mon = 0, tue, wed, thu, fri, sat, sun} week;
 typedef enum {in_use = 0, expired = -1, upcoming = 1, no_result = 10, no_result_a = 11, no_result_b = 12} feedStatus;
@@ -47,6 +51,8 @@ const string feedInfoFile = root + "feed_info.txt";
 const int precision = 8;
 const int defPrecision = 6;
 
+#pragma endregion
+#pragma region CLASSES AND STRUCTS
 
 class time {
 public:
@@ -173,7 +179,7 @@ public:
         return output;
     }
 };
-class calendar_day { // to only be used in structs and functions that truly need it
+class calendar_day { // to only be used in structs and functions that truly need it, or, in suitable overloads
 public:
     int year;
     int month;
@@ -469,6 +475,9 @@ struct service {
     std::vector<calendar_date> exceptions;
 };
 
+#pragma endregion
+#pragma region HELPER FUNCTIONS
+
 int to_integer(string input) {
     if (input == "" || input == " ") return 0;
 
@@ -658,6 +667,9 @@ double getScore(string input) {
     total /= input.length();
     return total;
 }
+
+#pragma endregion
+#pragma region FUNCTIONS
 
 trip getTripInfo(string trip_id) { // requirements: trips.txt
     trip output;
@@ -1677,6 +1689,8 @@ std::vector<trip_segment> getStopTimeInfo(string trip_id) { // requiremtns: stop
     stopTimesFile.close();
     return output;
 }
-};
+
+#pragma endregion
+}; // MARK: END OF NAMESPACE GTFS
 
 #endif
