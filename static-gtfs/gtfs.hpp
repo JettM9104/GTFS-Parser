@@ -51,7 +51,7 @@ const string feedInfoFile = root + "feed_info.txt";
 const int precision = 8;
 const int defPrecision = 6;
 
-#pragma endregion
+#pragma endregion ENUMS AND VARIABLES
 #pragma region CLASSES AND STRUCTS
 
 class time {
@@ -475,7 +475,7 @@ struct service {
     std::vector<calendar_date> exceptions;
 };
 
-#pragma endregion
+#pragma endregion CLASSES AND STRUCTS
 #pragma region HELPER FUNCTIONS
 
 int to_integer(string input) {
@@ -668,7 +668,7 @@ double getScore(string input) {
     return total;
 }
 
-#pragma endregion
+#pragma endregion HELPER FUNCTIONS
 #pragma region FUNCTIONS
 
 trip getTripInfo(string trip_id) { // requirements: trips.txt
@@ -1690,7 +1690,8 @@ std::vector<trip_segment> getStopTimeInfo(string trip_id) { // requiremtns: stop
     return output;
 }
 
-#pragma endregion
+#pragma endregion FUNCTIONS
+
 }; // MARK: END OF NAMESPACE GTFS
 
 #endif
