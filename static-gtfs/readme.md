@@ -62,3 +62,39 @@ on mac, and
 cd
 ```
 (with no arguments), on windows
+
+to get it.
+
+2. `gtfs.hpp` line 32: update
+```cpp
+const string path = "/data/whatever_is_here/";
+```
+Replace `whatever_is_here` with the name of your extracted folder containing the gtfs files. 
+
+3. Test it
+Create a new file, `main.cpp` with this code:
+```cpp
+#include <iostream>
+#include <ctime>
+#include <iomanip>
+#include "gtfs.hpp"
+
+
+int main(int argc, char* argv[]) {
+    std::time_t t = std::time(nullptr);
+    std::tm* now = std::localtime(&t);
+    std::cout << gtfs::verifyGTFS(now->tm_year + 1900, now->tm_mon + 1, now->tm_mday) << std::endl;
+    return 0;
+}
+```
+
+Check the output. Refer to this table:
+
+| Program Output | Meaning |
+| -------------- | ------- |
+| 0              | GTFS Data read and validated |
+| 1              | GTFS Data read but is expired |
+| -1             | GTFS Data read but it is not yet in place |
+| 10             | GTFS Data's feed_info.txt not read |
+| 11             | GTFS Data read but feed_info.txt is missing feed_start_date field |
+| 12             | GTFS Data read but feed_info.txt is missing feed_end_date field |
