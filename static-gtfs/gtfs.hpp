@@ -1591,6 +1591,92 @@ std::vector<trip> getAllBlockId(string block_id) { // requirements: trips.txt wi
     tripFile.close();
     return output;
 }
+std::vector<trip_segment> getStopTimeInfo(string trip_id) { // requiremtns: stop_time.txt
+    std::vector<trip_segment> output; // assume a trip only appears once in
+    ifstream stopTimesFile = ifstream(stopTimesPath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    bool firstLine = true;
+    std::unordered_map<string, int> refs;
+
+    while (getline(stopTimesFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+        
+
+        if (parsedCurrentLine[refs["trip_id"]] == trip_id) {
+            trip_segment x;
+
+            // required fields
+            x.stop.trip_id = trip_id;
+            x.stop.stop_sequence = to_integer(parsedCurrentLine[refs["stop_sequence"]]);
+
+            // optional/conditionally required/conditionally forbidden fields
+            { auto find = refs.find("stop_id");
+            if (find != refs.end()) x.stop.stop_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("arrival_time");
+            if (find != refs.end()) x.stop.arrival_time = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("departure_time");
+            if (find != refs.end()) x.stop.departure_time = parseFormattedTime(parsedCurrentLine[find->second]); }
+            
+            { auto find = refs.find("location_group_id");
+            if (find != refs.end()) x.stop.location_group_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("location_id");
+            if (find != refs.end()) x.stop.location_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("stop_sequence");
+            if (find != refs.end()) x.stop.stop_sequence = to_integer(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("stop_headsign");
+            if (find != refs.end()) x.stop.stop_headsign = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("start_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.start_pickup_drop_off_window = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("end_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.end_pickup_drop_off_window = parseFormattedTime(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("pickup_type");
+            if (find != refs.end()) x.stop.pickup_type = static_cast<stop_time::pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("drop_off_type");
+            if (find != refs.end()) x.stop.drop_off_type = static_cast<stop_time::pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("continuous_pickup");
+            if (find != refs.end()) x.stop.continuous_pickup = static_cast<stop_time::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("continuous_drop_off");
+            if (find != refs.end()) x.stop.continuous_drop_off = static_cast<stop_time::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("shape_dist_traveled");
+            if (find != refs.end()) x.stop.shape_dist_traveled = to_float(parsedCurrentLine[find->second]); }
+
+            { auto find = refs.find("timepoint");
+            if (find != refs.end()) x.stop.timepoint = static_cast<stop_time::timepoint_type>(to_integer(parsedCurrentLine[find->second])); }
+
+            { auto find = refs.find("pickup_booking_rule_id");
+            if (find != refs.end()) x.stop.pickup_booking_rule_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("drop_off_booking_rule_id");
+            if (find != refs.end()) x.stop.drop_off_booking_rule_id = parsedCurrentLine[find->second]; }
+
+            output.push_back(x);
+        }
+    }
+
+
+    stopTimesFile.close();
+    return output;
+}
 };
 
 #endif

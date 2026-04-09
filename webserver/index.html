@@ -865,6 +865,7 @@
       stopMarkers.forEach(m => map.removeLayer(m));
       stopMarkers = [];
       if (polyline) map.removeLayer(polyline);
+      if (window._dirArrows) { window._dirArrows.forEach(m => map.removeLayer(m)); window._dirArrows = []; }
 
       document.getElementById('tripInfo').innerHTML = `
         <div class="section-title" style="margin-top:4px">Trip Info</div>
@@ -877,6 +878,36 @@
       polyline = L.polyline(latlngs, { color: data.route_color, weight: 4, opacity: 0.85 }).addTo(map);
 
       if (latlngs.length) map.fitBounds(L.latLngBounds(latlngs));
+
+      // ── Direction arrows along the path ──────────────────────────────────────
+      window._dirArrows = [];
+      const STEP = 20; // place an arrow every N pos_markers
+      const markers = data.pos_markers;
+
+      for (let i = STEP; i < markers.length - 1; i += STEP) {
+        const a = markers[i - 1], b = markers[i];
+        const angle = Math.atan2(b.lng - a.lng, b.lat - a.lat) * 180 / Math.PI - 89;
+
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="
+            width:22px; height:22px;
+            display:flex; align-items:center; justify-content:center;
+            transform:rotate(${angle}deg);
+            color:#fff;
+            font-size:20px;
+            line-height:1;
+            text-shadow:0 0 3px rgba(0,0,0,0.5);
+            pointer-events:none;
+          ">➔</div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+
+        const m = L.marker([b.lat, b.lng], { icon, interactive: false }).addTo(map);
+        window._dirArrows.push(m);
+      }
+      // ─────────────────────────────────────────────────────────────────────────
 
       data.stops.forEach(stop => {
         const m = L.circleMarker([stop.lat, stop.lng], {
