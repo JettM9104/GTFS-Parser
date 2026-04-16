@@ -80,6 +80,10 @@ def get_rt_stop(stopID):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('.', 'favicon.ico')
+
 @app.route('/')
 @require_token
 def index():
