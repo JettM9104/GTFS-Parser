@@ -724,9 +724,10 @@
       const p = t.split(':').map(Number);
       let h = p[0] % 24;
       const m = String(p[1]).padStart(2,'0');
+      const s = String(p[2]||0).padStart(2,'0');
       const ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
-      return `${h}:${m} ${ampm}`;
+      return `${h}:${m}<sup style="font-size:0.6em;vertical-align:sub">${s}</sup> ${ampm}`;
     }
 
     function fmtUnixTime(ts) {
@@ -756,14 +757,28 @@
       return n.getHours()*3600 + n.getMinutes()*60 + n.getSeconds();
     }
 
+    function getRTDelaySeconds(tripId) {
+      if (!rtStopCache.data) return 0;
+      const entity = (rtStopCache.data.entity || []).find(e => e.trip_update?.trip?.trip_id === tripId);
+      if (!entity) return 0;
+      const stu = entity.trip_update.stop_time_update?.[0];
+      return stu?.departure?.delay ?? stu?.arrival?.delay ?? 0;
+    }
+
     function filterNext3h(departures) {
       const now = nowInSeconds(), cutoff = now + 3*3600;
-      return departures.filter(d => { const t = parseTime(d.arrival_time); return t >= now && t <= cutoff; });
+      return departures.filter(d => {
+        const delay = getRTDelaySeconds(d.trip_id);
+        const t = parseTime(d.arrival_time) + delay;
+        return t >= now && t <= cutoff;
+      });
     }
 
     function filterNext4(departures) {
       const now = nowInSeconds();
-      return departures.filter(d => parseTime(d.arrival_time) >= now).slice(0,4);
+      return departures
+        .filter(d => parseTime(d.arrival_time) + getRTDelaySeconds(d.trip_id) >= now)
+        .slice(0, 4);
     }
 
     function clearNearestStopMarkers() {
@@ -876,8 +891,7 @@
       const entity = (data.entity||[]).find(e => e.vehicle);
 
       if (!entity) {
-        document.getElementById('rtPulse').className = 'error';
-        document.getElementById('rtTimestamp').textContent = 'No vehicle data in feed';
+        document.getElementById('rtPanel').style.display = 'none';
         if (vehicleRTMarker) { map.removeLayer(vehicleRTMarker); vehicleRTMarker = null; }
         return;
       }
@@ -983,7 +997,7 @@
         const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
         card.innerHTML = `
           <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>Route ${dep.route_id}</div>
-          <div class="dep-time">${fmtTime(dep.arrival_time)}</div>
+          <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
           <div class="dep-trip">Trip ${dep.trip_id}</div>
         `;
         card.addEventListener('click', () => loadTrip(dep.trip_id, card));
