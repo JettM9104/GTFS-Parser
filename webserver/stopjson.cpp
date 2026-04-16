@@ -46,9 +46,12 @@ int main(int argc, char* argv[]) {
     const int tsLen = ts.size();
     for (int i = 0; i < tsLen; i++) {
         gtfs::trip_segment x = ts[i];
-        cout << "\t\t{ \"route_id\": \"" << x.route_id << 
+
+        gtfs::route routeInfo = gtfs::getRouteInfo(x.route_id);
+        cout << "\t\t{ \"route_id\": \"" << routeInfo.route_short_name << 
                 "\", \"arrival_time\": \"" << x.stop.arrival_time.leadingRoundedTime() << 
                 "\", \"trip_id\": \"" << x.stop.trip_id << 
+                "\", \"route_color\": \"" << routeInfo.route_color << 
                 (i == (tsLen-1) ? "\" } \n" : "\" }, \n");
     }
 
