@@ -104,3 +104,5 @@ gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
 webserver/getTrips
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_stop.pb
+gtfs-rt/proto-conversion/webserver-implementation/decodeAlerts
+gtfs-rt/proto-conversion/webserver-implementation/downloaded_alerts.pb
