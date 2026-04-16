@@ -588,7 +588,7 @@ week convertDateToWeek(int year, int month, int day) {
         case 4: dayIndex = wed; break;
         case 5: dayIndex = thu; break;
         case 6: dayIndex = fri; break;
-        default: cout << "how??"; break;
+        default: cout << "exit conditino"; break;
     }
     return static_cast<week>(dayIndex);
 }
