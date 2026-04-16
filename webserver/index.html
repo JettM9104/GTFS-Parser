@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Bus Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,15 +28,19 @@
       --card-radius: 8px;
       --sidebar-radius: 16px;
       --transition: 0.18s ease;
+      --sheet-handle-color: #3a3a3a;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     html, body {
       height: 100%;
       font-family: 'DM Sans', sans-serif;
       background: var(--bg);
       color: var(--text);
+      overscroll-behavior: none;
     }
 
     #map {
@@ -44,6 +49,7 @@
       z-index: 0;
     }
 
+    /* ===== DESKTOP SIDEBAR ===== */
     #sidebar {
       position: fixed;
       top: 14px;
@@ -89,6 +95,148 @@
     #sidebar-body::-webkit-scrollbar { width: 3px; }
     #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
+    /* ===== MOBILE BOTTOM SHEET ===== */
+    #mobile-sheet {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 1000;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 32px rgba(0,0,0,0.7);
+      flex-direction: column;
+      max-height: 85vh;
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      touch-action: none;
+      padding-bottom: var(--safe-bottom);
+    }
+
+    #mobile-sheet.collapsed {
+      transform: translateY(calc(100% - 108px - var(--safe-bottom)));
+    }
+
+    #sheet-handle-area {
+      padding: 10px 0 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #sheet-handle {
+      width: 36px; height: 4px;
+      border-radius: 2px;
+      background: var(--sheet-handle-color);
+    }
+
+    #sheet-peek {
+      padding: 0 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    #sheet-peek-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #sheet-peek-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    #sheet-peek-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    #mobile-sheet-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+
+    /* ===== MOBILE TAB BAR ===== */
+    #mobile-tabs {
+      display: none;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 14px;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    #mobile-tabs::-webkit-scrollbar { display: none; }
+
+    .m-tab {
+      padding: 9px 13px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: none;
+      background: none;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      transition: color var(--transition), border-color var(--transition);
+      flex-shrink: 0;
+    }
+
+    .m-tab:hover { color: var(--text-muted); }
+    .m-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ===== MAP CONTROLS (mobile) ===== */
+    #map-controls {
+      display: none;
+      position: fixed;
+      right: 12px;
+      z-index: 900;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .map-ctrl-btn {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      transition: background var(--transition), color var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .map-ctrl-btn:active { background: var(--surface3); color: var(--text); }
+    .map-ctrl-btn.active-mode { background: rgba(224,85,85,0.15); border-color: rgba(224,85,85,0.4); color: var(--negative); }
+
+    /* ===== SHARED FORM ELEMENTS ===== */
     .input-group {
       display: flex;
       gap: 6px;
@@ -110,6 +258,7 @@
       transition: border-color var(--transition), background var(--transition);
       color-scheme: dark;
       font-size: 14px;
+      -webkit-appearance: none;
     }
 
     input[type="text"]::placeholder { color: var(--text-dim); }
@@ -130,6 +279,8 @@
       font-family: 'DM Sans', sans-serif;
       transition: background var(--transition), border-color var(--transition), transform 0.1s;
       white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     button:hover { background: #2a2a2a; border-color: var(--border2); }
@@ -170,14 +321,14 @@
       flex-shrink: 0;
     }
 
-    #tripInfo, #nearestStopsInfo {
+    #tripInfo, #tripInfo-m, #nearestStopsInfo, #nearestStopsInfo-m {
       font-size: 13.5px;
       color: var(--text-muted);
       line-height: 1.75;
     }
 
-    #tripInfo p { margin-bottom: 3px; }
-    #tripInfo b { color: var(--text); }
+    #tripInfo p, #tripInfo-m p { margin-bottom: 3px; }
+    #tripInfo b, #tripInfo-m b { color: var(--text); }
 
     .section-title {
       font-size: 11.5px;
@@ -188,21 +339,22 @@
       margin-bottom: 7px;
     }
 
-    #stopHeader { display: none; }
-    #stopHeader .stop-name {
+    .stop-header { display: none; }
+    .stop-header .stop-name {
       font-size: 15px;
       font-weight: 600;
       color: var(--text);
     }
-    #stopHeader .stop-meta {
+    .stop-header .stop-meta {
       font-size: 12.5px;
       color: var(--text-muted);
       font-family: 'DM Mono', monospace;
       margin-top: 4px;
       line-height: 1.6;
+      white-space: pre;
     }
 
-    #departuresGrid {
+    .departures-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 7px;
@@ -217,6 +369,7 @@
       transition: border-color var(--transition), background var(--transition), transform 0.15s, box-shadow var(--transition);
       position: relative;
       overflow: hidden;
+      touch-action: manipulation;
     }
 
     .dep-card:hover {
@@ -294,12 +447,14 @@
       align-items: center;
       cursor: pointer;
       transition: border-color var(--transition), background var(--transition), transform 0.15s;
+      touch-action: manipulation;
+      min-height: 44px;
     }
     .nearest-stop-item:hover {
       border-color: var(--border2);
       background: var(--surface3);
-      transform: translateX(2px);
     }
+    .nearest-stop-item:active { transform: scale(0.98); }
     .nearest-stop-item .ns-id { color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; }
     .nearest-stop-item .ns-dist { color: var(--text-muted); font-size: 12px; }
 
@@ -364,7 +519,7 @@
     }
 
     /* Live vehicle panel */
-    #rtPanel {
+    .rt-panel {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--card-radius);
@@ -372,7 +527,7 @@
       flex-shrink: 0;
     }
 
-    #rtPanel-header {
+    .rt-panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -380,7 +535,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    #rtPanel-header .rt-title {
+    .rt-panel-header .rt-title {
       font-size: 11.5px;
       font-weight: 600;
       letter-spacing: 0.07em;
@@ -388,7 +543,7 @@
       color: var(--accent3);
     }
 
-    #rtPulse {
+    .rt-pulse {
       width: 7px; height: 7px;
       border-radius: 50%;
       background: var(--positive);
@@ -398,9 +553,9 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50%       { opacity: 0.35; transform: scale(0.7); }
     }
-    #rtPulse.error { background: var(--negative); animation: none; opacity: 0.6; }
+    .rt-pulse.error { background: var(--negative); animation: none; opacity: 0.6; }
 
-    #rtBody {
+    .rt-body {
       padding: 9px 11px;
       font-size: 13px;
       line-height: 1.7;
@@ -445,7 +600,7 @@
     .rt-badge.stopped     { background: rgba(91,138,240,0.12); color: var(--accent); }
     .rt-badge.incoming    { background: rgba(224,85,85,0.12);  color: var(--negative); }
 
-    #rtTimestamp {
+    .rt-timestamp {
       font-size: 11px;
       color: var(--text-dim);
       text-align: right;
@@ -466,16 +621,15 @@
       100% { box-shadow: 0 0 0 0 rgba(93,176,228,0); }
     }
 
-    /* Departures section header */
-    #departuresSectionHeader {
+    .departures-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 7px;
     }
-    #departuresSectionHeader .section-title { margin-bottom: 0; }
+    .departures-section-header .section-title { margin-bottom: 0; }
 
-    #showAllDepsBtn {
+    .show-all-deps-btn {
       font-size: 12px;
       font-weight: 500;
       padding: 3px 10px;
@@ -487,36 +641,30 @@
       transition: border-color var(--transition), color var(--transition), background var(--transition);
       white-space: nowrap;
     }
-    #showAllDepsBtn:hover { border-color: var(--border2); color: var(--text); background: var(--surface3); }
+    .show-all-deps-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface3); }
 
-    #depWindowLabel {
+    .dep-window-label {
       font-size: 11.5px;
       color: var(--text-dim);
       font-family: 'DM Mono', monospace;
       margin-bottom: 8px;
     }
 
-    /* Route trips section */
-    #routeTripsSection {
+    /* Route trips */
+    .route-trips-section {
       display: none;
       flex-direction: column;
       gap: 6px;
     }
 
-    #routeTripsSectionHeader {
+    .route-trips-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    #routeTripsSectionHeader .section-title { margin-bottom: 0; }
+    .route-trips-section-header .section-title { margin-bottom: 0; }
 
-    #routeTripsCount {
-      font-size: 11.5px;
-      color: var(--text-dim);
-      font-family: 'DM Mono', monospace;
-    }
-
-    #routeTripsGrid {
+    .route-trips-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 6px;
@@ -529,8 +677,7 @@
       padding: 9px 10px;
       cursor: pointer;
       transition: border-color var(--transition), background var(--transition), transform 0.15s, box-shadow var(--transition);
-      position: relative;
-      overflow: hidden;
+      touch-action: manipulation;
     }
 
     .rt-trip-card:hover {
@@ -557,77 +704,89 @@
       text-overflow: ellipsis;
     }
 
-    #routeTripsError {
+    .route-trips-error {
       font-size: 13px;
       color: var(--negative);
       font-family: 'DM Mono', monospace;
       padding: 4px 0;
     }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+      #sidebar { display: none; }
+
+      #mobile-sheet { display: flex; }
+      #mobile-tabs { display: flex; }
+      #map-controls { display: flex; bottom: calc(116px + var(--safe-bottom)); }
+
+      .leaflet-control-zoom { display: none; }
+    }
+
+    @media (min-width: 641px) {
+      #mobile-sheet { display: none !important; }
+      #mobile-tabs { display: none !important; }
+      #map-controls { display: none !important; }
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
+  <!-- ===== DESKTOP SIDEBAR ===== -->
   <div id="sidebar">
     <div id="sidebar-header">
       <h1>GTFS Parser</h1>
     </div>
     <div id="sidebar-body">
 
-      <!-- Trip lookup -->
       <div class="field-block">
         <div class="input-row-label">Trip</div>
         <div class="input-group">
           <input type="text" id="tripIdInput" placeholder="Trip ID" />
-          <button class="primary" id="loadTripBtn">Go</button>
+          <button class="primary" onclick="handleLoadTrip('tripIdInput')">Go</button>
         </div>
       </div>
 
       <div class="divider"></div>
 
-      <!-- Stop lookup -->
       <div class="field-block">
         <div class="input-row-label">Stop</div>
         <div class="input-group">
           <input type="text" id="stopIdInput" placeholder="Stop ID" />
-          <button class="primary" id="loadStopBtn">Go</button>
+          <button class="primary" onclick="handleLoadStop('stopIdInput','dateInput')">Go</button>
         </div>
       </div>
 
-      <!-- Date picker -->
       <div class="field-block">
         <div class="input-row-label">Date</div>
         <div class="date-row">
           <input type="date" id="dateInput" />
-          <button class="secondary" id="todayBtn">Today</button>
+          <button class="secondary" onclick="document.getElementById('dateInput').value=todayStr()">Today</button>
         </div>
       </div>
 
-      <!-- Stop header -->
-      <div id="stopHeader">
+      <div id="stopHeader" class="stop-header">
         <div class="stop-name" id="stopNameDisplay"></div>
         <div class="stop-meta" id="stopMetaDisplay"></div>
       </div>
 
-      <!-- Departures grid -->
       <div id="departuresSection" style="display:none">
-        <div id="departuresSectionHeader">
+        <div class="departures-section-header">
           <div class="section-title">Departures</div>
-          <button id="showAllDepsBtn">Show all</button>
+          <button class="show-all-deps-btn" id="showAllDepsBtn" onclick="cycleDepView('d')">Show all</button>
         </div>
-        <div id="depWindowLabel"></div>
-        <div id="departuresGrid"></div>
+        <div class="dep-window-label" id="depWindowLabel"></div>
+        <div class="departures-grid" id="departuresGrid"></div>
       </div>
 
-      <!-- Trip info -->
       <div id="tripInfo"></div>
 
-      <!-- Live vehicle panel -->
-      <div id="rtPanel" style="display:none">
-        <div id="rtPanel-header">
+      <div id="rtPanel" class="rt-panel" style="display:none">
+        <div class="rt-panel-header">
           <span class="rt-title">Live Vehicle</span>
-          <span id="rtPulse"></span>
+          <span class="rt-pulse" id="rtPulse"></span>
         </div>
-        <div id="rtBody">
+        <div class="rt-body">
           <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="rv-id">—</span></div>
           <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="rv-route">—</span></div>
           <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="rv-trip">—</span></div>
@@ -640,34 +799,31 @@
           <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="rv-bearing">—</span></div>
           <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="rv-speed">—</span></div>
           <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="rv-occ">—</span></div>
-          <div id="rtTimestamp"></div>
+          <div class="rt-timestamp" id="rtTimestamp"></div>
         </div>
       </div>
 
       <div class="divider"></div>
 
-      <!-- Route lookup -->
       <div class="field-block">
         <div class="input-row-label">Route</div>
         <div class="input-group">
           <input type="text" id="routeIdInput" placeholder="Route ID" />
-          <button class="primary" id="loadRouteBtn">Search</button>
+          <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search</button>
         </div>
       </div>
 
-      <!-- Route trips results -->
-      <div id="routeTripsSection">
-        <div id="routeTripsSectionHeader">
+      <div id="routeTripsSection" class="route-trips-section">
+        <div class="route-trips-section-header">
           <div class="section-title">Route Trips</div>
-          <span id="routeTripsCount"></span>
+          <span id="routeTripsCount" style="font-size:11.5px;color:var(--text-dim);font-family:'DM Mono',monospace;"></span>
         </div>
-        <div id="routeTripsError" style="display:none"></div>
-        <div id="routeTripsGrid"></div>
+        <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
+        <div class="route-trips-grid" id="routeTripsGrid"></div>
       </div>
 
       <div class="divider"></div>
 
-      <!-- Nearest stops -->
       <div class="field-block">
         <div class="input-row-label">Find Nearest</div>
         <div class="input-group" style="flex-direction:column">
@@ -675,41 +831,176 @@
           <input type="text" id="lonInput" placeholder="Lon" />
         </div>
         <div class="input-group" style="margin-top:5px">
-          <button id="findNearestBtn" class="secondary" style="flex:1">Search</button>
-          <button id="useMyLocationBtn" class="secondary" style="flex:1">My Location</button>
+          <button class="secondary" style="flex:1" onclick="handleFindNearest('latInput','lonInput')">Search</button>
+          <button class="secondary" style="flex:1" onclick="useMyLocation('latInput','lonInput')">My Location</button>
         </div>
       </div>
 
-      <button id="showLocationBtn" class="secondary" style="width:100%">Show My Location on Map</button>
-      <button id="pickModeBtn" class="pick-mode-btn">Click Map to Find Nearest Stops</button>
+      <button class="secondary" style="width:100%" onclick="showUserLocation()">Show My Location on Map</button>
+      <button class="pick-mode-btn" id="pickModeBtn" onclick="setPickMode(!pickModeActive)">Click Map to Find Nearest Stops</button>
 
       <div id="nearestStopsInfo"></div>
+    </div>
+  </div>
+
+  <!-- ===== MOBILE MAP CONTROLS ===== -->
+  <div id="map-controls">
+    <button class="map-ctrl-btn" id="mPickBtn" title="Pick location" onclick="setPickMode(!pickModeActive)">⊕</button>
+    <button class="map-ctrl-btn" title="My location" onclick="useMyLocation('m-latInput','m-lonInput',true)">◎</button>
+  </div>
+
+  <!-- ===== MOBILE BOTTOM SHEET ===== -->
+  <div id="mobile-sheet" class="collapsed">
+    <div id="sheet-handle-area">
+      <div id="sheet-handle"></div>
+    </div>
+
+    <div id="sheet-peek">
+      <div id="sheet-peek-left">
+        <div id="sheet-peek-title">GTFS Parser</div>
+        <div id="sheet-peek-sub">Tap to search stops &amp; trips</div>
+      </div>
+    </div>
+
+    <div id="mobile-tabs">
+      <button class="m-tab active" data-tab="m-tab-stop">Stop</button>
+      <button class="m-tab" data-tab="m-tab-trip">Trip</button>
+      <button class="m-tab" data-tab="m-tab-route">Route</button>
+      <button class="m-tab" data-tab="m-tab-nearby">Nearby</button>
+    </div>
+
+    <div id="mobile-sheet-body">
+
+      <!-- STOP TAB -->
+      <div class="tab-panel active" id="m-tab-stop">
+        <div class="field-block">
+          <div class="input-row-label">Stop</div>
+          <div class="input-group">
+            <input type="text" id="m-stopIdInput" placeholder="Stop ID" />
+            <button class="primary" onclick="handleLoadStop('m-stopIdInput','m-dateInput')">Go</button>
+          </div>
+        </div>
+        <div class="field-block">
+          <div class="input-row-label">Date</div>
+          <div class="date-row">
+            <input type="date" id="m-dateInput" />
+            <button class="secondary" onclick="document.getElementById('m-dateInput').value=todayStr()">Today</button>
+          </div>
+        </div>
+
+        <div id="m-stopHeader" class="stop-header">
+          <div class="stop-name" id="m-stopNameDisplay"></div>
+          <div class="stop-meta" id="m-stopMetaDisplay"></div>
+        </div>
+
+        <div id="m-departuresSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Departures</div>
+            <button class="show-all-deps-btn" id="m-showAllDepsBtn" onclick="cycleDepView('m')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="m-depWindowLabel"></div>
+          <div class="departures-grid" id="m-departuresGrid"></div>
+        </div>
+
+        <div id="m-tripInfo"></div>
+
+        <div id="m-rtPanel" class="rt-panel" style="display:none">
+          <div class="rt-panel-header">
+            <span class="rt-title">Live Vehicle</span>
+            <span class="rt-pulse" id="m-rtPulse"></span>
+          </div>
+          <div class="rt-body">
+            <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="m-rv-id">—</span></div>
+            <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="m-rv-route">—</span></div>
+            <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="m-rv-trip">—</span></div>
+            <div class="rt-row"><span class="rt-label">Direction</span><span class="rt-val" id="m-rv-dir">—</span></div>
+            <div class="rt-row"><span class="rt-label">Start</span><span class="rt-val" id="m-rv-start">—</span></div>
+            <div class="rt-row"><span class="rt-label">Status</span><span class="rt-val" id="m-rv-status">—</span></div>
+            <div class="rt-row"><span class="rt-label">Stop seq</span><span class="rt-val" id="m-rv-seq">—</span></div>
+            <div class="rt-row"><span class="rt-label">Next stop</span><span class="rt-val" id="m-rv-stop">—</span></div>
+            <div class="rt-row"><span class="rt-label">Lat / Lon</span><span class="rt-val" id="m-rv-pos">—</span></div>
+            <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="m-rv-bearing">—</span></div>
+            <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="m-rv-speed">—</span></div>
+            <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="m-rv-occ">—</span></div>
+            <div class="rt-timestamp" id="m-rtTimestamp"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRIP TAB -->
+      <div class="tab-panel" id="m-tab-trip">
+        <div class="field-block">
+          <div class="input-row-label">Trip</div>
+          <div class="input-group">
+            <input type="text" id="m-tripIdInput" placeholder="Trip ID" />
+            <button class="primary" onclick="handleLoadTrip('m-tripIdInput')">Go</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROUTE TAB -->
+      <div class="tab-panel" id="m-tab-route">
+        <div class="field-block">
+          <div class="input-row-label">Route</div>
+          <div class="input-group">
+            <input type="text" id="m-routeIdInput" placeholder="Route ID" />
+            <button class="primary" onclick="handleLoadRoute('m-routeIdInput','m-dateInput')">Search</button>
+          </div>
+        </div>
+
+        <div id="m-routeTripsSection" class="route-trips-section">
+          <div class="route-trips-section-header">
+            <div class="section-title">Route Trips</div>
+            <span id="m-routeTripsCount" style="font-size:11.5px;color:var(--text-dim);font-family:'DM Mono',monospace;"></span>
+          </div>
+          <div class="route-trips-error" id="m-routeTripsError" style="display:none"></div>
+          <div class="route-trips-grid" id="m-routeTripsGrid"></div>
+        </div>
+      </div>
+
+      <!-- NEARBY TAB -->
+      <div class="tab-panel" id="m-tab-nearby">
+        <div class="field-block">
+          <div class="input-row-label">Coordinates</div>
+          <div class="input-group" style="flex-direction:column">
+            <input type="text" id="m-latInput" placeholder="Lat" />
+            <input type="text" id="m-lonInput" placeholder="Lon" />
+          </div>
+          <div class="input-group" style="margin-top:5px">
+            <button class="secondary" style="flex:1" onclick="handleFindNearest('m-latInput','m-lonInput')">Search</button>
+            <button class="secondary" style="flex:1" onclick="useMyLocation('m-latInput','m-lonInput',true)">My Location</button>
+          </div>
+        </div>
+        <div id="m-nearestStopsInfo"></div>
+      </div>
 
     </div>
   </div>
 
   <script>
+    // ===== STATE =====
     let map;
     let stopMarkers = [];
     let polyline;
     let activeDepCard = null;
-
     let rtIntervalId = null;
     let rtRelativeId = null;
     let rtLastVehTs  = null;
     let rtTripId = null;
     let vehicleRTMarker = null;
-
     let allDepartures = [];
-    let showingAllDeps = false;
-    let showingNext4 = false;
+    let showingAllDeps_d = false, showingNext4_d = false;
+    let showingAllDeps_m = false, showingNext4_m = false;
     let depsRefreshId = null;
-
     let rtStopCache = { stopId: null, data: null, receivedAt: null };
     const RT_STALE_MS = 60 * 1000;
-
     let activeRouteTripCard = null;
+    let currentStopId = null;
+    let pickModeActive = false;
+    let clickPinMarker = null;
+    let isMobile = () => window.innerWidth <= 640;
 
+    // ===== UTILS =====
     function todayStr() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -768,8 +1059,7 @@
     function filterNext3h(departures) {
       const now = nowInSeconds(), cutoff = now + 3*3600;
       return departures.filter(d => {
-        const delay = getRTDelaySeconds(d.trip_id);
-        const t = parseTime(d.arrival_time) + delay;
+        const t = parseTime(d.arrival_time) + getRTDelaySeconds(d.trip_id);
         return t >= now && t <= cutoff;
       });
     }
@@ -788,29 +1078,74 @@
       }
     }
 
+    function setVal(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+
+    // ===== MAP =====
     function initMap() {
       map = L.map('map').setView([43.88,-79.34],10);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
         attribution:'© OpenStreetMap contributors'
       }).addTo(map);
+      map.on('click', onMapClick);
+    }
+
+    function onMapClick(e) {
+      if (!pickModeActive) return;
+      const {lat,lng} = e.latlng;
+      ['latInput','m-latInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=lat.toFixed(6); });
+      ['lonInput','m-lonInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=lng.toFixed(6); });
+      if (clickPinMarker) map.removeLayer(clickPinMarker);
+      const pinIcon = L.divIcon({className:'click-pin-marker',html:'<div></div>',iconSize:[12,12],iconAnchor:[6,6]});
+      clickPinMarker = L.marker([lat,lng],{icon:pinIcon}).addTo(map);
+      clickPinMarker.bindPopup(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup();
+      findNearestStops(lat,lng);
+      setPickMode(false);
+    }
+
+    // ===== PICK MODE =====
+    function setPickMode(on) {
+      pickModeActive = on;
+      const btns = [document.getElementById('pickModeBtn'), document.getElementById('mPickBtn')];
+      const mapEl = document.getElementById('map');
+      btns.forEach(btn => {
+        if (!btn) return;
+        if (on) { btn.classList.add('active'); if(btn.id==='pickModeBtn') btn.textContent='Cancel'; }
+        else    { btn.classList.remove('active'); if(btn.id==='pickModeBtn') btn.textContent='Click Map to Find Nearest Stops'; }
+      });
+      on ? mapEl.classList.add('pick-mode') : mapEl.classList.remove('pick-mode');
+    }
+
+    // ===== TRIP =====
+    function handleLoadTrip(inputId) {
+      const v = document.getElementById(inputId)?.value.trim();
+      if (v) loadTrip(v, null);
     }
 
     function loadTrip(tripId, cardEl) {
       if (activeDepCard) activeDepCard.classList.remove('active');
       if (activeRouteTripCard) activeRouteTripCard.classList.remove('active');
-
       if (cardEl) {
         cardEl.classList.add('active');
         if (cardEl.classList.contains('rt-trip-card')) activeRouteTripCard = cardEl;
         else activeDepCard = cardEl;
       }
-
       fetch(`/api/trip/${tripId}`)
         .then(r => r.json())
         .then(displayTrip)
-        .catch(() => { document.getElementById('tripInfo').textContent = 'Error loading trip'; });
-
+        .catch(() => {
+          document.getElementById('tripInfo').textContent = 'Error loading trip';
+          document.getElementById('m-tripInfo').textContent = 'Error loading trip';
+        });
       startRTPolling(tripId);
+
+      // On mobile: switch to stop tab to show live vehicle info, expand sheet
+      if (isMobile()) {
+        switchTab('m-tab-stop');
+        expandSheet();
+      }
     }
 
     function displayTrip(data) {
@@ -819,12 +1154,14 @@
       if (polyline) map.removeLayer(polyline);
       if (window._dirArrows) { window._dirArrows.forEach(m => map.removeLayer(m)); window._dirArrows = []; }
 
-      document.getElementById('tripInfo').innerHTML = `
+      const html = `
         <div class="section-title" style="margin-top:2px">Trip Info</div>
         <p><b>ID</b>: ${data.trip_id}</p>
         <p><b>Route</b>: ${data.route_short_name} — ${data.route_long_name}</p>
         <p><b>Stops</b>: ${data.total}</p>
       `;
+      document.getElementById('tripInfo').innerHTML = html;
+      document.getElementById('m-tripInfo').innerHTML = html;
 
       const latlngs = data.pos_markers.map(p => [p.lat,p.lng]);
       polyline = L.polyline(latlngs,{color:data.route_color,weight:4,opacity:0.85}).addTo(map);
@@ -853,20 +1190,27 @@
       });
     }
 
-    // RT vehicle polling
-
+    // ===== RT VEHICLE =====
     function startRTPolling(tripId) {
       stopRTPolling();
       rtTripId = tripId;
       rtLastVehTs = null;
-      document.getElementById('rtPanel').style.display = 'block';
-      document.getElementById('rtPulse').className = '';
+      ['rtPanel','m-rtPanel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+      });
+      ['rtPulse','m-rtPulse'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = 'rt-pulse';
+      });
       fetchRTLocation();
-      rtIntervalId = setInterval(fetchRTLocation,10000);
+      rtIntervalId = setInterval(fetchRTLocation, 10000);
       rtRelativeId = setInterval(() => {
-        if (rtLastVehTs)
-          document.getElementById('rtTimestamp').textContent = `GPS ${fmtUnixTime(rtLastVehTs)} · ${timeAgo(rtLastVehTs)}`;
-      },1000);
+        if (rtLastVehTs) {
+          const txt = `GPS ${fmtUnixTime(rtLastVehTs)} · ${timeAgo(rtLastVehTs)}`;
+          ['rtTimestamp','m-rtTimestamp'].forEach(id => setVal(id, txt));
+        }
+      }, 1000);
     }
 
     function stopRTPolling() {
@@ -882,8 +1226,8 @@
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then(renderRTData)
         .catch(err => {
-          document.getElementById('rtPulse').className = 'error';
-          document.getElementById('rtTimestamp').textContent = `Error: ${err.message}`;
+          ['rtPulse','m-rtPulse'].forEach(id => { const el=document.getElementById(id); if(el) el.className='rt-pulse error'; });
+          ['rtTimestamp','m-rtTimestamp'].forEach(id => setVal(id, `Error: ${err.message}`));
         });
     }
 
@@ -891,37 +1235,49 @@
       const entity = (data.entity||[]).find(e => e.vehicle);
 
       if (!entity) {
-        document.getElementById('rtPanel').style.display = 'none';
+        ['rtPanel','m-rtPanel'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
         if (vehicleRTMarker) { map.removeLayer(vehicleRTMarker); vehicleRTMarker = null; }
         return;
       }
 
-      document.getElementById('rtPulse').className = '';
+      ['rtPulse','m-rtPulse'].forEach(id => { const el=document.getElementById(id); if(el) el.className='rt-pulse'; });
 
       const veh  = entity.vehicle;
       const trip = veh.trip     || {};
       const pos  = veh.position || {};
       const info = veh.vehicle  || {};
 
-      set('rv-id',      info.id    || entity.id || '—');
-      set('rv-route',   trip.route_id   || '—');
-      set('rv-trip',    trip.trip_id    || '—');
-      set('rv-dir',     trip.direction_id != null ? (trip.direction_id===0 ? '0 — Outbound' : '1 — Inbound') : '—');
-      set('rv-start',   trip.start_time ? `${trip.start_time} · ${trip.start_date||''}` : '—');
-      set('rv-seq',     veh.current_stop_sequence != null ? String(veh.current_stop_sequence) : '—');
-      set('rv-stop',    veh.stop_id  || '—');
-      set('rv-pos',     pos.latitude  != null ? `${pos.latitude}, ${pos.longitude}` : '—');
-      set('rv-bearing', pos.bearing   != null ? `${pos.bearing}°` : '—');
-      set('rv-speed',   pos.speed     != null ? `${(pos.speed*3.6).toFixed(1)} km/h` : '—');
-      set('rv-occ',     veh.occupancy_status ? veh.occupancy_status.replace(/_/g,' ').toLowerCase().replace(/^\w/,c=>c.toUpperCase()) : '—');
+      const pairs = [
+        ['rv-id',      info.id    || entity.id || '—'],
+        ['rv-route',   trip.route_id   || '—'],
+        ['rv-trip',    trip.trip_id    || '—'],
+        ['rv-dir',     trip.direction_id != null ? (trip.direction_id===0 ? '0 — Outbound' : '1 — Inbound') : '—'],
+        ['rv-start',   trip.start_time ? `${trip.start_time} · ${trip.start_date||''}` : '—'],
+        ['rv-seq',     veh.current_stop_sequence != null ? String(veh.current_stop_sequence) : '—'],
+        ['rv-stop',    veh.stop_id  || '—'],
+        ['rv-pos',     pos.latitude  != null ? `${pos.latitude}, ${pos.longitude}` : '—'],
+        ['rv-bearing', pos.bearing   != null ? `${pos.bearing}°` : '—'],
+        ['rv-speed',   pos.speed     != null ? `${(pos.speed*3.6).toFixed(1)} km/h` : '—'],
+        ['rv-occ',     veh.occupancy_status ? veh.occupancy_status.replace(/_/g,' ').toLowerCase().replace(/^\w/,c=>c.toUpperCase()) : '—'],
+      ];
 
-      const [label,cls] = fmtStatus(veh.current_status,veh.stop_id);
-      document.getElementById('rv-status').innerHTML = `<span class="rt-badge ${cls}">${label}</span>`;
+      pairs.forEach(([key, val]) => {
+        setVal(key, val);
+        setVal('m-' + key, val);
+      });
+
+      const [label,cls] = fmtStatus(veh.current_status, veh.stop_id);
+      const statusHTML = `<span class="rt-badge ${cls}">${label}</span>`;
+      ['rv-status','m-rv-status'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = statusHTML;
+      });
 
       const ts = veh.timestamp || data.header?.timestamp;
       if (ts) {
         rtLastVehTs = ts;
-        document.getElementById('rtTimestamp').textContent = `GPS ${fmtUnixTime(ts)} · ${timeAgo(ts)}`;
+        const txt = `GPS ${fmtUnixTime(ts)} · ${timeAgo(ts)}`;
+        ['rtTimestamp','m-rtTimestamp'].forEach(id => setVal(id, txt));
       }
 
       if (pos.latitude != null && pos.longitude != null) {
@@ -938,13 +1294,7 @@
       }
     }
 
-    function set(id,val) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = val;
-    }
-
-    // RT stop departures
-
+    // ===== RT STOP =====
     function loadRTStopUpdates(stopId) {
       fetch(`/api/rt/stop/${stopId}`)
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
@@ -968,27 +1318,27 @@
         if (!tripId) return;
         const stu = tu.stop_time_update?.[0];
         const delay = stu?.departure?.delay ?? stu?.arrival?.delay ?? null;
-        const card = document.querySelector(`.dep-card[data-trip-id="${tripId}"]`);
-        if (!card) return;
-        card.classList.add('rt-live');
-        let badge = card.querySelector('.rt-delay-badge');
-        if (!badge) { badge = document.createElement('div'); badge.className = 'rt-delay-badge'; card.appendChild(badge); }
-        if (delay === null) { badge.textContent='Live'; badge.className='rt-delay-badge rt-live-only'; }
-        else if (delay <= 0) {
-          const mins = Math.abs(Math.round(delay/60));
-          if (mins > 0) { badge.textContent=`▲ ${mins}m early`; badge.className='rt-delay-badge rt-early'; }
-          else { badge.textContent='On time'; badge.className='rt-delay-badge rt-ontime'; }
-        } else {
-          if (delay > 60) { badge.textContent=`▼ ${Math.round(delay/60)}m delay`; badge.className='rt-delay-badge rt-delayed'; }
-          else { badge.textContent=`▼ ${delay}s delay`; badge.className='rt-delay-badge rt-delayed'; }
-        }
+        document.querySelectorAll(`.dep-card[data-trip-id="${tripId}"]`).forEach(card => {
+          card.classList.add('rt-live');
+          let badge = card.querySelector('.rt-delay-badge');
+          if (!badge) { badge = document.createElement('div'); badge.className = 'rt-delay-badge'; card.appendChild(badge); }
+          if (delay === null) { badge.textContent='Live'; badge.className='rt-delay-badge rt-live-only'; }
+          else if (delay <= 0) {
+            const mins = Math.abs(Math.round(delay/60));
+            if (mins > 0) { badge.textContent=`▲ ${mins}m early`; badge.className='rt-delay-badge rt-early'; }
+            else { badge.textContent='On time'; badge.className='rt-delay-badge rt-ontime'; }
+          } else {
+            if (delay > 60) { badge.textContent=`▼ ${Math.round(delay/60)}m delay`; badge.className='rt-delay-badge rt-delayed'; }
+            else { badge.textContent=`▼ ${delay}s delay`; badge.className='rt-delay-badge rt-delayed'; }
+          }
+        });
       });
     }
 
-    // Departures
-
-    function renderDepartureCards(departures, stopId) {
-      const grid = document.getElementById('departuresGrid');
+    // ===== DEPARTURES =====
+    function renderDepartureCards(departures, stopId, prefix) {
+      const grid = document.getElementById(prefix + 'departuresGrid');
+      if (!grid) return;
       grid.innerHTML = '';
       departures.forEach(dep => {
         const card = document.createElement('div');
@@ -1008,86 +1358,126 @@
     }
 
     function updateDeparturesView(stopId) {
-      const btn   = document.getElementById('showAllDepsBtn');
-      const label = document.getElementById('depWindowLabel');
-      if (showingAllDeps) {
-        renderDepartureCards(allDepartures, stopId);
-        btn.textContent = 'Next 3h only';
-        label.textContent = `${allDepartures.length} departure${allDepartures.length!==1?'s':''} total`;
-      } else if (showingNext4) {
-        const next4 = filterNext4(allDepartures);
-        renderDepartureCards(next4, stopId);
-        btn.textContent = `Show all ${allDepartures.length}`;
-        label.textContent = 'Next 4 departures';
-      } else {
-        const filtered = filterNext3h(allDepartures);
-        renderDepartureCards(filtered, stopId);
-        if (filtered.length === 0) {
-          btn.textContent = `Show all ${allDepartures.length}`;
-          label.textContent = 'No departures in the next 3 hours';
+      ['d','m'].forEach(prefix => {
+        const p = prefix === 'd' ? '' : 'm-';
+        const showAll = prefix === 'd' ? showingAllDeps_d : showingAllDeps_m;
+        const showN4  = prefix === 'd' ? showingNext4_d  : showingNext4_m;
+        const btn     = document.getElementById(p + 'showAllDepsBtn');
+        const label   = document.getElementById(p + 'depWindowLabel');
+        const sec     = document.getElementById(p + 'departuresSection');
+        if (!sec) return;
+        if (showAll) {
+          renderDepartureCards(allDepartures, stopId, p);
+          if (btn) btn.textContent = 'Next 3h only';
+          if (label) label.textContent = `${allDepartures.length} departure${allDepartures.length!==1?'s':''} total`;
+        } else if (showN4) {
+          const next4 = filterNext4(allDepartures);
+          renderDepartureCards(next4, stopId, p);
+          if (btn) btn.textContent = `Show all ${allDepartures.length}`;
+          if (label) label.textContent = 'Next 4 departures';
         } else {
-          btn.textContent = 'Next 4';
-          label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length!==1?'s':''}`;
+          const filtered = filterNext3h(allDepartures);
+          renderDepartureCards(filtered, stopId, p);
+          if (filtered.length === 0) {
+            if (btn) btn.textContent = `Show all ${allDepartures.length}`;
+            if (label) label.textContent = 'No departures in the next 3 hours';
+          } else {
+            if (btn) btn.textContent = 'Next 4';
+            if (label) label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length!==1?'s':''}`;
+          }
         }
-      }
-      document.getElementById('departuresSection').style.display = 'block';
-    }
-
-    // Route trips
-
-    function loadRouteTrips(routeId) {
-      const dateVal = document.getElementById('dateInput').value || todayStr();
-      const [year,month,day] = dateVal.split('-');
-      const section = document.getElementById('routeTripsSection');
-      const grid    = document.getElementById('routeTripsGrid');
-      const errEl   = document.getElementById('routeTripsError');
-      const countEl = document.getElementById('routeTripsCount');
-      grid.innerHTML = '';
-      errEl.style.display = 'none';
-      countEl.textContent = 'Loading…';
-      section.style.display = 'flex';
-      section.scrollIntoView({behavior:'smooth',block:'nearest'});
-      fetch(`/api/route/${routeId}/${year}/${month}/${day}`)
-        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then(data => renderRouteTrips(data, routeId))
-        .catch(err => { countEl.textContent=''; errEl.textContent=`Error: ${err.message}`; errEl.style.display='block'; });
-    }
-
-    function renderRouteTrips(data, routeId) {
-      const grid    = document.getElementById('routeTripsGrid');
-      const countEl = document.getElementById('routeTripsCount');
-      grid.innerHTML = '';
-      const trips = Array.isArray(data) ? data : (data.trips||[]);
-      if (trips.length === 0) {
-        countEl.textContent = '0 trips';
-        grid.innerHTML = `<div style="font-size:13px;color:var(--text-muted);grid-column:1/-1;padding:4px 0">No trips found for this date.</div>`;
-        return;
-      }
-      countEl.textContent = `${trips.length} trip${trips.length!==1?'s':''}`;
-      trips.forEach(tripId => {
-        const card = document.createElement('div');
-        card.className = 'rt-trip-card';
-        card.dataset.tripId = tripId;
-        card.innerHTML = `<div class="rt-trip-id">${tripId}</div>`;
-        card.addEventListener('click', () => loadTrip(tripId, card));
-        grid.appendChild(card);
+        sec.style.display = 'block';
       });
     }
 
-    // Stop
+    function cycleDepView(prefix) {
+      if (prefix === 'd') {
+        if (!showingAllDeps_d && !showingNext4_d) { showingNext4_d=true; showingAllDeps_d=false; }
+        else if (showingNext4_d && !showingAllDeps_d) { showingNext4_d=false; showingAllDeps_d=true; }
+        else { showingAllDeps_d=false; showingNext4_d=false; }
+      } else {
+        if (!showingAllDeps_m && !showingNext4_m) { showingNext4_m=true; showingAllDeps_m=false; }
+        else if (showingNext4_m && !showingAllDeps_m) { showingNext4_m=false; showingAllDeps_m=true; }
+        else { showingAllDeps_m=false; showingNext4_m=false; }
+      }
+      if (currentStopId) updateDeparturesView(currentStopId);
+    }
 
-    function loadStop(stopId) {
-      const date = document.getElementById('dateInput').value || todayStr();
+    // ===== ROUTE =====
+    function handleLoadRoute(routeInputId, dateInputId) {
+      const v = document.getElementById(routeInputId)?.value.trim();
+      if (!v) { alert('Please enter a Route ID.'); return; }
+      const dateVal = document.getElementById(dateInputId)?.value || todayStr();
+      loadRouteTrips(v, dateVal);
+    }
+
+    function loadRouteTrips(routeId, dateVal) {
+      const [year,month,day] = (dateVal || todayStr()).split('-');
+      ['','m-'].forEach(p => {
+        const section = document.getElementById(p + 'routeTripsSection');
+        const grid    = document.getElementById(p + 'routeTripsGrid');
+        const errEl   = document.getElementById(p + 'routeTripsError');
+        const countEl = document.getElementById(p + 'routeTripsCount');
+        if (!section) return;
+        if (grid) grid.innerHTML = '';
+        if (errEl) errEl.style.display = 'none';
+        if (countEl) countEl.textContent = 'Loading…';
+        section.style.display = 'flex';
+      });
+
+      fetch(`/api/route/${routeId}/${year}/${month}/${day}`)
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(data => renderRouteTrips(data, routeId))
+        .catch(err => {
+          ['','m-'].forEach(p => {
+            const countEl = document.getElementById(p + 'routeTripsCount');
+            const errEl   = document.getElementById(p + 'routeTripsError');
+            if (countEl) countEl.textContent = '';
+            if (errEl) { errEl.textContent = `Error: ${err.message}`; errEl.style.display = 'block'; }
+          });
+        });
+    }
+
+    function renderRouteTrips(data, routeId) {
+      const trips = Array.isArray(data) ? data : (data.trips||[]);
+      ['','m-'].forEach(p => {
+        const grid    = document.getElementById(p + 'routeTripsGrid');
+        const countEl = document.getElementById(p + 'routeTripsCount');
+        if (!grid) return;
+        grid.innerHTML = '';
+        if (countEl) countEl.textContent = `${trips.length} trip${trips.length!==1?'s':''}`;
+        if (trips.length === 0) {
+          grid.innerHTML = `<div style="font-size:13px;color:var(--text-muted);grid-column:1/-1;padding:4px 0">No trips found for this date.</div>`;
+          return;
+        }
+        trips.forEach(tripId => {
+          const card = document.createElement('div');
+          card.className = 'rt-trip-card';
+          card.dataset.tripId = tripId;
+          card.innerHTML = `<div class="rt-trip-id">${tripId}</div>`;
+          card.addEventListener('click', () => loadTrip(tripId, card));
+          grid.appendChild(card);
+        });
+      });
+    }
+
+    // ===== STOP =====
+    function handleLoadStop(stopInputId, dateInputId) {
+      const v = document.getElementById(stopInputId)?.value.trim();
+      const date = document.getElementById(dateInputId)?.value || todayStr();
+      if (v) loadStop(v, date);
+    }
+
+    function loadStop(stopId, date) {
+      date = date || todayStr();
       fetch(`/api/stop/${stopId}/${date}`)
         .then(r => r.json())
         .then(data => displayStop(data))
         .catch(() => {
-          document.getElementById('stopHeader').style.display = 'none';
-          document.getElementById('departuresSection').style.display = 'none';
+          ['stopHeader','m-stopHeader'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+          ['departuresSection','m-departuresSection'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
         });
     }
-
-    let currentStopId = null;
 
     function startDepsRefresh(stopId) {
       if (depsRefreshId !== null) clearInterval(depsRefreshId);
@@ -1100,19 +1490,27 @@
 
     function displayStop(data) {
       if (window.stopMarker) map.removeLayer(window.stopMarker);
-
       if (rtStopCache.stopId !== data.stop_id)
         rtStopCache = {stopId:null,data:null,receivedAt:null};
 
-      const hdr = document.getElementById('stopHeader');
-      hdr.style.display = 'block';
-      document.getElementById('stopNameDisplay').textContent = data.stop_name;
-      document.getElementById('stopMetaDisplay').textContent =
-        `Stop ${data.stop_code}  ·  ID ${data.stop_id}\n${data.lat}, ${data.lon}`;
+      ['stopHeader','m-stopHeader'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+      });
+
+      const metaTxt = `Stop ${data.stop_code}  ·  ID ${data.stop_id}\n${data.lat}, ${data.lon}`;
+      setVal('stopNameDisplay', data.stop_name);
+      setVal('stopMetaDisplay', metaTxt);
+      setVal('m-stopNameDisplay', data.stop_name);
+      setVal('m-stopMetaDisplay', metaTxt);
+
+      // Update peek title
+      document.getElementById('sheet-peek-title').textContent = data.stop_name;
+      document.getElementById('sheet-peek-sub').textContent = `Stop ${data.stop_code} · ID ${data.stop_id}`;
 
       allDepartures = [...data.departures].sort((a,b) => parseTime(a.arrival_time)-parseTime(b.arrival_time));
-      showingAllDeps = false;
-      showingNext4 = false;
+      showingAllDeps_d = false; showingNext4_d = false;
+      showingAllDeps_m = false; showingNext4_m = false;
       currentStopId = data.stop_id;
 
       updateDeparturesView(data.stop_id);
@@ -1121,14 +1519,44 @@
       window.stopMarker = L.marker([data.lat,data.lon]).addTo(map);
       window.stopMarker.bindPopup(`<b>${data.stop_name}</b><br>Stop ID: ${data.stop_id}`);
       map.setView([data.lat,data.lon],15);
+
+      // On mobile: expand sheet and switch to stop tab
+      if (isMobile()) {
+        switchTab('m-tab-stop');
+        expandSheet();
+      }
     }
 
-    document.getElementById('showAllDepsBtn').addEventListener('click', () => {
-      if (!showingAllDeps && !showingNext4) { showingNext4=true; showingAllDeps=false; }
-      else if (showingNext4 && !showingAllDeps) { showingNext4=false; showingAllDeps=true; }
-      else { showingAllDeps=false; showingNext4=false; }
-      if (currentStopId) updateDeparturesView(currentStopId);
+    // Sync date inputs
+    document.getElementById('m-dateInput').value = todayStr();
+    document.getElementById('m-dateInput').addEventListener('change', e => {
+      document.getElementById('dateInput').value = e.target.value;
+      const v = document.getElementById('m-stopIdInput')?.value.trim();
+      if (v) loadStop(v, e.target.value);
     });
+
+    document.getElementById('dateInput').addEventListener('change', e => {
+      document.getElementById('m-dateInput').value = e.target.value;
+      const v = document.getElementById('stopIdInput')?.value.trim();
+      if (v) loadStop(v, e.target.value);
+    });
+
+    // ===== NEAREST STOPS =====
+    function handleFindNearest(latId, lonId) {
+      const lat = document.getElementById(latId)?.value.trim();
+      const lon = document.getElementById(lonId)?.value.trim();
+      if (lat && lon) findNearestStops(lat, lon);
+      else alert('Please enter both latitude and longitude.');
+    }
+
+    function useMyLocation(latId, lonId, search) {
+      navigator.geolocation?.getCurrentPosition(pos => {
+        const {latitude:lat,longitude:lon} = pos.coords;
+        ['latInput','m-latInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=lat; });
+        ['lonInput','m-lonInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=lon; });
+        if (search) findNearestStops(lat, lon);
+      }, () => alert('Unable to get your location.'));
+    }
 
     function showUserLocation() {
       navigator.geolocation?.getCurrentPosition(pos => {
@@ -1138,111 +1566,157 @@
         window.userLocationMarker = L.marker([lat,lon],{icon}).addTo(map);
         window.userLocationMarker.bindPopup('Your Location');
         map.setView([lat,lon],15);
-      },() => alert('Unable to get your location.'));
+      }, () => alert('Unable to get your location.'));
     }
 
     function findNearestStops(lat, lon) {
       fetch(`/api/nearest/${lat}/${lon}`)
         .then(r => r.json())
         .then(displayNearestStops)
-        .catch(() => { document.getElementById('nearestStopsInfo').textContent = 'Error finding stops'; });
+        .catch(() => {
+          ['nearestStopsInfo','m-nearestStopsInfo'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'Error finding stops';
+          });
+        });
     }
 
     function displayNearestStops(data) {
       clearNearestStopMarkers();
       window.nearestStopsMarkers = [];
 
-      const container = document.getElementById('nearestStopsInfo');
-      container.innerHTML = `<div class="section-title" style="margin-bottom:7px">Nearest Stops</div>`;
-      const list = document.createElement('div');
-      list.style.cssText = 'display:flex;flex-direction:column;gap:5px';
+      ['nearestStopsInfo','m-nearestStopsInfo'].forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = `<div class="section-title" style="margin-bottom:7px">Nearest Stops</div>`;
+        const list = document.createElement('div');
+        list.style.cssText = 'display:flex;flex-direction:column;gap:5px';
 
-      data.nearest_stops.forEach(stop => {
-        const item = document.createElement('div');
-        item.className = 'nearest-stop-item';
-        item.innerHTML = `<span class="ns-id">${stop.stop_id}</span><span class="ns-dist">${stop.distanceKM.toFixed(2)} km</span>`;
-        item.addEventListener('click', () => {
-          clearNearestStopMarkers();
-          document.getElementById('stopIdInput').value = stop.stop_id;
-          loadStop(stop.stop_id);
+        data.nearest_stops.forEach(stop => {
+          const item = document.createElement('div');
+          item.className = 'nearest-stop-item';
+          item.innerHTML = `<span class="ns-id">${stop.stop_id}</span><span class="ns-dist">${stop.distanceKM.toFixed(2)} km</span>`;
+          item.addEventListener('click', () => {
+            clearNearestStopMarkers();
+            ['stopIdInput','m-stopIdInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=stop.stop_id; });
+            const date = document.getElementById('dateInput').value || todayStr();
+            loadStop(stop.stop_id, date);
+            if (isMobile()) switchTab('m-tab-stop');
+          });
+          list.appendChild(item);
         });
-        list.appendChild(item);
 
-        const m = L.circleMarker([stop.stop_lat,stop.stop_lon],{
-          color:'#e05555',fillColor:'#e05555',fillOpacity:0.7,radius:7,weight:2
-        }).addTo(map);
-        m.bindPopup(`Stop ${stop.stop_id} · ${stop.distanceKM.toFixed(2)} km`);
-        window.nearestStopsMarkers.push(m);
+        container.appendChild(list);
       });
 
-      container.appendChild(list);
-
       if (data.nearest_stops.length) {
+        data.nearest_stops.forEach(stop => {
+          const m = L.circleMarker([stop.stop_lat,stop.stop_lon],{
+            color:'#e05555',fillColor:'#e05555',fillOpacity:0.7,radius:7,weight:2
+          }).addTo(map);
+          m.bindPopup(`Stop ${stop.stop_id} · ${stop.distanceKM.toFixed(2)} km`);
+          window.nearestStopsMarkers.push(m);
+        });
         const bounds = L.latLngBounds(data.nearest_stops.map(s => [s.stop_lat,s.stop_lon]));
         map.fitBounds(bounds.pad(0.15));
       }
+
+      if (isMobile()) expandSheet();
     }
 
+    // ===== MOBILE SHEET =====
+    let sheetExpanded = false;
+
+    function expandSheet() {
+      const sheet = document.getElementById('mobile-sheet');
+      sheet.classList.remove('collapsed');
+      sheetExpanded = true;
+    }
+
+    function collapseSheet() {
+      const sheet = document.getElementById('mobile-sheet');
+      sheet.classList.add('collapsed');
+      sheetExpanded = false;
+    }
+
+    function toggleSheet() {
+      sheetExpanded ? collapseSheet() : expandSheet();
+    }
+
+    // Touch drag for sheet
+    let dragStartY = 0, dragStartTransform = 0, isDragging = false;
+    const handleArea = document.getElementById('sheet-handle-area');
+    const peekArea   = document.getElementById('sheet-peek');
+
+    function onDragStart(e) {
+      isDragging = true;
+      dragStartY = e.touches ? e.touches[0].clientY : e.clientY;
+      const sheet = document.getElementById('mobile-sheet');
+      sheet.style.transition = 'none';
+    }
+
+    function onDragMove(e) {
+      if (!isDragging) return;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const dy = clientY - dragStartY;
+      const sheet = document.getElementById('mobile-sheet');
+      const maxTranslate = sheet.offsetHeight - 108 - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom') || '0');
+
+      if (sheetExpanded) {
+        const newY = Math.max(0, Math.min(dy, maxTranslate));
+        sheet.style.transform = `translateY(${newY}px)`;
+      } else {
+        const base = maxTranslate;
+        const newY = Math.max(0, Math.min(base + dy, base));
+        sheet.style.transform = `translateY(${newY}px)`;
+      }
+      if (e.cancelable) e.preventDefault();
+    }
+
+    function onDragEnd(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+      const dy = clientY - dragStartY;
+      const sheet = document.getElementById('mobile-sheet');
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+
+      if (sheetExpanded) { if (dy > 80) collapseSheet(); else expandSheet(); }
+      else               { if (dy < -40) expandSheet(); else collapseSheet(); }
+    }
+
+    [handleArea, peekArea].forEach(el => {
+      el.addEventListener('touchstart', onDragStart, {passive:true});
+      el.addEventListener('touchmove',  onDragMove,  {passive:false});
+      el.addEventListener('touchend',   onDragEnd,   {passive:true});
+      el.addEventListener('click', (e) => {
+        if (Math.abs((e.changedTouches?.[0]?.clientY || e.clientY) - dragStartY) < 10) toggleSheet();
+      });
+    });
+
+    // ===== MOBILE TABS =====
+    function switchTab(tabId) {
+      document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
+    }
+
+    document.querySelectorAll('.m-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    // ===== KEYBOARD SHORTCUTS (desktop) =====
+    document.getElementById('tripIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadTrip('tripIdInput'); });
+    document.getElementById('stopIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadStop('stopIdInput','dateInput'); });
+    document.getElementById('routeIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadRoute('routeIdInput','dateInput'); });
+    document.getElementById('m-tripIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadTrip('m-tripIdInput'); });
+    document.getElementById('m-stopIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadStop('m-stopIdInput','m-dateInput'); });
+    document.getElementById('m-routeIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadRoute('m-routeIdInput','m-dateInput'); });
+
+    // ===== INIT =====
     initMap();
-
-    const dateInput = document.getElementById('dateInput');
-    dateInput.value = todayStr();
-
-    document.getElementById('todayBtn').addEventListener('click', () => { dateInput.value = todayStr(); });
-
-    document.getElementById('loadTripBtn').addEventListener('click', () => { const v=document.getElementById('tripIdInput').value.trim(); if(v) loadTrip(v,null); });
-    document.getElementById('tripIdInput').addEventListener('keypress', e => { if(e.key==='Enter') document.getElementById('loadTripBtn').click(); });
-
-    document.getElementById('loadStopBtn').addEventListener('click', () => { const v=document.getElementById('stopIdInput').value.trim(); if(v) loadStop(v); });
-    document.getElementById('stopIdInput').addEventListener('keypress', e => { if(e.key==='Enter') document.getElementById('loadStopBtn').click(); });
-
-    dateInput.addEventListener('change', () => { const v=document.getElementById('stopIdInput').value.trim(); if(v) loadStop(v); });
-
-    document.getElementById('loadRouteBtn').addEventListener('click', () => { const v=document.getElementById('routeIdInput').value.trim(); if(v) loadRouteTrips(v); else alert('Please enter a Route ID.'); });
-    document.getElementById('routeIdInput').addEventListener('keypress', e => { if(e.key==='Enter') document.getElementById('loadRouteBtn').click(); });
-
-    document.getElementById('showLocationBtn').addEventListener('click', showUserLocation);
-
-    document.getElementById('findNearestBtn').addEventListener('click', () => {
-      const lat=document.getElementById('latInput').value.trim();
-      const lon=document.getElementById('lonInput').value.trim();
-      if(lat&&lon) findNearestStops(lat,lon); else alert('Please enter both latitude and longitude.');
-    });
-
-    document.getElementById('useMyLocationBtn').addEventListener('click', () => {
-      navigator.geolocation?.getCurrentPosition(pos => {
-        const {latitude:lat,longitude:lon} = pos.coords;
-        document.getElementById('latInput').value = lat;
-        document.getElementById('lonInput').value = lon;
-        findNearestStops(lat,lon);
-      },() => alert('Unable to get your location.'));
-    });
-
-    let pickModeActive = false;
-    let clickPinMarker = null;
-
-    function setPickMode(on) {
-      pickModeActive = on;
-      const btn   = document.getElementById('pickModeBtn');
-      const mapEl = document.getElementById('map');
-      if (on) { btn.classList.add('active'); btn.textContent='Cancel'; mapEl.classList.add('pick-mode'); }
-      else    { btn.classList.remove('active'); btn.textContent='Click Map to Find Nearest Stops'; mapEl.classList.remove('pick-mode'); }
-    }
-
-    document.getElementById('pickModeBtn').addEventListener('click', () => setPickMode(!pickModeActive));
-
-    map.on('click', e => {
-      if (!pickModeActive) return;
-      const {lat,lng} = e.latlng;
-      document.getElementById('latInput').value = lat.toFixed(6);
-      document.getElementById('lonInput').value = lng.toFixed(6);
-      if (clickPinMarker) map.removeLayer(clickPinMarker);
-      const pinIcon = L.divIcon({className:'click-pin-marker',html:'<div></div>',iconSize:[12,12],iconAnchor:[6,6]});
-      clickPinMarker = L.marker([lat,lng],{icon:pinIcon}).addTo(map);
-      clickPinMarker.bindPopup(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup();
-      findNearestStops(lat,lng);
-      setPickMode(false);
-    });
+    document.getElementById('dateInput').value = todayStr();
+    document.getElementById('m-dateInput').value = todayStr();
   </script>
 </body>
 </html>
