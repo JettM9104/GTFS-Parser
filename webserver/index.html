@@ -229,12 +229,27 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-      transition: background var(--transition), color var(--transition);
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
       -webkit-tap-highlight-color: transparent;
     }
 
     .map-ctrl-btn:active { background: var(--surface3); color: var(--text); }
-    .map-ctrl-btn.active-mode { background: rgba(224,85,85,0.15); border-color: rgba(224,85,85,0.4); color: var(--negative); }
+
+    /* ===== PICK MODE BUTTON (mobile) ===== */
+    #mPickBtn {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-family: 'DM Mono', monospace;
+      transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+
+    #mPickBtn.active-mode {
+      background: rgba(224,85,85,0.18);
+      border-color: rgba(224,85,85,0.55);
+      color: var(--negative);
+      box-shadow: 0 0 0 2px rgba(224,85,85,0.18);
+    }
 
     /* ===== SHARED FORM ELEMENTS ===== */
     .input-group {
@@ -845,8 +860,12 @@
 
   <!-- ===== MOBILE MAP CONTROLS ===== -->
   <div id="map-controls">
-    <button class="map-ctrl-btn" id="mPickBtn" title="Pick location" onclick="setPickMode(!pickModeActive)">⊕</button>
-    <button class="map-ctrl-btn" title="My location" onclick="useMyLocation('m-latInput','m-lonInput',true)">◎</button>
+    <button class="map-ctrl-btn" id="mPickBtn" title="Pick location" onclick="setPickMode(!pickModeActive)">
+      <span id="mPickBtnIcon" style="font-size:16px;line-height:1;font-family:'DM Mono',monospace;font-weight:600;">pin</span>
+    </button>
+    <button class="map-ctrl-btn" title="My location" onclick="useMyLocation('m-latInput','m-lonInput',true)">
+      <span style="font-size:16px;line-height:1;">⌖</span>
+    </button>
   </div>
 
   <!-- ===== MOBILE BOTTOM SHEET ===== -->
@@ -1108,13 +1127,34 @@
     // ===== PICK MODE =====
     function setPickMode(on) {
       pickModeActive = on;
-      const btns = [document.getElementById('pickModeBtn'), document.getElementById('mPickBtn')];
+      const desktopBtn = document.getElementById('pickModeBtn');
+      const mobileBtn  = document.getElementById('mPickBtn');
+      const mobileIcon = document.getElementById('mPickBtnIcon');
       const mapEl = document.getElementById('map');
-      btns.forEach(btn => {
-        if (!btn) return;
-        if (on) { btn.classList.add('active'); if(btn.id==='pickModeBtn') btn.textContent='Cancel'; }
-        else    { btn.classList.remove('active'); if(btn.id==='pickModeBtn') btn.textContent='Click Map to Find Nearest Stops'; }
-      });
+
+      // Desktop pick button
+      if (desktopBtn) {
+        if (on) { desktopBtn.classList.add('active'); desktopBtn.textContent = 'Cancel'; }
+        else    { desktopBtn.classList.remove('active'); desktopBtn.textContent = 'Click Map to Find Nearest Stops'; }
+      }
+
+      // Mobile pick button — red highlight + X icon when active
+      if (mobileBtn) {
+        if (on) {
+          mobileBtn.classList.add('active-mode');
+          if (mobileIcon) {
+            mobileIcon.textContent = '✕';
+            mobileIcon.style.fontSize = '18px';
+          }
+        } else {
+          mobileBtn.classList.remove('active-mode');
+          if (mobileIcon) {
+            mobileIcon.textContent = 'pin';
+            mobileIcon.style.fontSize = '16px';
+          }
+        }
+      }
+
       on ? mapEl.classList.add('pick-mode') : mapEl.classList.remove('pick-mode');
     }
 
@@ -1346,7 +1386,7 @@
         card.dataset.tripId = dep.trip_id;
         const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
         card.innerHTML = `
-          <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>Route ${dep.route_id}</div>
+          <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
           <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
           <div class="dep-trip">Trip ${dep.trip_id}</div>
         `;
@@ -1570,6 +1610,12 @@
     }
 
     function findNearestStops(lat, lon) {
+      // On mobile: switch to Nearby tab and expand sheet immediately
+      if (isMobile()) {
+        switchTab('m-tab-nearby');
+        expandSheet();
+      }
+
       fetch(`/api/nearest/${lat}/${lon}`)
         .then(r => r.json())
         .then(displayNearestStops)
@@ -1601,7 +1647,7 @@
             ['stopIdInput','m-stopIdInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=stop.stop_id; });
             const date = document.getElementById('dateInput').value || todayStr();
             loadStop(stop.stop_id, date);
-            if (isMobile()) switchTab('m-tab-stop');
+            // On mobile: loadStop already calls switchTab('m-tab-stop') + expandSheet()
           });
           list.appendChild(item);
         });
@@ -1620,8 +1666,6 @@
         const bounds = L.latLngBounds(data.nearest_stops.map(s => [s.stop_lat,s.stop_lon]));
         map.fitBounds(bounds.pad(0.15));
       }
-
-      if (isMobile()) expandSheet();
     }
 
     // ===== MOBILE SHEET =====
