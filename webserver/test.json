@@ -5,7 +5,7 @@
             "trip_id": 1234, "service_id": "1.2.1", "start_date": "2026-ab-cd", "end_date": "2026-ab-cd",
             "service": {
                 "mon": false, "tue": false, "wed": false, "thu": true, "fri": false, "sat": false, "sun": true,
-                "exception_dates": ["2026-02-03", "2026-04-02"] 
+                "exception_dates": [{"date": "2026-02-03", "exception": 1}, {"date": "2026-02-04", "exception": 1}] 
             }
         },
         { 
