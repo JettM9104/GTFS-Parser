@@ -106,3 +106,7 @@ gtfs-rt/proto-conversion/webserver-implementation/downloaded_file.pb
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_stop.pb
 gtfs-rt/proto-conversion/webserver-implementation/decodeAlerts
 gtfs-rt/proto-conversion/webserver-implementation/downloaded_alerts.pb
+/gtfs-rt/proto-conversion/webserver-implementation/ttc
+/gtfs-rt/proto-conversion/webserver-implementation/yrt
+/static-gtfs/data/yrt_archives
+static-gtfs/data/Complete GTFS.zip
