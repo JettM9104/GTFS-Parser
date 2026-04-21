@@ -111,3 +111,4 @@ gtfs-rt/proto-conversion/webserver-implementation/downloaded_alerts.pb
 /static-gtfs/data/yrt_archives
 static-gtfs/data/Complete GTFS.zip
 static-gtfs/gtfs_cli
+static-gtfs/flag_finder

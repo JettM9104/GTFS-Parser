@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         } else if (static_cast<string>(argv[i]) == "-h" || static_cast<string>(argv[i]) == "--help") {
             printUsage(argv[0]);
             return 0;
-        } else if () {}
+        } else if (static_cast<string>(argv[i]) == "") {}
         
         
         else if (argv[i][0] == '-') {
