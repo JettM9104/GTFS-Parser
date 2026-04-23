@@ -1,86 +1,75 @@
-# Schedule GTFS Parser (updated Apr 2026)
+# static-gtfs
 
-## Information
+C++ header library for parsing GTFS Schedule data. All functionality lives in `gtfs.hpp`. No build system required, just include it.
 
-Transit agencies usually provide GTFS-schedule data in a `.zip` file, composed of many `.txt` files in a **csv** format. The refrence for GTFS-schedule can be found [here](https://gtfs.org/documentation/schedule/reference/).
+## Background
 
-The required files (the agency **MUST** include these):
+Transit agencies publish GTFS Schedule data as a `.zip` of `.csv`-formatted `.txt` files. The spec is [here](https://gtfs.org/documentation/schedule/reference/). For larger agencies (major cities), files like `stop_times.txt` can exceed 200,000 lines.
 
-- `agency.txt`: The information on the agency/agencies and their corresponding `agency_id`
-- `routes.txt`: The information on the routes, with their corresponding `route_id`
-- `trips.txt`: The information on the trips, with their corresponding `trip_id`
-- `stop_times.txt`: The information the trip times making reference to `trip_id`
+**Required files** (agency must provide):
 
-As you can probably guess, for larger transit agencies (for bigger cities), it can get very big (200,000+ lines!!)
+| File | Contents |
+|---|---|
+| `agency.txt` | Agency info and `agency_id` |
+| `routes.txt` | Route info and `route_id` |
+| `trips.txt` | Trip info and `trip_id` |
+| `stop_times.txt` | Scheduled times, references `trip_id` |
 
-Agencies are encouraged (and *sometimes* required) to include files with more info, like:
+**Common optional files:**
 
-- `stops.txt`: The information on the stops and their corresponding `stop_id`, this is required unless a `location.geojson` is provided.
-- `location.geojson`: The location information for on-demand service
-- `calendar.txt`: The information on the trips' service schedules (based off days of the week)
-- `calendar_dates.txt`: The informaton on the trips' service schedules' exceptions, like added or removed service on certain days. Some agencies could choose to just use `calendar_dates.txt` solely and omit `calendar.txt`. 
+| File | Contents |
+|---|---|
+| `stops.txt` | Stop locations and `stop_id` (required unless `location.geojson` is provided) |
+| `calendar.txt` | Weekly service schedules |
+| `calendar_dates.txt` | Service exceptions (added/removed service days) |
+| `fare_attributes.txt` | Fare pricing and payment info |
+| `frequencies.txt` | Headway-based frequency info |
+| `feed_info.txt` | Feed validity dates |
 
-Agencies can also choose to include other files with more information, like:
+## Setup
 
-- `fare_attributes.txt`: Information on the fares (i.e. where it is paid, how much it is)
-- `frequencies.txt`: Information on the frequency of certain routes
+### 1. Add your GTFS data
 
-Within the files, agencies can choose to include optional fields (like `route_color` inside `routes.txt` for map displays, and `block_id` inside `trips.txt` to specify which trips are conducted by the same vehicles!)
+Create a `data/` folder inside `static-gtfs/` and extract your agency's `.zip` there:
 
-
-## Usage
-
-The `gtfs.hpp` uses `fstream`'s `ifstream` to read and parse data values. Using this API without the webserver can work.
-
-To make use, please follow these instructions, even if using the webserver:
-
-1. Download your agency's GTFS data and create a folder `data` inside `./GTFS-Parser/static-gtfs/`. Extract the `.zip` file into the `data` folder, so the structure looks something like this:
 ```
-static-gtfs
+static-gtfs/
 ├── gtfs.hpp
-└── data
-    ├── google_transit.zip
-    └── google_transit
+└── data/
+    └── your_agency/
         ├── agency.txt
-        ├── trips.txt
         ├── routes.txt
-        └── ... (continued)
+        ├── trips.txt
+        ├── stop_times.txt
+        └── ...
 ```
 
-1. `gtfs.hpp` line 34: update 
+### 2. Configure paths in `gtfs.hpp`
+
+**Line 37** — set `path` to the subfolder inside `data/` that contains your `.txt` files:
+
 ```cpp
-const string root = "...";
+const string path = "/data/your_agency/";
 ```
 
-Replace whatever's in there with the path to the folder `static-gtfs` **without** the leading `/` or `\`. You can run
+**Line 38** — set `root` to the absolute path of the `static-gtfs/` directory:
 
-```zsh
-pwd
-```
-on mac, and 
-```bash 
-cd
-```
-(with no arguments), on windows
-
-to get it.
-
-2. `gtfs.hpp` line 32: update
 ```cpp
-const string path = "/data/whatever_is_here/";
+const string root = "/path/to/static-gtfs" + path;
 ```
-Replace `whatever_is_here` with the name of your extracted folder containing the gtfs files. 
 
-3. Test it
-Create a new file, `main.cpp` with this code:
+To find your absolute path, run `pwd` (Mac/Linux) or `cd` with no arguments (Windows).
+
+### 3. Verify the setup
+
+Create a `main.cpp`:
+
 ```cpp
 #include <iostream>
 #include <ctime>
-#include <iomanip>
 #include "gtfs.hpp"
 
-
-int main(int argc, char* argv[]) {
+int main() {
     std::time_t t = std::time(nullptr);
     std::tm* now = std::localtime(&t);
     std::cout << gtfs::verifyGTFS(now->tm_year + 1900, now->tm_mon + 1, now->tm_mday) << std::endl;
@@ -88,13 +77,19 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-Check the output. Refer to this table:
+Compile and run:
 
-| Program Output | Meaning |
-| -------------- | ------- |
-| 0              | GTFS Data read and validated |
-| 1              | GTFS Data read but is expired |
-| -1             | GTFS Data read but it is not yet in place |
-| 10             | GTFS Data's feed_info.txt not read |
-| 11             | GTFS Data read but feed_info.txt is missing feed_end_date field |
-| 12             | GTFS Data read but feed_info.txt is missing feed_start_date field |
+```zsh
+clang++ -std=c++17 -O3 main.cpp -o main && ./main
+```
+
+`verifyGTFS` return values:
+
+| Output | Meaning |
+|---|---|
+| `0` | Data read and valid |
+| `1` | Data read but feed is expired |
+| `-1` | Data read but feed has not started yet |
+| `10` | `feed_info.txt` not found |
+| `11` | `feed_info.txt` missing `feed_end_date` |
+| `12` | `feed_info.txt` missing `feed_start_date` |

@@ -1,66 +1,75 @@
-# GTFS Webserver
-## Description
-This is a lil side project from the main API but here it is i guess!
+# webserver
 
-## Instructions for use
-**MAC**
+Flask server that bridges the C++ GTFS parsers to an HTML/JavaScript frontend. Runs on `http://localhost:5015`.
 
-Navigate to the directory. 
+## Setup (Mac)
 
-**Step 1**: Create a virtual enviroment (optional)
+### Step 1 — Create a virtual environment
 
-In the terminal, run:
 ```zsh
 python3 -m venv .venv
-```
-Activate it:
-```zsh
 source .venv/bin/activate
 ```
 
-**Step 2**: Install dependencies
+### Step 2 — Install dependencies
 
-Run:
-```
+```zsh
 python3 -m pip install flask
 ```
 
-**Step 3**: Build all C++ files in this folder
+### Step 3 — Compile C++ backends
+
+From the `webserver/` directory:
 
 ```zsh
 find . -name "*.cpp" | xargs -I{} bash -c 'clang++ -std=c++17 -O3 -o "${0%.cpp}" "$0"' {}
 ```
 
-**Step 4**: Build RT Files
+### Step 4 — Compile GTFS-RT decoders
 
-Read the (README)[https://github.com/JettM9104/GTFS-Parser/blob/main/gtfs-rt/readme.md] from the GTFS-RT Section to compile the RT Files.
+Follow the [gtfs-rt README](../gtfs-rt/readme.md) to build `decodeTrip`, `decodeStop`, and `decodeAlerts`.
 
-**Step 5**: Run the server!
+### Step 5 — Start the server
 
-Run
 ```zsh
 python3 server.py
 ```
 
-Open up `http://localhost:5015` in your browser
+Open `http://localhost:5015` in your browser.
 
+## API Endpoints
 
-**Step 6** (optional): Server that requires a token
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/trip/<trip_id>` | Schedule data for a trip |
+| GET | `/api/stop/<stop_id>/<YYYY-MM-DD>` | Arrivals at a stop on a given date |
+| GET | `/api/nearest/<lat>/<lon>` | Nearest stops to a coordinate |
+| GET | `/api/route/<route_id>/<year>/<month>/<day>` | All trips for a route on a date |
+| GET | `/api/rt/location/<trip_id>` | Live vehicle location for a trip |
+| GET | `/api/rt/stop/<stop_id>` | Live arrivals at a stop |
 
-Run
+## Token Authentication (optional)
+
+To require a token for all requests, run the token server instead:
+
 ```zsh
-python3 tokenindex_converter | python3 tokenserver_converter
+python3 tokenindex_converter.py | python3 tokenserver_converter.py
 ```
 
-Create a file called `t_confidental_info.py` and create a token:
+Create `t_confidental_info.py` with your token:
+
 ```py
-token = "generate_or_make_a_token_here"
+token = "your_secret_token"
 ```
 
-Generate a token using
+Generate a secure token:
+
 ```zsh
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Access it using the URL: `http://localhost:5015/?token=your_token`
+Access the server with: `http://localhost:5015/?token=your_secret_token`
 
+## Offline Map Tiles (optional)
+
+Place map tiles in `tiles/<z>/<x>/<y>.png`. The server serves them at `/tiles/<z>/<x>/<y>.png` for use with a Leaflet or similar map frontend.

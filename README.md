@@ -1,15 +1,41 @@
-# A GTFS Parser
-## What is GTFS?
-**GTFS**, or *General Transit Feed Specification* (look at repository [`google/transit`](https://github.com/google/transit) and the reference [here](https://gtfs.org/documentation/schedule/reference/)) is the general (and only) worldwide standard for transit agency arrival, departure, and shape data (and more!). A *GTFS dataset* is created by a transit agency and used by other software to tell when the bus/vehicle is scheduled arrive on time. There is another kind of GTFS called **GTFS-RT** which stands for GTFS Realtime. It includes live locations and live schedules for busses and other transit routes. Some transit agencies may not use this.
+# GTFS Parser
+
+A C++ library and Python webserver for parsing and serving **GTFS Schedule** and **GTFS Realtime** transit data.
+
+**GTFS** (General Transit Feed Specification) is the worldwide standard for transit agency schedule and location data. See the [official reference](https://gtfs.org/documentation/schedule/reference/) and the [`google/transit`](https://github.com/google/transit) repository.
 
 <img width="1914" height="956" alt="image" src="https://github.com/user-attachments/assets/08733e08-7a5b-4e54-ba88-a782d231d065" />
 
-## How do I use this?
-1. Make a new folder, right click the folder and press `Open Terminal at Folder` (Linux/Mac) or open `Command Prompt` on Windows and use cd to navigate to your folder
-2. run `git clone https://github.com/JettM9104/GTFS-Parser/`
-3. Read the README.md for either [static-gtfs](/static-gtfs/) or [gtfs-rt](/gtfs-rt/) to continue
+## Components
 
-## What do I need?
-1. A C++ compiler
-2. A computer and operating system
-3. `git` and some basic knowledge of the command prompt/terminal
+| Directory | Description |
+|---|---|
+| [`static-gtfs/`](static-gtfs/) | C++ header (`gtfs.hpp`) for parsing GTFS Schedule `.txt` files |
+| [`gtfs-rt/`](gtfs-rt/) | C++ tools for decoding GTFS Realtime `.pb` protobuf files |
+| [`webserver/`](webserver/) | Flask server + HTML frontend that exposes both as a REST API |
+
+## Quick Start
+
+```bash
+git clone https://github.com/JettM9104/GTFS-Parser/
+```
+
+Then follow the README in whichever component you need:
+
+1. [static-gtfs](static-gtfs/readme.md) — parse schedule data
+2. [gtfs-rt](gtfs-rt/readme.md) — decode realtime feeds
+3. [webserver](webserver/README.md) — run the full web UI
+
+## Requirements
+
+- C++17 compiler (`clang++` or `g++`)
+- Python 3 with `flask`
+- `protobuf@21` (for GTFS-RT only)
+- `git`
+
+## Versions
+
+| Release | Notes |
+|---|---|
+| v1.8.0 | Stable — reorganized into `gtfs.hpp`, improved GTFS-RT (JSON output) |
+| v3.0 beta | HTML GUI via Flask + JavaScript frontend |
