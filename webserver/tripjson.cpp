@@ -4,9 +4,11 @@
 #include <iomanip>
 #include <cstdlib>
 #include "../static-gtfs/gtfs.hpp"
+#include "gtfs_config.hpp"
 
 
 int main(int argc, char* argv[]) {
+    loadGtfsConfig(argv[0]);
     if (argc < 2) {
         std::cout << "Usage: \n" << argv[0] << " <tripID> [--precision | -p <precision>]\n";
         return -1;

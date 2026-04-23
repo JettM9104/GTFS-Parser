@@ -33,20 +33,20 @@ float π = 3.14159;
 
 typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
-const string path = "/data/yrt_archive/";
+string path = "/data/yrt_archive/";
 
-const string root = "/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs" + path;
+string root = "/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs" + path;
 
-const string stopPath = root + "stops.txt";
-const string routePath = root + "routes.txt";
-const string tripsPath = root + "trips.txt";
-const string stopTimesPath = root + "stop_times.txt";
-const string tripPath = root + "trips.txt";
-const string calendarPath = root + "calendar.txt";
-const string calendarDatesPath = root + "calendar_dates.txt";
-const string agencyPath = root + "agency.txt";
-const string shapePath = root + "shapes.txt";
-const string feedInfoFile = root + "feed_info.txt";
+string stopPath = root + "stops.txt";
+string routePath = root + "routes.txt";
+string tripsPath = root + "trips.txt";
+string stopTimesPath = root + "stop_times.txt";
+string tripPath = root + "trips.txt";
+string calendarPath = root + "calendar.txt";
+string calendarDatesPath = root + "calendar_dates.txt";
+string agencyPath = root + "agency.txt";
+string shapePath = root + "shapes.txt";
+string feedInfoFile = root + "feed_info.txt";
 
 const int precision = 8;
 const int defPrecision = 6;
