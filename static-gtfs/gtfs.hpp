@@ -47,6 +47,7 @@ string calendarDatesPath = root + "calendar_dates.txt";
 string agencyPath = root + "agency.txt";
 string shapePath = root + "shapes.txt";
 string feedInfoFile = root + "feed_info.txt";
+string frequencyPath = root + "frequencies.txt";
 
 const int precision = 8;
 const int defPrecision = 6;
@@ -464,6 +465,15 @@ struct calendar_date {
     string service_id;
     calendar_day date;
     exception exception_type;
+};
+struct frequency {
+    enum exact_time { frequency_based = 0, schedule_based = 1 };
+    string trip_id;
+    time start_time;
+    time end_time;
+    unsigned int headway_secs;
+
+    exact_time exact_times;
 };
 
 struct trip_segment {
@@ -1687,6 +1697,41 @@ std::vector<trip_segment> getStopTimeInfo(string trip_id) { // requiremtns: stop
 
 
     stopTimesFile.close();
+    return output;
+}
+std::vector<frequency> getFrequencies(string trip_id) { // requiements: frequencies.txt
+    std::vector<frequency> output;
+    ifstream frequencyFile = ifstream(frequencyPath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    std::unordered_map<string, int> refs;
+    bool firstLine = true;
+
+    while (getline(frequencyFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+
+            continue;
+        }
+
+        if (parsedCurrentLine[refs["trip_id"]] == trip_id) {
+            frequency temp;
+            temp.start_time = parseFormattedTime(parsedCurrentLine[refs["start_time"]]);
+            temp.end_time = parseFormattedTime(parsedCurrentLine[refs["end_time"]]);
+            temp.headway_secs = static_cast<unsigned int>(to_integer(parsedCurrentLine[refs["headway_secs"]]));
+
+            { auto find = refs.find("exact_times");
+            if (find != refs.end()) temp.exact_times = static_cast<frequency::exact_time>(to_integer(parsedCurrentLine[find->second])); }
+
+            output.push_back(temp);
+        }
+    }
+
+    frequencyFile.close();
     return output;
 }
 
