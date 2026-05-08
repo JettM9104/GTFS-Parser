@@ -48,6 +48,7 @@ string agencyPath = root + "agency.txt";
 string shapePath = root + "shapes.txt";
 string feedInfoFile = root + "feed_info.txt";
 string frequencyPath = root + "frequencies.txt";
+string fareAttributesPath = root + "fare_attributes.txt";
 
 const int precision = 8;
 const int defPrecision = 6;
@@ -474,6 +475,19 @@ struct frequency {
     unsigned int headway_secs;
 
     exact_time exact_times;
+};
+struct fare { // fare_attributes.txt parameters
+    enum payment_methods { paid_on_board = 0, paid_before_boarding = 1 };
+    enum transfer { unlimited = -1, no_transfers = 0, one_transfer = 1, two_transfers = 2 }; 
+
+    string fare_id;
+    float price;
+    string currency_type;
+    payment_methods payment_method;
+    transfer transfers;
+    string agency_id;
+
+    unsigned int transfer_duration;
 };
 
 struct trip_segment {
@@ -1734,6 +1748,48 @@ std::vector<frequency> getFrequencies(string trip_id) { // requiements: frequenc
     frequencyFile.close();
     return output;
 }
+fare getFareInfo(string fare_id) {
+    fare output;
+    ifstream fareAttributesFile = ifstream(fareAttributesPath);
+
+    string currentLine;
+    std::vector<string> parsedCurrentLine;
+    bool firstLine = true;
+    std::unordered_map<string, int> refs;
+
+    while (getline(fareAttributesFile, currentLine)) {
+        parsedCurrentLine = parseDataCSV(currentLine);
+
+
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }   
+
+        if (parsedCurrentLine[refs["fare_id"]] == fare_id) {
+            output.fare_id = fare_id;
+
+            output.price = to_double(parsedCurrentLine[refs["price"]]);
+            output.currency_type = parsedCurrentLine[refs["currency_type"]];
+            output.payment_method = static_cast<fare::payment_methods>(to_integer(parsedCurrentLine[refs["payment_method"]]));
+            output.transfers = static_cast<fare::transfer>(to_integer(parsedCurrentLine[refs["transfers"]]));
+            
+            { auto find = refs.find("agency_id");
+            if (find != refs.end()) output.agency_id = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("transfer_duration");
+            if (find != refs.end()) output.transfer_duration = to_integer(parsedCurrentLine[find->second]); }
+            
+            break;
+        }
+    }
+
+
+    fareAttributesFile.close();
+    return output;
+}   
+
 
 #pragma endregion FUNCTIONS
 
