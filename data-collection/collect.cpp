@@ -6,7 +6,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <libgen.h>
 
-// build command: clang++ -std=c++17 collect.cpp ../gtfs-rt/proto-conversion/transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o collect -O3
+// build command: clang++ -std=c++17 collect.cpp ../gtfs-rt/proto-conversion/transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o collect -O3 && ./collect
 
 using namespace std;
 using namespace transit_realtime;
