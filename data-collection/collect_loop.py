@@ -6,6 +6,7 @@ import json
 import subprocess
 import time
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -54,6 +55,10 @@ def extract_trip_rows(weather):
     with open(GTFS_JSON) as f:
         data = json.load(f)
 
+    timestamp = datetime.fromtimestamp(
+        int(data["header"]["timestamp"]), tz=timezone.utc
+    ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
     rows = []
     for entity in data.get("entity", []):
         trip_update = entity.get("trip_update")
@@ -73,7 +78,7 @@ def extract_trip_rows(weather):
         rows.append({
             "trip_id": trip_id,
             "delay": event.get("delay"),
-            "timestamp": event.get("time"),
+            "timestamp": timestamp,
             **weather,
         })
 
@@ -97,13 +102,18 @@ def run_once():
     print(f"Appended {len(rows)} rows to {TABLE_CSV.name}")
 
 
+def seconds_until_next_interval():
+    now = time.time()
+    return INTERVAL_SECONDS - (now % INTERVAL_SECONDS)
+
+
 def main():
     while True:
+        time.sleep(seconds_until_next_interval())
         try:
             run_once()
         except Exception as e:
             print(f"Error during collection cycle: {e}")
-        time.sleep(INTERVAL_SECONDS)
 
 
 if __name__ == "__main__":
