@@ -115,3 +115,6 @@ static-gtfs/flag_finder
 static-gtfs/spam.py
 /.claude
 data-collection/collect
+data-collection/decoded_gtfs.json
+data-collection/downloaded_tripUpdates.pb
+data-collection/table.csv
