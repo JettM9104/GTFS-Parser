@@ -114,3 +114,4 @@ static-gtfs/gtfs_cli
 static-gtfs/flag_finder
 static-gtfs/spam.py
 /.claude
+data-collection/collect
