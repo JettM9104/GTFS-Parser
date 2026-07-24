@@ -17,11 +17,11 @@ int main(int argc, char* argv[]) {
     std::string exeDir = dirname(argv[0]);
     std::string outputPath = exeDir + "/downloaded_tripUpdates.pb";
 
-    std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/TripUpdates";
+    std::string cmd = "wget -q -O '" + outputPath + "' https://rtu.york.ca/gtfsrealtime/TripUpdates";
     system(cmd.c_str());
 
     // Open the GTFS-realtime feed
-    fstream input("downloaded_tripUpdates.pb", ios::in | ios::binary);
+    fstream input(outputPath, ios::in | ios::binary);
     if (!input) {
         cerr << "Error: could not open downloaded_tripUpdates.pb" << endl;
         return 1;
