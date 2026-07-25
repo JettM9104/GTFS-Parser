@@ -1,8 +1,8 @@
-import math
 import torch
 import os
-import csv
 import json
+import numpy as np
+import pandas as pd
 
 DATA_FILE = "data.csv"
 WEIGHTS_PATH = "model_weights.pt"
@@ -12,21 +12,25 @@ OUTPUT_COLUMN = "delay"
 
 # unix_timestamp is seconds since last Monday 00:00 UTC, so it wraps weekly.
 WEEK_SECONDS = 7 * 24 * 3600
+DAY_SECONDS = 24 * 3600
 
 class test_neural_network(torch.nn.Module):
-    def __init__(self, in_size, hidden_size, out_size):
+    def __init__(self, in_size, hidden_size, out_size, dropout=0.3):
         super().__init__()
         self.net = torch.nn.Sequential(
             torch.nn.Linear(in_size, hidden_size),
             torch.nn.ReLU(),
+            torch.nn.Dropout(dropout),
+            torch.nn.Linear(hidden_size, hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(dropout),
             torch.nn.Linear(hidden_size, out_size)
         )
     def forward(self, x):
         return self.net(x)
 
 def save_weights_readable(state_dict, path):
-    # Plain-text JSON instead of a pickled blob, since the hidden layer is only
-    # 16 neurons wide the whole state_dict is small enough to eyeball directly.
+    # Plain-text JSON instead of a pickled blob, so the state_dict is easy to eyeball directly.
     readable = {name: tensor.tolist() for name, tensor in state_dict.items()}
     with open(path, "w") as f:
         json.dump(readable, f, indent=2)
@@ -37,92 +41,158 @@ def load_weights_readable(path):
     return {name: torch.tensor(values) for name, values in readable.items()}
 
 def load_data(data_file):
-    rows = []
-    outputs_data = []
-    with open(data_file, newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row["route_id"] == "":
-                continue  # skip rows we couldn't match a route for
-            rows.append(row)
-            outputs_data.append([float(row[OUTPUT_COLUMN])])
-    return rows, outputs_data
+    # dtype=str + explicit numeric conversion below keeps pandas from guessing
+    # column types row-by-row; this is a single vectorized C-level parse pass
+    # instead of csv.DictReader's per-row Python dict construction.
+    df = pd.read_csv(data_file, dtype=str, keep_default_na=False)
+    df = df[df["route_id"] != ""].reset_index(drop=True)
+    return df
 
-def build_route_vocab(rows):
-    return sorted({row["route_id"] for row in rows})
+def build_route_vocab(df):
+    route_vocab = sorted(df["route_id"].unique().tolist())
+    route_to_idx = {route_id: i for i, route_id in enumerate(route_vocab)}
+    return route_vocab, route_to_idx
+
+def encode_time_batch(unix_timestamps):
+    # Vectorized over the whole column instead of once per row.
+    t = unix_timestamps % WEEK_SECONDS
+    week_angle = 2 * np.pi * t / WEEK_SECONDS
+    # A week-length sinusoid alone can't represent daily rush-hour patterns
+    # (its cycle spans 7 days), so add a separate day-length sinusoid to
+    # capture time-of-day independent of which day it is.
+    day_angle = 2 * np.pi * (t % DAY_SECONDS) / DAY_SECONDS
+    return np.stack(
+        [np.sin(week_angle), np.cos(week_angle), np.sin(day_angle), np.cos(day_angle)],
+        axis=1,
+    )
 
 def encode_time(unix_timestamp):
-    angle = 2 * math.pi * (float(unix_timestamp) % WEEK_SECONDS) / WEEK_SECONDS
-    return [math.sin(angle), math.cos(angle)]
+    return encode_time_batch(np.array([float(unix_timestamp)]))[0].tolist()
 
-def encode_route(route_id, route_vocab):
-    one_hot = [0.0] * len(route_vocab)
-    if route_id in route_vocab:
-        one_hot[route_vocab.index(route_id)] = 1.0
+def encode_route_batch(route_ids, route_to_idx):
+    n = len(route_ids)
+    one_hot = np.zeros((n, len(route_to_idx)), dtype=np.float32)
+    rows = [i for i, r in enumerate(route_ids) if r in route_to_idx]
+    cols = [route_to_idx[r] for r in route_ids if r in route_to_idx]
+    one_hot[rows, cols] = 1.0
     return one_hot
 
-def build_feature_vector(row, route_vocab):
+def encode_route(route_id, route_to_idx):
+    one_hot = [0.0] * len(route_to_idx)
+    if route_id in route_to_idx:
+        one_hot[route_to_idx[route_id]] = 1.0
+    return one_hot
+
+def build_feature_matrix(df, route_to_idx):
+    continuous = df[CONTINUOUS_COLUMNS].astype(np.float32).values
+    time_features = encode_time_batch(df["unix_timestamp"].astype(np.float64).values)
+    route_features = encode_route_batch(df["route_id"].tolist(), route_to_idx)
+    return np.hstack([continuous, time_features, route_features]).astype(np.float32)
+
+def build_feature_vector(row, route_to_idx):
     continuous = [float(row[col]) for col in CONTINUOUS_COLUMNS]
-    return continuous + encode_time(row["unix_timestamp"]) + encode_route(row["route_id"], route_vocab)
+    return continuous + encode_time(row["unix_timestamp"]) + encode_route(row["route_id"], route_to_idx)
 
-rows, outputs_data = load_data(DATA_FILE)
-route_vocab = build_route_vocab(rows)
+df = load_data(DATA_FILE)
+route_vocab, route_to_idx = build_route_vocab(df)
 
-inputs = [build_feature_vector(row, route_vocab) for row in rows]
+X_raw = torch.from_numpy(build_feature_matrix(df, route_to_idx))
+y = torch.from_numpy(df[[OUTPUT_COLUMN]].astype(np.float32).values.copy())
 
-X_raw = torch.tensor(inputs)
-y = torch.tensor(outputs_data)
+# Held-out split so a training loss plateau can be checked against unseen data
+# instead of just eyeballing the training curve.
+torch.manual_seed(0)
+n = X_raw.shape[0]
+perm = torch.randperm(n)
+n_val = max(1, int(0.15 * n))
+val_idx, train_idx = perm[:n_val], perm[n_val:]
 
 # Standardize only the continuous columns; sin/cos and one-hot columns are already bounded.
+# Stats come from the training split only, to avoid leaking val data into normalization.
 n_continuous = len(CONTINUOUS_COLUMNS)
 X_mean = torch.zeros(X_raw.shape[1])
 X_std = torch.ones(X_raw.shape[1])
-X_mean[:n_continuous] = X_raw[:, :n_continuous].mean(dim=0)
-X_std[:n_continuous] = X_raw[:, :n_continuous].std(dim=0)
+X_mean[:n_continuous] = X_raw[train_idx][:, :n_continuous].mean(dim=0)
+X_std[:n_continuous] = X_raw[train_idx][:, :n_continuous].std(dim=0)
 X_std[X_std == 0] = 1.0  # avoid divide-by-zero on constant columns
 X = (X_raw - X_mean) / X_std
 
-y_mean = y.mean(dim=0)
-y_std = y.std(dim=0)
+y_mean = y[train_idx].mean(dim=0)
+y_std = y[train_idx].std(dim=0)
 y_std[y_std == 0] = 1.0
 y_norm = (y - y_mean) / y_std
 
-model = test_neural_network(in_size=X.shape[1], hidden_size=16, out_size=1)
-criterion = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+X_train, y_train = X[train_idx], y_norm[train_idx]
+X_val, y_val = X[val_idx], y_norm[val_idx]
+
+model = test_neural_network(in_size=X.shape[1], hidden_size=64, out_size=1)
+# delay has heavy-tailed outliers (some trips off by 1000+s), which dominate MSE
+# and pull training toward those rather than the typical near-zero delay. Huber
+# loss is quadratic near zero and linear for large errors, so it's far less
+# sensitive to those outliers.
+criterion = torch.nn.HuberLoss(delta=1.0)
+# weight_decay (L2 penalty) alongside dropout in the network, since train/val
+# have been diverging (train improving, val getting worse) regardless of loss
+# function — that's overfitting, not an outlier or optimizer issue.
+optimizer = torch.optim.AdamW(model.parameters(), lr=0.01, weight_decay=1e-3)
+# min_lr keeps the scheduler from decaying all the way to 0, which stalls
+# training long before epochs run out (patience=200 over 10k epochs allows
+# up to ~50 halvings, i.e. lr -> ~1e-17).
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=200, min_lr=1e-4)
 
 # --- Ask user for number of epochs ---
 epochs = int(input("Enter number of epochs to train (0 to skip training and go straight to inference): "))
 
+def try_load_weights(model, path):
+    try:
+        model.load_state_dict(torch.load(path))
+        return True
+    except RuntimeError as e:
+        print(f"Saved weights at {path} don't match the current architecture ({e}); starting from random weights instead.")
+        return False
+
 if epochs == 0:
     # Skip training, load existing weights instead
     if os.path.exists(WEIGHTS_PATH):
-        model.load_state_dict(torch.load(WEIGHTS_PATH))
-        print(f"Loaded saved weights from {WEIGHTS_PATH}")
+        if try_load_weights(model, WEIGHTS_PATH):
+            print(f"Loaded saved weights from {WEIGHTS_PATH}")
     else:
         print(f"No saved weights found at {WEIGHTS_PATH} — model is untrained (random weights).")
 else:
     if os.path.exists(WEIGHTS_PATH):
-        model.load_state_dict(torch.load(WEIGHTS_PATH))
-        print(f"Loaded saved weights from {WEIGHTS_PATH}, continuing training")
+        if try_load_weights(model, WEIGHTS_PATH):
+            print(f"Loaded saved weights from {WEIGHTS_PATH}, continuing training")
+
+    best_val_loss = float("inf")
+    best_state = None
 
     for epoch in range(epochs):
+        model.train()
         optimizer.zero_grad()
-        preds = model(X)
-        loss = criterion(preds, y_norm)
+        preds = model(X_train)
+        loss = criterion(preds, y_train)
         loss.backward()
         optimizer.step()
 
+        model.eval()
+        with torch.no_grad():
+            val_loss = criterion(model(X_val), y_val)
+        scheduler.step(val_loss)
+
+        if val_loss.item() < best_val_loss:
+            best_val_loss = val_loss.item()
+            best_state = {k: v.clone() for k, v in model.state_dict().items()}
+
         if (epoch + 1) % 20 == 0 or epoch == 0:
-            print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}")
+            lr = optimizer.param_groups[0]["lr"]
+            print(f"Epoch {epoch+1}/{epochs}, Train Loss: {loss.item():.4f}, Val Loss: {val_loss.item():.4f}, LR: {lr:.5f}")
 
-        if (epoch + 1) % 10000 == 0:
-            torch.save(model.state_dict(), WEIGHTS_PATH)
-            print(f"Checkpoint: saved weights at epoch {epoch+1} to {WEIGHTS_PATH}")
-
-    # Save weights after training
+    # Keep the weights from whichever epoch had the best val loss, not
+    # necessarily the last one — train loss keeps dropping past the point
+    # where val loss stops improving.
+    model.load_state_dict(best_state)
     torch.save(model.state_dict(), WEIGHTS_PATH)
-    print(f"Saved trained weights to {WEIGHTS_PATH}")
+    print(f"Best val loss: {best_val_loss:.4f}. Saved those weights to {WEIGHTS_PATH}")
 
 # --- Using the trained model ---
 model.eval()
@@ -131,10 +201,10 @@ continuous_values = [float(input(f"{col}: ")) for col in CONTINUOUS_COLUMNS]
 unix_timestamp = input("unix_timestamp: ")
 route_id = input("route_id: ")
 
-if route_id not in route_vocab:
+if route_id not in route_to_idx:
     print(f"Warning: route_id {route_id!r} was not seen during training, using an unknown-route encoding.")
 
-values = continuous_values + encode_time(unix_timestamp) + encode_route(route_id, route_vocab)
+values = continuous_values + encode_time(unix_timestamp) + encode_route(route_id, route_to_idx)
 
 with torch.no_grad():
     test_input_raw = torch.tensor([values])
