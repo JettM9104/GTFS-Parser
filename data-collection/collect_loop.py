@@ -5,6 +5,7 @@ import csv
 import json
 import subprocess
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,9 +39,20 @@ def run_collect():
     subprocess.run([str(COLLECT_BIN)], cwd=SCRIPT_DIR, check=True)
 
 
+WEATHER_RETRY_SECONDS = 5
+
+
 def fetch_weather():
-    with urllib.request.urlopen(WEATHER_URL) as response:
-        data = json.loads(response.read())
+    while True:
+        try:
+            with urllib.request.urlopen(WEATHER_URL) as response:
+                data = json.loads(response.read())
+            break
+        except urllib.error.HTTPError as e:
+            if e.code != 503:
+                raise
+            print(f"Weather API 503, retrying in {WEATHER_RETRY_SECONDS}s...")
+            time.sleep(WEATHER_RETRY_SECONDS)
     current = data["current"]
     return {
         "temperature": current["temperature_2m"],
@@ -99,7 +111,8 @@ def run_once():
     weather = fetch_weather()
     rows = extract_trip_rows(weather)
     append_to_csv(rows)
-    print(f"Appended {len(rows)} rows to {TABLE_CSV.name}")
+    timestamp = rows[0]["timestamp"] if rows else "n/a"
+    print(f"Appended {len(rows)} rows to {TABLE_CSV.name} (timestamp: {timestamp})")
 
 
 def seconds_until_next_interval():
