@@ -3,12 +3,17 @@
 
 import csv
 import json
+import ssl
 import subprocess
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+import certifi
+
+SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 COLLECT_BIN = SCRIPT_DIR / "collect"
@@ -45,7 +50,7 @@ WEATHER_RETRY_SECONDS = 5
 def fetch_weather():
     while True:
         try:
-            with urllib.request.urlopen(WEATHER_URL) as response:
+            with urllib.request.urlopen(WEATHER_URL, context=SSL_CONTEXT) as response:
                 data = json.loads(response.read())
             break
         except urllib.error.HTTPError as e:
