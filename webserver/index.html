@@ -302,21 +302,39 @@
       flex-shrink: 0;
     }
 
-    .sidebar-section-label {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      font-weight: 600;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      padding: 2px 2px 0;
-    }
-
     .sidebar-section {
-      display: flex;
+      display: none;
       flex-direction: column;
       gap: var(--space-3);
     }
+    .sidebar-section.active { display: flex; }
+
+    #sidebar-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 var(--space-4);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sb-tab {
+      appearance: none;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 4px 9px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+      flex: 1;
+      text-align: center;
+    }
+    .sb-tab:hover { background: none; color: var(--text-muted); }
+    .sb-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
     #sidebar-body::-webkit-scrollbar { width: 3px; }
     #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -1134,11 +1152,14 @@
           </div>
           <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">Light theme</button>
         </div>
+        <div id="sidebar-tabs">
+          <button class="sb-tab active" data-sb-tab="sb-tab-stop">Stops</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-triproute">Trips &amp; routes</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-discover">Discover</button>
+        </div>
         <div id="sidebar-body">
 
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Stops</div>
-
+      <div class="sidebar-section active" id="sb-tab-stop">
         <div class="panel">
           <div class="panel-heading">Find a stop</div>
 
@@ -1234,11 +1255,7 @@
         </div>
       </div>
 
-      <div class="divider"></div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Trips &amp; routes</div>
-
+      <div class="sidebar-section" id="sb-tab-triproute">
         <div class="panel">
           <div class="panel-heading">Trip lookup</div>
           <div class="input-group">
@@ -1270,11 +1287,7 @@
         </div>
       </div>
 
-      <div class="divider"></div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Discover</div>
-
+      <div class="sidebar-section" id="sb-tab-discover">
         <div class="panel">
           <div class="panel-heading">Nearby stops</div>
           <div class="input-group" role="group" aria-label="Coordinates">
@@ -1735,10 +1748,8 @@
       startRTPolling(tripId);
 
       // On mobile: switch to stop tab to show live vehicle info, expand sheet
-      if (isMobile()) {
-        switchTab('m-tab-stop');
-        expandSheet();
-      }
+      switchTab('m-tab-stop');
+      if (isMobile()) expandSheet();
     }
 
     function displayTrip(data) {
@@ -2340,10 +2351,8 @@
       const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lon]));
       map.fitBounds(bounds.pad(0.2));
 
-      if (isMobile()) {
-        switchTab('m-tab-stop');
-        expandSheet();
-      }
+      switchTab('m-tab-stop');
+      if (isMobile()) expandSheet();
     }
 
     function renderMultiDepartureCards(departures, prefix) {
@@ -2468,10 +2477,8 @@
       map.setView([data.lat,data.lon],15);
 
       // On mobile: expand sheet and switch to stop tab
-      if (isMobile()) {
-        switchTab('m-tab-stop');
-        expandSheet();
-      }
+      switchTab('m-tab-stop');
+      if (isMobile()) expandSheet();
     }
 
     // Sync date inputs
@@ -2529,10 +2536,8 @@
 
     function findNearestStops(lat, lon) {
       // On mobile: switch to Nearby tab and expand sheet immediately
-      if (isMobile()) {
-        switchTab('m-tab-nearby');
-        expandSheet();
-      }
+      switchTab('m-tab-nearby');
+      if (isMobile()) expandSheet();
 
       fetch(`/api/nearest/${lat}/${lon}`)
         .then(r => r.json())
@@ -2667,11 +2672,30 @@
     function switchTab(tabId) {
       document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
+      const sbTabId = { 'm-tab-stop': 'sb-tab-stop', 'm-tab-trip': 'sb-tab-triproute', 'm-tab-route': 'sb-tab-triproute', 'm-tab-nearby': 'sb-tab-discover' }[tabId];
+      if (sbTabId) switchSidebarTab(sbTabId);
     }
 
     document.querySelectorAll('.m-tab').forEach(tab => {
       tab.addEventListener('click', () => switchTab(tab.dataset.tab));
     });
+
+    // ===== DESKTOP SIDEBAR TABS =====
+    function switchSidebarTab(tabId) {
+      document.querySelectorAll('.sb-tab').forEach(t => t.classList.toggle('active', t.dataset.sbTab === tabId));
+      document.querySelectorAll('.sidebar-section').forEach(p => p.classList.toggle('active', p.id === tabId));
+      try { localStorage.setItem('gtfs-sidebar-tab', tabId); } catch (e) {}
+    }
+
+    document.querySelectorAll('.sb-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchSidebarTab(tab.dataset.sbTab));
+    });
+
+    (function initSidebarTab() {
+      let saved = null;
+      try { saved = localStorage.getItem('gtfs-sidebar-tab'); } catch (e) {}
+      if (saved && document.getElementById(saved)) switchSidebarTab(saved);
+    })();
 
     // ===== KEYBOARD SHORTCUTS (desktop) =====
     document.getElementById('tripIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadTrip('tripIdInput'); });
