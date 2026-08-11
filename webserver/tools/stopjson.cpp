@@ -3,12 +3,10 @@
 #include <string>
 #include <iomanip>
 #include <cstdlib>
-#include "../static-gtfs/gtfs.hpp"
-#include "gtfs_config.hpp"
+#include "../../static-gtfs/gtfs.hpp"
 #include <ctime>
 
 int main(int argc, char* argv[]) {
-    loadGtfsConfig(argv[0]);
     if (argc < 2) {
         std::cerr << "Usage: \n" << argv[0] << " <stopID> [year, month, day]";
         return -1;

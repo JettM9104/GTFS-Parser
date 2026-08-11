@@ -1,12 +1,10 @@
-#include "../static-gtfs/gtfs.hpp"
-#include "gtfs_config.hpp"
+#include "../../static-gtfs/gtfs.hpp"
 
 #include <iostream>
 using namespace gtfs;
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    loadGtfsConfig(argv[0]);
     if (argc != 5) {
         std::cerr << "Usage: " << argv[0] << " <route_id> <year> <month> <day>\n";
         return -1;

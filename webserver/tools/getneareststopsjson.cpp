@@ -3,12 +3,10 @@
 #include <string>
 #include <iomanip>
 #include <cstdlib>
-#include "../static-gtfs/gtfs.hpp"
-#include "gtfs_config.hpp"
+#include "../../static-gtfs/gtfs.hpp"
 
 
 int main(int argc, char* argv[]) {
-    loadGtfsConfig(argv[0]);
     if (argc < 3) {
         std::cout << "Usage: \n" << argv[0] << " <lat> <lon> [--precision | -p <precision> = 6] [--total | -t <totalEntries> = 10]\n";
         return -1;

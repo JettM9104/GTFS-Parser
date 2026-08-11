@@ -13,9 +13,11 @@
 #include <ctime>
 #include <array>
 #include <algorithm>
+#include <cctype>
 #include <stdlib.h>
 #include <iomanip>
 #include <cmath>
+#include "config.hpp"
 
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl;
@@ -33,22 +35,19 @@ float π = 3.14159;
 
 typedef unsigned long long int αβγδεζηθικλμνξοπρστυφχψω; // little easter egg :D
 
-string path = "/data/yrt_archive/";
 
-string root = "/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs" + path;
-
-string stopPath = root + "stops.txt";
-string routePath = root + "routes.txt";
-string tripsPath = root + "trips.txt";
-string stopTimesPath = root + "stop_times.txt";
-string tripPath = root + "trips.txt";
-string calendarPath = root + "calendar.txt";
-string calendarDatesPath = root + "calendar_dates.txt";
-string agencyPath = root + "agency.txt";
-string shapePath = root + "shapes.txt";
-string feedInfoFile = root + "feed_info.txt";
-string frequencyPath = root + "frequencies.txt";
-string fareAttributesPath = root + "fare_attributes.txt";
+string stopPath = config::root + "stops.txt";
+string routePath = config::root + "routes.txt";
+string tripsPath = config::root + "trips.txt";
+string stopTimesPath = config::root + "stop_times.txt";
+string tripPath = config::root + "trips.txt";
+string calendarPath = config::root + "calendar.txt";
+string calendarDatesPath = config::root + "calendar_dates.txt";
+string agencyPath = config::root + "agency.txt";
+string shapePath = config::root + "shapes.txt";
+string feedInfoFile = config::root + "feed_info.txt";
+string frequencyPath = config::root + "frequencies.txt";
+string fareAttributesPath = config::root + "fare_attributes.txt";
 
 const int precision = 8;
 const int defPrecision = 6;
@@ -1282,11 +1281,19 @@ std::vector<matchsearch> searchStop(const string& name) { // stops.txt
         }
     }
 
+    auto toLower = [](string s) {
+        std::transform(s.begin(), s.end(), s.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        return s;
+    };
+
+    string nameLower = toLower(name);
+
     std::vector<matchsearch> results;
     results.reserve(stopNames.size());
 
     for (const auto& item : stopNames) {
-        int dist   = levenshtein(item.str, name);
+        int dist   = levenshtein(toLower(item.str), nameLower);
         int maxLen = (int)std::max(item.str.size(), name.size());
         int score  = (maxLen > 0) ? (100 - (dist * 100 / maxLen)) : 100;
 

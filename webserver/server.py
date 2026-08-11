@@ -8,7 +8,7 @@ app = Flask(__name__)
 @app.route('/api/trip/<trip_id>')
 def get_trip(trip_id):
     try:
-        result = subprocess.run(['./tripjson', trip_id], capture_output=True, text=True)
+        result = subprocess.run(['./tools/tripjson', trip_id], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
@@ -20,7 +20,7 @@ def get_trip(trip_id):
 def get_stop(stop_id, date):
     try:
         year, month, day = date.split('-')
-        result = subprocess.run(['./stopjson', stop_id, year, month, day], capture_output=True, text=True)
+        result = subprocess.run(['./tools/stopjson', stop_id, year, month, day], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
@@ -31,7 +31,7 @@ def get_stop(stop_id, date):
 @app.route('/api/nearest/<lat>/<lon>')
 def get_nearest_stops(lat, lon):
     try:
-        result = subprocess.run(['./getneareststopsjson', lat, lon], capture_output=True, text=True)
+        result = subprocess.run(['./tools/getneareststopsjson', lat, lon], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
