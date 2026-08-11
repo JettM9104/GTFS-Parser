@@ -37,6 +37,5 @@ int main(int argc, char* argv[]) {
                 ", \"lon\": " << st.stop_lon <<
                 ((matchesLen - 1) == i ? " }\n" : " },\n");
     }
-
     std::cout << "\t]\n}\n";
 }
