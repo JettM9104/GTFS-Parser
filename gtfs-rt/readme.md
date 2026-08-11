@@ -18,7 +18,7 @@ The compiled tools in `proto-conversion/webserver-implementation/` decode these 
 
 These steps only need to be done once per machine.
 
-### Step 1 — Install protobuf@21
+### Step 1 — Install protobuf
 
 Install [Homebrew](https://brew.sh) if you don't have it:
 
@@ -26,11 +26,11 @@ Install [Homebrew](https://brew.sh) if you don't have it:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Then install and link protobuf:
+Then install and link the latest protobuf (currently 35.x, which pulls in `abseil` as a dependency):
 
 ```zsh
-brew install protobuf@21
-brew link --force protobuf@21
+brew install protobuf pkg-config
+brew link --force protobuf
 ```
 
 ### Step 2 — Generate protobuf source files
@@ -45,23 +45,19 @@ This generates `gtfs-realtime.pb.cc` and `gtfs-realtime.pb.h`.
 
 ### Step 3 — Compile the decoder binaries
 
-Navigate to `proto-conversion/webserver-implementation/` and get your protobuf prefix:
+Modern protobuf (22+) depends on `abseil`, which means linking now needs dozens of `absl_*` libraries in addition to `-lprotobuf`. Rather than listing them by hand, use `pkg-config` to generate the right flags.
 
-```zsh
-brew --prefix protobuf@21
-```
-
-Use that output in place of `(prefix)` below:
+Navigate to `proto-conversion/webserver-implementation/` and run:
 
 ```zsh
 clang++ -std=c++17 -O3 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc \
-  -I(prefix)/include -L(prefix)/lib -lprotobuf -o decodeTrip
+  $(pkg-config --cflags --libs protobuf) -o decodeTrip
 
 clang++ -std=c++17 -O3 decodeStop.cpp ../transit-files/gtfs-realtime.pb.cc \
-  -I(prefix)/include -L(prefix)/lib -lprotobuf -o decodeStop
+  $(pkg-config --cflags --libs protobuf) -o decodeStop
 
 clang++ -std=c++17 -O3 decodeAlerts.cpp ../transit-files/gtfs-realtime.pb.cc \
-  -I(prefix)/include -L(prefix)/lib -lprotobuf -o decodeAlerts
+  $(pkg-config --cflags --libs protobuf) -o decodeAlerts
 ```
 
 ## Usage

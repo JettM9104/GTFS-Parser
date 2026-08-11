@@ -6,8 +6,8 @@
 #include <google/protobuf/util/json_util.h>
 #include <libgen.h>
 
-/* build commadn
-clang++ -std=c++17 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc -I/opt/homebrew/opt/protobuf@21/include -L/opt/homebrew/opt/protobuf@21/lib -lprotobuf -o decodeTrip -O3
+/* build command
+clang++ -std=c++17 -O3 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc $(pkg-config --cflags --libs protobuf) -o decodeTrip
 */
 using namespace std;
 using namespace transit_realtime;
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     
     google::protobuf::util::JsonPrintOptions options;
     options.add_whitespace = true;
-    options.always_print_primitive_fields = true;
+    options.always_print_fields_with_no_presence = true;
     options.preserve_proto_field_names = true;
 
     string output;

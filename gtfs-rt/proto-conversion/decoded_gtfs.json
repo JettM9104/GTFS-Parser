@@ -2,34 +2,23 @@
  "header": {
   "gtfs_realtime_version": "2.0",
   "incrementality": "FULL_DATASET",
-  "timestamp": "1775072252",
-  "feed_version": ""
+  "timestamp": "1775072252"
  },
  "entity": [
   {
    "id": "d1f54a68-c655-4167-9608-79f4e35a50d5",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
-      "start": "1756785600",
-      "end": "0"
+      "start": "1756785600"
      }
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "411",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "411"
      },
      {
-      "agency_id": "",
-      "route_id": "416",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "416"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -49,27 +38,20 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   },
   {
    "id": "65b360f1-23cb-4ab6-9ee2-9fe0d80eb92c",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
-      "start": "1751428800",
-      "end": "0"
+      "start": "1751428800"
      }
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "522",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "522"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -89,27 +71,20 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   },
   {
    "id": "7157682f-e93b-40ed-be70-4d85135347d3",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
-      "start": "1764223298",
-      "end": "0"
+      "start": "1764223298"
      }
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "85",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "85"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -129,27 +104,20 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   },
   {
    "id": "88f8920d-44e9-4229-8345-15e96a315a83",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
-      "start": "1754884800",
-      "end": "0"
+      "start": "1754884800"
      }
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "91",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "91"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -169,13 +137,11 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   },
   {
    "id": "59a173f7-fadf-4226-83a8-53975f81f1fd",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
@@ -185,18 +151,10 @@
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "52",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "52"
      },
      {
-      "agency_id": "",
-      "route_id": "425",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "425"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -216,139 +174,68 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   },
   {
    "id": "a85e72d8-c760-409d-89c4-0f0731419f51",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
-      "start": "1772204475",
-      "end": "0"
+      "start": "1772204475"
      }
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "2",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "2"
      },
      {
-      "agency_id": "",
-      "route_id": "91",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "91"
      },
      {
-      "agency_id": "",
-      "route_id": "9899",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "9899"
      },
      {
-      "agency_id": "",
-      "route_id": "99",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "99"
      },
      {
-      "agency_id": "",
-      "route_id": "300",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "300"
      },
      {
-      "agency_id": "",
-      "route_id": "301",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "301"
      },
      {
-      "agency_id": "",
-      "route_id": "302",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "302"
      },
      {
-      "agency_id": "",
-      "route_id": "303",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "303"
      },
      {
-      "agency_id": "",
-      "route_id": "304",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "304"
      },
      {
-      "agency_id": "",
-      "route_id": "305",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "305"
      },
      {
-      "agency_id": "",
-      "route_id": "5",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "5"
      },
      {
-      "agency_id": "",
-      "route_id": "23",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "23"
      },
      {
-      "agency_id": "",
-      "route_id": "77",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "77"
      },
      {
-      "agency_id": "",
-      "route_id": "88",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "88"
      },
      {
-      "agency_id": "",
-      "route_id": "360",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "360"
      },
      {
-      "agency_id": "",
-      "route_id": "601",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "601"
      },
      {
-      "agency_id": "",
-      "route_id": "60102",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "60102"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -368,13 +255,11 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   },
   {
    "id": "e1a4c815-f54f-4064-83e2-8512524d39cb",
-   "is_deleted": false,
    "alert": {
     "active_period": [
      {
@@ -384,74 +269,34 @@
     ],
     "informed_entity": [
      {
-      "agency_id": "",
-      "route_id": "2",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "2"
      },
      {
-      "agency_id": "",
-      "route_id": "5",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "5"
      },
      {
-      "agency_id": "",
-      "route_id": "77",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "77"
      },
      {
-      "agency_id": "",
-      "route_id": "88",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "88"
      },
      {
-      "agency_id": "",
-      "route_id": "91",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "91"
      },
      {
-      "agency_id": "",
-      "route_id": "9899",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "9899"
      },
      {
-      "agency_id": "",
-      "route_id": "99",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "99"
      },
      {
-      "agency_id": "",
-      "route_id": "360",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "360"
      },
      {
-      "agency_id": "",
-      "route_id": "601",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "601"
      },
      {
-      "agency_id": "",
-      "route_id": "60102",
-      "route_type": 0,
-      "stop_id": "",
-      "direction_id": 0
+      "route_id": "60102"
      }
     ],
     "cause": "CONSTRUCTION",
@@ -471,8 +316,7 @@
        "language": "en"
       }
      ]
-    },
-    "severity_level": "UNKNOWN_SEVERITY"
+    }
    }
   }
  ]

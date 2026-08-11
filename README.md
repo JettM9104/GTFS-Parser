@@ -30,7 +30,7 @@ Then follow the README in whichever component you need:
 
 - C++17 compiler (`clang++` or `g++`)
 - Python 3 with `flask`
-- `protobuf@21` (for GTFS-RT only)
+- `protobuf` (latest, currently 35.x) + `pkg-config` (for GTFS-RT only)
 - `git`
 
 ## Versions
