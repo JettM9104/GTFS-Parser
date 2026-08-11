@@ -22,7 +22,8 @@
     :root {
       --radius: 10px;
       --card-radius: 8px;
-      --sidebar-radius: 18px;
+      --sidebar-w: 380px;
+      --sidebar-transition: 0.32s cubic-bezier(0.16,1,0.3,1);
       --transition: 0.18s ease;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
@@ -123,40 +124,85 @@
       overscroll-behavior: none;
     }
 
-    #map {
+    /* ===== APP SHELL (full-height sidebar + map) ===== */
+    #app-shell {
       position: fixed;
       inset: 0;
       z-index: 0;
+      display: flex;
     }
 
-    /* ===== DESKTOP DOCK (bottom, collapsible) ===== */
+    #map {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      min-width: 0;
+    }
+
+    /* ===== DESKTOP SIDEBAR (full-height, collapsible) ===== */
     #sidebar {
-      --dock-max: min(64vh, 720px);
-      position: fixed;
-      left: var(--space-4);
-      bottom: var(--space-4);
-      z-index: 1000;
-      width: min(400px, calc(100vw - 28px));
-      max-height: calc(100vh - 28px);
+      position: relative;
+      flex-shrink: 0;
+      width: var(--sidebar-w);
+      height: 100%;
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--sidebar-radius);
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-sidebar);
+      transition: width var(--sidebar-transition), border-color var(--sidebar-transition);
+    }
+
+    #app-shell.sidebar-collapsed #sidebar {
+      width: 0;
+      border-right-color: transparent;
+      box-shadow: none;
+    }
+
+    /* Fixed-width inner wrapper: the outer #sidebar clips it to a wipe/slide
+       collapse instead of squeezing its contents as the width animates down. */
+    #sidebar-inner {
+      width: var(--sidebar-w);
+      height: 100%;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: var(--shadow-sidebar), 0 0 0 1px rgba(var(--accent-rgb), 0.03);
-      transition: box-shadow var(--transition);
     }
 
     #sidebar::before {
       content: '';
       position: absolute;
-      top: 0; left: 14px; right: 14px;
+      top: 0; left: 0; right: 0;
       height: 2px;
-      border-radius: 0 0 2px 2px;
       background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
       pointer-events: none;
     }
+
+    /* Collapse / expand tab, pinned to the sidebar's trailing edge */
+    #sidebarCollapseBtn {
+      position: absolute;
+      top: 50%;
+      left: var(--sidebar-w);
+      transform: translate(-50%, -50%);
+      z-index: 1001;
+      width: 22px;
+      height: 46px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      cursor: pointer;
+      box-shadow: var(--shadow-1);
+      transition: left var(--sidebar-transition), background var(--transition), color var(--transition), border-color var(--transition);
+    }
+    #sidebarCollapseBtn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+    #sidebarCollapseBtn svg { width: 11px; height: 11px; transition: transform var(--sidebar-transition); }
+    /* half the button's own width, so translate(-50%) leaves it flush
+       against the viewport edge instead of half clipped off-screen */
+    #app-shell.sidebar-collapsed #sidebarCollapseBtn { left: 11px; }
+    #app-shell.sidebar-collapsed #sidebarCollapseBtn svg { transform: rotate(180deg); }
 
     #sidebar-header {
       padding: 13px var(--space-5);
@@ -165,12 +211,7 @@
       align-items: center;
       justify-content: space-between;
       gap: var(--space-3);
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
-
-    #sidebar-header:hover { background: var(--surface2); }
 
     #sidebar-header-left {
       display: flex;
@@ -178,18 +219,6 @@
       gap: 11px;
       min-width: 0;
     }
-
-    #dock-chevron {
-      flex-shrink: 0;
-      width: 22px; height: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-dim);
-      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
-    }
-    #dock-chevron svg { width: 13px; height: 13px; }
-    #sidebar.expanded #dock-chevron { transform: rotate(180deg); color: var(--accent); }
 
     #sidebar-header-titles { min-width: 0; }
 
@@ -222,25 +251,12 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 0 var(--space-4) var(--space-4);
+      padding: var(--space-1) var(--space-4) var(--space-4);
       display: flex;
       flex-direction: column;
       gap: var(--space-4);
       scrollbar-width: thin;
       scrollbar-color: var(--border) transparent;
-      max-height: 0;
-      opacity: 0;
-      transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.25s ease, padding-top 0.4s cubic-bezier(0.16,1,0.3,1);
-    }
-
-    #sidebar.expanded #sidebar-body {
-      max-height: var(--dock-max);
-      opacity: 1;
-      padding-top: var(--space-1);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #sidebar-body { transition: opacity 0.15s linear; }
     }
 
     /* Grouped lookup panels */
@@ -1050,6 +1066,7 @@
     /* ===== RESPONSIVE ===== */
     @media (max-width: 640px) {
       #sidebar { display: none; }
+      #sidebarCollapseBtn { display: none; }
 
       #mobile-sheet { display: flex; }
       #mobile-tabs { display: flex; }
@@ -1104,23 +1121,20 @@
   </style>
 </head>
 <body>
-  <div id="map"></div>
-
-  <!-- ===== DESKTOP DOCK ===== -->
-  <div id="sidebar" class="expanded">
-    <div id="sidebar-header" role="button" tabindex="0" aria-expanded="true" aria-controls="sidebar-body" onclick="toggleDock()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDock();}">
-      <div id="sidebar-header-left">
-        <span id="dock-chevron" aria-hidden="true">
-          <svg viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        <div id="sidebar-header-titles">
-          <h1>GTFS Parser</h1>
-          <p id="dockSubtitle">Trip, stop &amp; route inspector</p>
+  <div id="app-shell">
+    <!-- ===== DESKTOP SIDEBAR ===== -->
+    <div id="sidebar">
+      <div id="sidebar-inner">
+        <div id="sidebar-header">
+          <div id="sidebar-header-left">
+            <div id="sidebar-header-titles">
+              <h1>GTFS Parser</h1>
+              <p id="dockSubtitle">Trip, stop &amp; route inspector</p>
+            </div>
+          </div>
+          <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">Light theme</button>
         </div>
-      </div>
-      <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="event.stopPropagation(); toggleTheme()">Light theme</button>
-    </div>
-    <div id="sidebar-body">
+        <div id="sidebar-body">
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">Stops</div>
@@ -1277,7 +1291,15 @@
 
         <div id="nearestStopsInfo"></div>
       </div>
+        </div>
+      </div>
     </div>
+
+    <button id="sidebarCollapseBtn" type="button" onclick="toggleSidebarCollapsed()" aria-expanded="true" aria-controls="sidebar" aria-label="Collapse sidebar" title="Collapse sidebar">
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3l-5 5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div id="map"></div>
   </div>
 
   <!-- ===== MOBILE MAP CONTROLS ===== -->
@@ -1603,26 +1625,34 @@
       syncThemeToggleLabel();
     }
 
-    // ===== DESKTOP DOCK (collapsible bottom bar) =====
-    function setDockExpanded(on) {
-      const dock = document.getElementById('sidebar');
-      const header = document.getElementById('sidebar-header');
-      dock.classList.toggle('expanded', on);
-      header.setAttribute('aria-expanded', String(on));
-      try { localStorage.setItem('gtfs-dock-expanded', on ? '1' : '0'); } catch (e) {}
+    // ===== DESKTOP SIDEBAR (collapsible) =====
+    function setSidebarCollapsed(collapsed) {
+      const shell = document.getElementById('app-shell');
+      const btn = document.getElementById('sidebarCollapseBtn');
+      shell.classList.toggle('sidebar-collapsed', collapsed);
+      if (btn) {
+        btn.setAttribute('aria-expanded', String(!collapsed));
+        const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        btn.setAttribute('aria-label', label);
+        btn.title = label;
+      }
+      try { localStorage.setItem('gtfs-sidebar-collapsed', collapsed ? '1' : '0'); } catch (e) {}
+      // Leaflet doesn't observe container resizes on its own; wait for the
+      // width transition to finish, then let it re-measure and redraw tiles.
+      if (map) setTimeout(() => map.invalidateSize({ animate: true }), 340);
     }
 
-    function toggleDock() {
-      setDockExpanded(!document.getElementById('sidebar').classList.contains('expanded'));
+    function toggleSidebarCollapsed() {
+      setSidebarCollapsed(!document.getElementById('app-shell').classList.contains('sidebar-collapsed'));
     }
 
-    (function initDockState() {
-      let expanded = true;
+    (function initSidebarState() {
+      let collapsed = false;
       try {
-        const saved = localStorage.getItem('gtfs-dock-expanded');
-        if (saved !== null) expanded = saved === '1';
+        const saved = localStorage.getItem('gtfs-sidebar-collapsed');
+        if (saved !== null) collapsed = saved === '1';
       } catch (e) {}
-      setDockExpanded(expanded);
+      if (collapsed) setSidebarCollapsed(true);
     })();
 
     // ===== MAP =====
