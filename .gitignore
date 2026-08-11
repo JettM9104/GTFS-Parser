@@ -118,3 +118,8 @@ data-collection/collect
 data-collection/decoded_gtfs.json
 data-collection/downloaded_tripUpdates.pb
 data-collection/table.csv
+webserver/tools/tripjson
+webserver/tools/searchstop
+webserver/tools/getneareststopsjson
+webserver/tools/stopjson
+webserver/tools/getTrips
