@@ -493,6 +493,9 @@ struct trip_segment {
     stop_time stop;
     string route_id;
 };
+struct high_trip_segment : trip_segment {
+    string trip_id;
+};
 struct service {
     calendar schedule;
     std::vector<calendar_date> exceptions;
@@ -1161,6 +1164,24 @@ std::vector<trip_segment> getDayTimesAtStop(string stop_id, int year, int month,
 }
 std::vector<trip_segment> getDayTimesAtStop(string stop_id, calendar_day date) { // requirements: stop_times.txt, routes.txt
     return getDayTimesAtStop(stop_id, date.year, date.month, date.day);
+}
+std::vector<high_trip_segment> getDayTripsAtStop(string stop_id, int year, int month, int day) { // requirements: stop_times.txt, routes.txt
+    std::vector<trip_segment> segments = getDayTimesAtStop(stop_id, year, month, day);
+    std::vector<high_trip_segment> output;
+    output.reserve(segments.size());
+
+    for (trip_segment& s : segments) {
+        high_trip_segment x;
+        x.stop = s.stop;
+        x.route_id = s.route_id;
+        x.trip_id = s.stop.trip_id;
+        output.push_back(x);
+    }
+
+    return output;
+}
+std::vector<high_trip_segment> getDayTripsAtStop(string stop_id, calendar_day date) { // requirements: stop_times.txt, routes.txt
+    return getDayTripsAtStop(stop_id, date.year, date.month, date.day);
 }
 std::vector<agency> getAgencyInfo() { // requiremnts: agency.txt
     std::vector<agency> output;

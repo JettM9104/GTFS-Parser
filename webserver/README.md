@@ -19,7 +19,7 @@ python3 -m pip install flask
 
 ### Step 3 — Compile C++ backends
 
-From the `webserver/` directory:
+From the `webserver/tools/` directory:
 
 ```zsh
 find . -name "*.cpp" | xargs -I{} bash -c 'clang++ -std=c++17 -O3 -o "${0%.cpp}" "$0"' {}

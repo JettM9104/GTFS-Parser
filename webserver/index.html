@@ -206,6 +206,22 @@
       color: var(--text);
     }
 
+    .sidebar-section-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 2px 2px 0;
+    }
+
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
     #sidebar-body::-webkit-scrollbar { width: 3px; }
     #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
@@ -451,6 +467,63 @@
 
     .field-block { display: flex; flex-direction: column; gap: var(--space-2); }
 
+    /* ===== STOP NAME SEARCH ===== */
+    .stop-search-wrap { position: relative; }
+
+    .stop-search-results {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-2);
+      max-height: 260px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      z-index: 30;
+    }
+    .stop-search-results.visible { display: block; }
+
+    .stop-search-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+      touch-action: manipulation;
+    }
+    .stop-search-item:last-child { border-bottom: none; }
+    .stop-search-item:hover, .stop-search-item.active { background: var(--surface3); }
+
+    .stop-search-name {
+      font-size: 13px;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .stop-search-id {
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .stop-search-empty {
+      padding: 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
     .divider {
       height: 1px;
       background: var(--border);
@@ -544,6 +617,15 @@
       font-weight: 600;
       color: var(--text);
       letter-spacing: -0.02em;
+    }
+
+    .dep-headsign {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.35;
+      overflow-wrap: break-word;
+      white-space: normal;
     }
 
     .dep-trip {
@@ -943,105 +1025,131 @@
     </div>
     <div id="sidebar-body">
 
-      <div class="panel">
-        <div class="panel-heading">Trip lookup</div>
-        <div class="input-group">
-          <input type="text" id="tripIdInput" placeholder="Trip ID, e.g. 40928123" aria-label="Trip ID" />
-          <button class="primary" onclick="handleLoadTrip('tripIdInput')">Load trip</button>
-        </div>
-      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Stops</div>
 
-      <div class="panel">
-        <div class="panel-heading">Stop lookup</div>
-        <div class="input-group">
-          <input type="text" id="stopIdInput" placeholder="Stop ID, e.g. 4901" aria-label="Stop ID" />
-          <button class="primary" onclick="handleLoadStop('stopIdInput','dateInput')">Load stop</button>
+        <div class="panel">
+          <div class="panel-heading">Find a stop</div>
+
+          <div class="field-block stop-search-wrap">
+            <label class="input-row-label" for="stopSearchInput">Search by name</label>
+            <input type="text" id="stopSearchInput" placeholder="e.g. Main St" autocomplete="off" aria-label="Search stops by name" />
+            <div class="stop-search-results" id="stopSearchResults"></div>
+          </div>
+
+          <div class="field-block">
+            <label class="input-row-label" for="stopIdInput">Or by stop ID</label>
+            <div class="input-group">
+              <input type="text" id="stopIdInput" placeholder="Stop ID, e.g. 4901" aria-label="Stop ID" />
+              <button class="primary" onclick="handleLoadStop('stopIdInput','dateInput')">Load stop</button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <label class="input-row-label" for="dateInput">Date</label>
+            <div class="date-row">
+              <input type="date" id="dateInput" />
+              <button class="secondary" onclick="document.getElementById('dateInput').value=todayStr()">Today</button>
+            </div>
+          </div>
         </div>
 
-        <div class="field-block">
-          <label class="input-row-label" for="dateInput">Date</label>
-          <div class="date-row">
-            <input type="date" id="dateInput" />
-            <button class="secondary" onclick="document.getElementById('dateInput').value=todayStr()">Today</button>
+        <div id="stopHeader" class="stop-header">
+          <div class="stop-name" id="stopNameDisplay"></div>
+          <div class="stop-meta" id="stopMetaDisplay"></div>
+        </div>
+
+        <div id="departuresSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Departures</div>
+            <button class="show-all-deps-btn" id="showAllDepsBtn" onclick="cycleDepView('d')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="depWindowLabel"></div>
+          <div class="departures-grid" id="departuresGrid"></div>
+        </div>
+
+        <div id="tripInfo"></div>
+
+        <div id="rtPanel" class="rt-panel" style="display:none">
+          <div class="rt-panel-header">
+            <span class="rt-title">Live vehicle</span>
+            <span class="rt-pulse" id="rtPulse"></span>
+          </div>
+          <div class="rt-body">
+            <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="rv-id">—</span></div>
+            <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="rv-route">—</span></div>
+            <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="rv-trip">—</span></div>
+            <div class="rt-row"><span class="rt-label">Direction</span><span class="rt-val" id="rv-dir">—</span></div>
+            <div class="rt-row"><span class="rt-label">Start</span><span class="rt-val" id="rv-start">—</span></div>
+            <div class="rt-row"><span class="rt-label">Status</span><span class="rt-val" id="rv-status">—</span></div>
+            <div class="rt-row"><span class="rt-label">Stop seq</span><span class="rt-val" id="rv-seq">—</span></div>
+            <div class="rt-row"><span class="rt-label">Next stop</span><span class="rt-val" id="rv-stop">—</span></div>
+            <div class="rt-row"><span class="rt-label">Lat / Lon</span><span class="rt-val" id="rv-pos">—</span></div>
+            <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="rv-bearing">—</span></div>
+            <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="rv-speed">—</span></div>
+            <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="rv-occ">—</span></div>
+            <div class="rt-timestamp" id="rtTimestamp"></div>
           </div>
         </div>
       </div>
 
-      <div id="stopHeader" class="stop-header">
-        <div class="stop-name" id="stopNameDisplay"></div>
-        <div class="stop-meta" id="stopMetaDisplay"></div>
-      </div>
+      <div class="divider"></div>
 
-      <div id="departuresSection" style="display:none">
-        <div class="departures-section-header">
-          <div class="section-title">Departures</div>
-          <button class="show-all-deps-btn" id="showAllDepsBtn" onclick="cycleDepView('d')">Show all</button>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Trips &amp; routes</div>
+
+        <div class="panel">
+          <div class="panel-heading">Trip lookup</div>
+          <div class="input-group">
+            <input type="text" id="tripIdInput" placeholder="Trip ID, e.g. 40928123" aria-label="Trip ID" />
+            <button class="primary" onclick="handleLoadTrip('tripIdInput')">Load trip</button>
+          </div>
         </div>
-        <div class="dep-window-label" id="depWindowLabel"></div>
-        <div class="departures-grid" id="departuresGrid"></div>
-      </div>
 
-      <div id="tripInfo"></div>
-
-      <div id="rtPanel" class="rt-panel" style="display:none">
-        <div class="rt-panel-header">
-          <span class="rt-title">Live vehicle</span>
-          <span class="rt-pulse" id="rtPulse"></span>
+        <div class="panel">
+          <div class="panel-heading">Route lookup</div>
+          <div class="input-group">
+            <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" aria-label="Route ID" />
+            <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+          </div>
         </div>
-        <div class="rt-body">
-          <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="rv-id">—</span></div>
-          <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="rv-route">—</span></div>
-          <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="rv-trip">—</span></div>
-          <div class="rt-row"><span class="rt-label">Direction</span><span class="rt-val" id="rv-dir">—</span></div>
-          <div class="rt-row"><span class="rt-label">Start</span><span class="rt-val" id="rv-start">—</span></div>
-          <div class="rt-row"><span class="rt-label">Status</span><span class="rt-val" id="rv-status">—</span></div>
-          <div class="rt-row"><span class="rt-label">Stop seq</span><span class="rt-val" id="rv-seq">—</span></div>
-          <div class="rt-row"><span class="rt-label">Next stop</span><span class="rt-val" id="rv-stop">—</span></div>
-          <div class="rt-row"><span class="rt-label">Lat / Lon</span><span class="rt-val" id="rv-pos">—</span></div>
-          <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="rv-bearing">—</span></div>
-          <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="rv-speed">—</span></div>
-          <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="rv-occ">—</span></div>
-          <div class="rt-timestamp" id="rtTimestamp"></div>
-        </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-heading">Route lookup</div>
-        <div class="input-group">
-          <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" aria-label="Route ID" />
-          <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+        <div id="routeTripsSection" class="route-trips-section">
+          <div class="route-trips-section-header">
+            <div class="section-title">Trips</div>
+            <span id="routeTripsCount" class="route-trips-count"></span>
+          </div>
+          <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
+          <div class="route-trips-grid" id="routeTripsGrid"></div>
+          <div class="pagination" id="routeTripsPagination" style="display:none">
+            <button class="pagination-btn" id="routeTripsPrevBtn" onclick="changeRouteTripsPage('', -1)">Previous</button>
+            <span class="pagination-status" id="routeTripsPageLabel"></span>
+            <button class="pagination-btn" id="routeTripsNextBtn" onclick="changeRouteTripsPage('', 1)">Next</button>
+          </div>
         </div>
       </div>
 
-      <div id="routeTripsSection" class="route-trips-section">
-        <div class="route-trips-section-header">
-          <div class="section-title">Trips</div>
-          <span id="routeTripsCount" class="route-trips-count"></span>
-        </div>
-        <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
-        <div class="route-trips-grid" id="routeTripsGrid"></div>
-        <div class="pagination" id="routeTripsPagination" style="display:none">
-          <button class="pagination-btn" id="routeTripsPrevBtn" onclick="changeRouteTripsPage('', -1)">Previous</button>
-          <span class="pagination-status" id="routeTripsPageLabel"></span>
-          <button class="pagination-btn" id="routeTripsNextBtn" onclick="changeRouteTripsPage('', 1)">Next</button>
-        </div>
-      </div>
+      <div class="divider"></div>
 
-      <div class="panel">
-        <div class="panel-heading">Nearby stops</div>
-        <div class="input-group" role="group" aria-label="Coordinates">
-          <input type="text" id="latInput" placeholder="Latitude" aria-label="Latitude" />
-          <input type="text" id="lonInput" placeholder="Longitude" aria-label="Longitude" />
-        </div>
-        <div class="input-group">
-          <button class="secondary" style="flex:1" onclick="handleFindNearest('latInput','lonInput')">Search nearby</button>
-          <button class="secondary" style="flex:1" onclick="useMyLocation('latInput','lonInput')">Use my location</button>
-        </div>
-        <button class="secondary" style="width:100%" onclick="showUserLocation()">Show my location on map</button>
-        <button class="pick-mode-btn" id="pickModeBtn" onclick="setPickMode(!pickModeActive)">Pick a point on the map</button>
-      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Discover</div>
 
-      <div id="nearestStopsInfo"></div>
+        <div class="panel">
+          <div class="panel-heading">Nearby stops</div>
+          <div class="input-group" role="group" aria-label="Coordinates">
+            <input type="text" id="latInput" placeholder="Latitude" aria-label="Latitude" />
+            <input type="text" id="lonInput" placeholder="Longitude" aria-label="Longitude" />
+          </div>
+          <div class="input-group">
+            <button class="secondary" style="flex:1" onclick="handleFindNearest('latInput','lonInput')">Search nearby</button>
+            <button class="secondary" style="flex:1" onclick="useMyLocation('latInput','lonInput')">Use my location</button>
+          </div>
+          <button class="secondary" style="width:100%" onclick="showUserLocation()">Show my location on map</button>
+          <button class="pick-mode-btn" id="pickModeBtn" onclick="setPickMode(!pickModeActive)">Pick a point on the map</button>
+        </div>
+
+        <div id="nearestStopsInfo"></div>
+      </div>
     </div>
   </div>
 
@@ -1080,8 +1188,14 @@
 
       <!-- STOP TAB -->
       <div class="tab-panel active" id="m-tab-stop">
+        <div class="field-block stop-search-wrap">
+          <label class="input-row-label" for="m-stopSearchInput">Search by name</label>
+          <input type="text" id="m-stopSearchInput" placeholder="e.g. Main St" autocomplete="off" aria-label="Search stops by name" />
+          <div class="stop-search-results" id="m-stopSearchResults"></div>
+        </div>
+
         <div class="field-block">
-          <label class="input-row-label" for="m-stopIdInput">Stop</label>
+          <label class="input-row-label" for="m-stopIdInput">Or by stop ID</label>
           <div class="input-group">
             <input type="text" id="m-stopIdInput" placeholder="Stop ID" />
             <button class="primary" onclick="handleLoadStop('m-stopIdInput','m-dateInput')">Load stop</button>
@@ -1614,6 +1728,7 @@
         card.innerHTML = `
           <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
           <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
+          ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
           <div class="dep-trip">Trip ${dep.trip_id}</div>
         `;
         card.addEventListener('click', () => loadTrip(dep.trip_id, card));
@@ -1781,6 +1896,104 @@
           ['stopHeader','m-stopHeader'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
           ['departuresSection','m-departuresSection'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
         });
+    }
+
+    // ===== STOP NAME SEARCH =====
+    let stopSearchRequestId = 0;
+
+    function initStopSearch(inputId, resultsId) {
+      const input = document.getElementById(inputId);
+      const results = document.getElementById(resultsId);
+      if (!input || !results) return;
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        if (!q) { hideStopSearchResults(results); return; }
+        runStopSearch(q, results);
+      });
+
+      input.addEventListener('focus', () => {
+        if (results.childElementCount) results.classList.add('visible');
+      });
+
+      input.addEventListener('blur', () => {
+        // delay so a click on a result registers before the list is hidden
+        setTimeout(() => hideStopSearchResults(results), 150);
+      });
+    }
+
+    function hideStopSearchResults(results) {
+      results.classList.remove('visible');
+    }
+
+    function runStopSearch(query, results) {
+      const requestId = ++stopSearchRequestId;
+      fetch(`/api/searchstop/${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (requestId !== stopSearchRequestId) return; // superseded by a later keystroke
+          renderStopSearchResults(data.matches || [], results);
+        })
+        .catch(() => {
+          if (requestId !== stopSearchRequestId) return;
+          results.innerHTML = '';
+          hideStopSearchResults(results);
+        });
+    }
+
+    function renderStopSearchResults(matches, results) {
+      results.innerHTML = '';
+
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'stop-search-empty';
+        empty.textContent = 'No matching stops';
+        results.appendChild(empty);
+        results.classList.add('visible');
+        return;
+      }
+
+      matches.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'stop-search-item';
+
+        const name = document.createElement('span');
+        name.className = 'stop-search-name';
+        name.textContent = m.stop_name;
+
+        const id = document.createElement('span');
+        id.className = 'stop-search-id';
+        id.textContent = `#${m.stop_id}`;
+
+        item.appendChild(name);
+        item.appendChild(id);
+        item.addEventListener('mousedown', e => {
+          e.preventDefault(); // fires before the input's blur handler hides the list
+          selectStopFromSearch(m, results);
+        });
+        results.appendChild(item);
+      });
+
+      results.classList.add('visible');
+    }
+
+    function selectStopFromSearch(match, results) {
+      hideStopSearchResults(results);
+
+      const date = document.getElementById('dateInput')?.value
+        || document.getElementById('m-dateInput')?.value
+        || todayStr();
+
+      ['stopIdInput', 'm-stopIdInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.stop_id;
+      });
+      ['stopSearchInput', 'm-stopSearchInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.stop_name;
+      });
+
+      loadStop(match.stop_id, date);
     }
 
     function startDepsRefresh(stopId) {
@@ -2032,6 +2245,8 @@
     syncThemeToggleLabel();
     document.getElementById('dateInput').value = todayStr();
     document.getElementById('m-dateInput').value = todayStr();
+    initStopSearch('stopSearchInput', 'stopSearchResults');
+    initStopSearch('m-stopSearchInput', 'm-stopSearchResults');
   </script>
 </body>
 </html>

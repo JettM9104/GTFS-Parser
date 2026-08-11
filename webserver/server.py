@@ -28,6 +28,17 @@ def get_stop(stop_id, date):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/searchstop/<query>')
+def search_stop(query):
+    try:
+        result = subprocess.run(['./tools/searchstop', query, '-t', '25'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/nearest/<lat>/<lon>')
 def get_nearest_stops(lat, lon):
     try:
@@ -81,7 +92,7 @@ def tiles(z, x, y):
 @app.route('/api/route/<route_id>/<year>/<month>/<day>')
 def get_trip_root(route_id, year, month, day):
     try:
-        result = subprocess.run(['./getTrips', route_id, year, month, day], capture_output=True, text=True)
+        result = subprocess.run(['./tools/getTrips', route_id, year, month, day], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)

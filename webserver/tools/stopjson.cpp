@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
         cout << "\t\t{ \"route_id\": \"" << routeInfo.route_short_name << 
                 "\", \"arrival_time\": \"" << x.stop.arrival_time.leadingRoundedTime() << 
                 "\", \"trip_id\": \"" << x.stop.trip_id << 
+                "\", \"trip_headsign\": \"" << gtfs::getTripInfo(x.stop.trip_id).trip_headsign << 
                 "\", \"route_color\": \"" << routeInfo.route_color << 
                 (i == (tsLen-1) ? "\" } \n" : "\" }, \n");
     }
