@@ -22,7 +22,7 @@
     :root {
       --radius: 10px;
       --card-radius: 8px;
-      --sidebar-radius: 14px;
+      --sidebar-radius: 18px;
       --transition: 0.18s ease;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
@@ -129,45 +129,87 @@
       z-index: 0;
     }
 
-    /* ===== DESKTOP SIDEBAR ===== */
+    /* ===== DESKTOP DOCK (bottom, collapsible) ===== */
     #sidebar {
+      --dock-max: min(64vh, 720px);
       position: fixed;
-      top: 14px;
-      right: 14px;
-      bottom: 14px;
+      left: var(--space-4);
+      bottom: var(--space-4);
       z-index: 1000;
-      width: 340px;
+      width: min(400px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--sidebar-radius);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: var(--shadow-sidebar);
+      box-shadow: var(--shadow-sidebar), 0 0 0 1px rgba(var(--accent-rgb), 0.03);
+      transition: box-shadow var(--transition);
+    }
+
+    #sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 14px; right: 14px;
+      height: 2px;
+      border-radius: 0 0 2px 2px;
+      background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
+      pointer-events: none;
     }
 
     #sidebar-header {
-      padding: var(--space-5) var(--space-5) var(--space-4);
-      border-bottom: 1px solid var(--border);
+      padding: 13px var(--space-5);
       flex-shrink: 0;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: var(--space-3);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
+
+    #sidebar-header:hover { background: var(--surface2); }
+
+    #sidebar-header-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    #dock-chevron {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    #dock-chevron svg { width: 13px; height: 13px; }
+    #sidebar.expanded #dock-chevron { transform: rotate(180deg); color: var(--accent); }
+
+    #sidebar-header-titles { min-width: 0; }
 
     #sidebar-header h1 {
       font-family: var(--font-display);
-      font-size: 17px;
+      font-size: 15.5px;
       font-weight: 700;
       letter-spacing: -0.01em;
       color: var(--text);
+      line-height: 1.2;
     }
 
     #sidebar-header p {
-      margin-top: 2px;
-      font-size: 12.5px;
-      color: var(--text-muted);
+      margin-top: 1px;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .theme-toggle-btn {
@@ -178,13 +220,27 @@
 
     #sidebar-body {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
-      padding: var(--space-4);
+      padding: 0 var(--space-4) var(--space-4);
       display: flex;
       flex-direction: column;
       gap: var(--space-4);
       scrollbar-width: thin;
       scrollbar-color: var(--border) transparent;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.25s ease, padding-top 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    #sidebar.expanded #sidebar-body {
+      max-height: var(--dock-max);
+      opacity: 1;
+      padding-top: var(--space-1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #sidebar-body { transition: opacity 0.15s linear; }
     }
 
     /* Grouped lookup panels */
@@ -204,6 +260,30 @@
       font-size: 13px;
       font-weight: 700;
       color: var(--text);
+    }
+
+    .panel-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
     .sidebar-section-label {
@@ -645,6 +725,18 @@
       flex-shrink: 0;
     }
 
+    .dep-stop-tag {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--accent2);
+      background: rgba(var(--accent2-rgb), 0.12);
+      border-radius: 20px;
+      padding: 2px 7px;
+      display: inline-block;
+      margin-top: 5px;
+      font-family: var(--font-mono);
+    }
+
     .rt-delay-badge {
       font-size: 11px;
       font-weight: 600;
@@ -1014,14 +1106,19 @@
 <body>
   <div id="map"></div>
 
-  <!-- ===== DESKTOP SIDEBAR ===== -->
-  <div id="sidebar">
-    <div id="sidebar-header">
-      <div>
-        <h1>GTFS Parser</h1>
-        <p>Trip, stop &amp; route inspector</p>
+  <!-- ===== DESKTOP DOCK ===== -->
+  <div id="sidebar" class="expanded">
+    <div id="sidebar-header" role="button" tabindex="0" aria-expanded="true" aria-controls="sidebar-body" onclick="toggleDock()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDock();}">
+      <div id="sidebar-header-left">
+        <span id="dock-chevron" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div id="sidebar-header-titles">
+          <h1>GTFS Parser</h1>
+          <p id="dockSubtitle">Trip, stop &amp; route inspector</p>
+        </div>
       </div>
-      <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">Light theme</button>
+      <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="event.stopPropagation(); toggleTheme()">Light theme</button>
     </div>
     <div id="sidebar-body">
 
@@ -1066,6 +1163,36 @@
           </div>
           <div class="dep-window-label" id="depWindowLabel"></div>
           <div class="departures-grid" id="departuresGrid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-heading-row">
+            <div class="panel-heading">Search multiple stops</div>
+            <label class="toggle-row" for="mergeCrossStreetsToggle" title="Treat &quot;A / B&quot; and &quot;B / A&quot; as the same intersection">
+              <input type="checkbox" id="mergeCrossStreetsToggle" checked />
+              Merge reversed cross-streets
+            </label>
+          </div>
+
+          <div class="field-block stop-search-wrap">
+            <label class="input-row-label" for="multiStopSearchInput">Search by name (all stops with this exact name)</label>
+            <input type="text" id="multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" aria-label="Search multiple stops by name" />
+            <div class="stop-search-results" id="multiStopSearchResults"></div>
+          </div>
+        </div>
+
+        <div id="multiStopHeader" class="stop-header">
+          <div class="stop-name" id="multiStopNameDisplay"></div>
+          <div class="stop-meta" id="multiStopMetaDisplay"></div>
+        </div>
+
+        <div id="multiDeparturesSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Combined departures</div>
+            <button class="show-all-deps-btn" id="showAllMultiDepsBtn" onclick="cycleMultiDepView('d')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="multiDepWindowLabel"></div>
+          <div class="departures-grid" id="multiDeparturesGrid"></div>
         </div>
 
         <div id="tripInfo"></div>
@@ -1223,6 +1350,32 @@
           <div class="departures-grid" id="m-departuresGrid"></div>
         </div>
 
+        <div class="field-block stop-search-wrap">
+          <div class="panel-heading-row">
+            <label class="input-row-label" for="m-multiStopSearchInput">Search multiple stops (exact name)</label>
+            <label class="toggle-row" for="m-mergeCrossStreetsToggle" title="Treat &quot;A / B&quot; and &quot;B / A&quot; as the same intersection">
+              <input type="checkbox" id="m-mergeCrossStreetsToggle" checked />
+              Merge reversed
+            </label>
+          </div>
+          <input type="text" id="m-multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" aria-label="Search multiple stops by name" />
+          <div class="stop-search-results" id="m-multiStopSearchResults"></div>
+        </div>
+
+        <div id="m-multiStopHeader" class="stop-header">
+          <div class="stop-name" id="m-multiStopNameDisplay"></div>
+          <div class="stop-meta" id="m-multiStopMetaDisplay"></div>
+        </div>
+
+        <div id="m-multiDeparturesSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Combined departures</div>
+            <button class="show-all-deps-btn" id="m-showAllMultiDepsBtn" onclick="cycleMultiDepView('m')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="m-multiDepWindowLabel"></div>
+          <div class="departures-grid" id="m-multiDeparturesGrid"></div>
+        </div>
+
         <div id="m-tripInfo"></div>
 
         <div id="m-rtPanel" class="rt-panel" style="display:none">
@@ -1325,6 +1478,14 @@
     let pickModeActive = false;
     let clickPinMarker = null;
     let isMobile = () => window.innerWidth <= 640;
+    let multiStopMarkers = [];
+    let allMultiDepartures = [];
+    let showingAllMultiDeps_d = false, showingNext4MultiDeps_d = false;
+    let showingAllMultiDeps_m = false, showingNext4MultiDeps_m = false;
+    let multiDepsRefreshId = null;
+    let multiStopsRequestId = 0;
+    let currentMultiStopName = null;
+    let currentMultiStopIds = [];
 
     // ===== UTILS =====
     function todayStr() {
@@ -1441,6 +1602,28 @@
       try { localStorage.setItem('gtfs-theme', next); } catch (e) {}
       syncThemeToggleLabel();
     }
+
+    // ===== DESKTOP DOCK (collapsible bottom bar) =====
+    function setDockExpanded(on) {
+      const dock = document.getElementById('sidebar');
+      const header = document.getElementById('sidebar-header');
+      dock.classList.toggle('expanded', on);
+      header.setAttribute('aria-expanded', String(on));
+      try { localStorage.setItem('gtfs-dock-expanded', on ? '1' : '0'); } catch (e) {}
+    }
+
+    function toggleDock() {
+      setDockExpanded(!document.getElementById('sidebar').classList.contains('expanded'));
+    }
+
+    (function initDockState() {
+      let expanded = true;
+      try {
+        const saved = localStorage.getItem('gtfs-dock-expanded');
+        if (saved !== null) expanded = saved === '1';
+      } catch (e) {}
+      setDockExpanded(expanded);
+    })();
 
     // ===== MAP =====
     function initMap() {
@@ -1901,7 +2084,8 @@
     // ===== STOP NAME SEARCH =====
     let stopSearchRequestId = 0;
 
-    function initStopSearch(inputId, resultsId) {
+    function initStopSearch(inputId, resultsId, onSelect) {
+      onSelect = onSelect || selectStopFromSearch;
       const input = document.getElementById(inputId);
       const results = document.getElementById(resultsId);
       if (!input || !results) return;
@@ -1909,7 +2093,7 @@
       input.addEventListener('input', () => {
         const q = input.value.trim();
         if (!q) { hideStopSearchResults(results); return; }
-        runStopSearch(q, results);
+        runStopSearch(q, results, onSelect);
       });
 
       input.addEventListener('focus', () => {
@@ -1926,13 +2110,13 @@
       results.classList.remove('visible');
     }
 
-    function runStopSearch(query, results) {
+    function runStopSearch(query, results, onSelect) {
       const requestId = ++stopSearchRequestId;
       fetch(`/api/searchstop/${encodeURIComponent(query)}`)
         .then(r => r.json())
         .then(data => {
           if (requestId !== stopSearchRequestId) return; // superseded by a later keystroke
-          renderStopSearchResults(data.matches || [], results);
+          renderStopSearchResults(data.matches || [], results, onSelect);
         })
         .catch(() => {
           if (requestId !== stopSearchRequestId) return;
@@ -1941,7 +2125,7 @@
         });
     }
 
-    function renderStopSearchResults(matches, results) {
+    function renderStopSearchResults(matches, results, onSelect) {
       results.innerHTML = '';
 
       if (!matches.length) {
@@ -1969,7 +2153,7 @@
         item.appendChild(id);
         item.addEventListener('mousedown', e => {
           e.preventDefault(); // fires before the input's blur handler hides the list
-          selectStopFromSearch(m, results);
+          onSelect(m, results);
         });
         results.appendChild(item);
       });
@@ -1994,6 +2178,222 @@
       });
 
       loadStop(match.stop_id, date);
+    }
+
+    // ===== SEARCH MULTIPLE STOPS (exact name match) =====
+
+    // Splits "A / B", "A & B", "A and B", "A at B" into segments regardless of
+    // agency naming convention, so "16TH AV / BAYVIEW AV" and "BAYVIEW AV / 16TH AV"
+    // (or any other feed's cross-street ordering) resolve to the same key.
+    const CROSS_STREET_SPLIT_RE = /\s*[\/&@]\s*|\s+AND\s+|\s+AT\s+/i;
+
+    function nameSegments(name) {
+      const norm = name.trim().toUpperCase().replace(/\s+/g, ' ');
+      return norm.split(CROSS_STREET_SPLIT_RE).map(p => p.trim()).filter(Boolean);
+    }
+
+    function canonicalStopKey(name) {
+      const parts = nameSegments(name);
+      if (parts.length < 2) return name.trim().toUpperCase().replace(/\s+/g, ' ');
+      return [...parts].sort().join('|');
+    }
+
+    function mergeCrossStreetsEnabled() {
+      const d = document.getElementById('mergeCrossStreetsToggle');
+      const m = document.getElementById('m-mergeCrossStreetsToggle');
+      if (d) return d.checked;
+      if (m) return m.checked;
+      return true;
+    }
+
+    function selectMultiStopFromSearch(match, results) {
+      hideStopSearchResults(results);
+
+      const date = document.getElementById('dateInput')?.value
+        || document.getElementById('m-dateInput')?.value
+        || todayStr();
+
+      ['multiStopSearchInput', 'm-multiStopSearchInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.stop_name;
+      });
+
+      loadMultiStops(match.stop_name, date);
+    }
+
+    function loadMultiStops(stopName, date, isRefresh) {
+      date = date || todayStr();
+      const requestId = ++multiStopsRequestId;
+      const mergeReversed = mergeCrossStreetsEnabled();
+      const target = mergeReversed ? canonicalStopKey(stopName) : stopName.trim().toUpperCase();
+
+      // The fuzzy search endpoint ranks by literal string similarity, so a
+      // reversed-order duplicate (e.g. "16TH AV / BAYVIEW AV" vs "BAYVIEW AV /
+      // 16TH AV") can score too low to appear in its results at all. When
+      // merging is on, also query the segments in reverse order so both
+      // orderings are guaranteed to be in the candidate pool before filtering.
+      const queries = [stopName];
+      if (mergeReversed) {
+        const segs = nameSegments(stopName);
+        if (segs.length >= 2) queries.push(segs.slice().reverse().join(' / '));
+      }
+
+      Promise.all(queries.map(q => fetch(`/api/searchstop/${encodeURIComponent(q)}`).then(r => r.json())))
+        .then(results => {
+          if (requestId !== multiStopsRequestId) return; // superseded by a later search
+          const candidates = new Map();
+          results.forEach(data => (data.matches || []).forEach(m => candidates.set(m.stop_id, m)));
+
+          const exact = [...candidates.values()].filter(m => {
+            const key = mergeReversed ? canonicalStopKey(m.stop_name) : m.stop_name.trim().toUpperCase();
+            return key === target;
+          });
+          if (!exact.length) { if (!isRefresh) showToast('No exact-name matches found.'); return; }
+
+          return Promise.all(exact.map(m => fetch(`/api/stop/${m.stop_id}/${date}`).then(r => r.json())))
+            .then(stops => {
+              if (requestId !== multiStopsRequestId) return;
+              displayMultiStops(stopName, stops.filter(s => !s.error), isRefresh);
+            });
+        })
+        .catch(() => { if (requestId === multiStopsRequestId && !isRefresh) showToast('Error searching stops.'); });
+    }
+
+    function clearMultiStopMarkers() {
+      multiStopMarkers.forEach(m => map.removeLayer(m));
+      multiStopMarkers = [];
+    }
+
+    function displayMultiStops(stopName, stops, isRefresh) {
+      if (!stops.length) { if (!isRefresh) showToast('No exact-name matches found.'); return; }
+
+      currentMultiStopName = stopName;
+      currentMultiStopIds = stops.map(s => s.stop_id);
+
+      ['multiStopHeader', 'm-multiStopHeader'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+      });
+
+      const metaTxt = `${stops.length} stop${stops.length !== 1 ? 's' : ''} sharing this name  ·  IDs ${stops.map(s => s.stop_id).join(', ')}`;
+      setVal('multiStopNameDisplay', stopName);
+      setVal('multiStopMetaDisplay', metaTxt);
+      setVal('m-multiStopNameDisplay', stopName);
+      setVal('m-multiStopMetaDisplay', metaTxt);
+
+      allMultiDepartures = [];
+      stops.forEach(s => {
+        (s.departures || []).forEach(dep => {
+          allMultiDepartures.push({ ...dep, _stopId: s.stop_id, _stopLat: s.lat, _stopLon: s.lon });
+        });
+      });
+      allMultiDepartures.sort((a, b) => parseTime(a.arrival_time) - parseTime(b.arrival_time));
+
+      showingAllMultiDeps_d = false; showingNext4MultiDeps_d = false;
+      showingAllMultiDeps_m = false; showingNext4MultiDeps_m = false;
+
+      updateMultiDeparturesView();
+
+      if (isRefresh) return;
+
+      startMultiDepsRefresh();
+
+      clearMultiStopMarkers();
+      multiStopMarkers = stops.map(s => {
+        const m = L.circleMarker([s.lat, s.lon], {
+          color: '#7c5cff', fillColor: '#7c5cff', fillOpacity: 0.75, radius: 8, weight: 2
+        }).addTo(map);
+        m.bindPopup(`<b>${s.stop_name}</b><br>Stop ID: ${s.stop_id}`);
+        return m;
+      });
+
+      const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lon]));
+      map.fitBounds(bounds.pad(0.2));
+
+      if (isMobile()) {
+        switchTab('m-tab-stop');
+        expandSheet();
+      }
+    }
+
+    function renderMultiDepartureCards(departures, prefix) {
+      const grid = document.getElementById(prefix + 'multiDeparturesGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      departures.forEach(dep => {
+        const card = document.createElement('div');
+        card.className = 'dep-card';
+        card.dataset.tripId = dep.trip_id;
+        const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+        card.innerHTML = `
+          <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+          <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
+          ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+          <div class="dep-trip">Trip ${dep.trip_id}</div>
+          <div class="dep-stop-tag">Stop #${dep._stopId}</div>
+        `;
+        card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+        grid.appendChild(card);
+      });
+    }
+
+    function updateMultiDeparturesView() {
+      ['d', 'm'].forEach(prefix => {
+        const p = prefix === 'd' ? '' : 'm-';
+        const showAll = prefix === 'd' ? showingAllMultiDeps_d : showingAllMultiDeps_m;
+        const showN4  = prefix === 'd' ? showingNext4MultiDeps_d : showingNext4MultiDeps_m;
+        const btn     = document.getElementById(p + 'showAllMultiDepsBtn');
+        const label   = document.getElementById(p + 'multiDepWindowLabel');
+        const sec     = document.getElementById(p + 'multiDeparturesSection');
+        if (!sec) return;
+        if (showAll) {
+          renderMultiDepartureCards(allMultiDepartures, p);
+          if (btn) btn.textContent = 'Next 3h only';
+          if (label) label.textContent = `${allMultiDepartures.length} departure${allMultiDepartures.length !== 1 ? 's' : ''} total, across all matching stops`;
+        } else if (showN4) {
+          const next4 = filterNext4(allMultiDepartures);
+          renderMultiDepartureCards(next4, p);
+          if (btn) btn.textContent = `Show all ${allMultiDepartures.length}`;
+          if (label) label.textContent = 'Next 4 departures, across all matching stops';
+        } else {
+          const filtered = filterNext3h(allMultiDepartures);
+          renderMultiDepartureCards(filtered, p);
+          if (filtered.length === 0) {
+            if (btn) btn.textContent = `Show all ${allMultiDepartures.length}`;
+            if (label) label.textContent = 'No departures in the next 3 hours';
+          } else {
+            if (btn) btn.textContent = 'Next 4';
+            if (label) label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length !== 1 ? 's' : ''}, across all matching stops`;
+          }
+        }
+        sec.style.display = 'block';
+      });
+
+      currentMultiStopIds.forEach(id => { reapplyCachedRT(id); loadRTStopUpdates(id); });
+    }
+
+    function cycleMultiDepView(prefix) {
+      if (prefix === 'd') {
+        if (!showingAllMultiDeps_d && !showingNext4MultiDeps_d) { showingNext4MultiDeps_d = true; showingAllMultiDeps_d = false; }
+        else if (showingNext4MultiDeps_d && !showingAllMultiDeps_d) { showingNext4MultiDeps_d = false; showingAllMultiDeps_d = true; }
+        else { showingAllMultiDeps_d = false; showingNext4MultiDeps_d = false; }
+      } else {
+        if (!showingAllMultiDeps_m && !showingNext4MultiDeps_m) { showingNext4MultiDeps_m = true; showingAllMultiDeps_m = false; }
+        else if (showingNext4MultiDeps_m && !showingAllMultiDeps_m) { showingNext4MultiDeps_m = false; showingAllMultiDeps_m = true; }
+        else { showingAllMultiDeps_m = false; showingNext4MultiDeps_m = false; }
+      }
+      if (currentMultiStopName) updateMultiDeparturesView();
+    }
+
+    function startMultiDepsRefresh() {
+      if (multiDepsRefreshId !== null) clearInterval(multiDepsRefreshId);
+      multiDepsRefreshId = setInterval(() => {
+        if (currentMultiStopName) loadMultiStops(currentMultiStopName, document.getElementById('dateInput')?.value || todayStr(), true);
+      }, 15000);
+    }
+
+    function stopMultiDepsRefresh() {
+      if (multiDepsRefreshId !== null) { clearInterval(multiDepsRefreshId); multiDepsRefreshId = null; }
     }
 
     function startDepsRefresh(stopId) {
@@ -2056,6 +2456,17 @@
       document.getElementById('m-dateInput').value = e.target.value;
       const v = document.getElementById('stopIdInput')?.value.trim();
       if (v) loadStop(v, e.target.value);
+    });
+
+    // Sync "merge reversed cross-streets" toggle, and re-run the active multi-stop
+    // search so flipping it updates results immediately.
+    document.getElementById('mergeCrossStreetsToggle').addEventListener('change', e => {
+      document.getElementById('m-mergeCrossStreetsToggle').checked = e.target.checked;
+      if (currentMultiStopName) loadMultiStops(currentMultiStopName, document.getElementById('dateInput')?.value || todayStr());
+    });
+    document.getElementById('m-mergeCrossStreetsToggle').addEventListener('change', e => {
+      document.getElementById('mergeCrossStreetsToggle').checked = e.target.checked;
+      if (currentMultiStopName) loadMultiStops(currentMultiStopName, document.getElementById('m-dateInput')?.value || todayStr());
     });
 
     // ===== NEAREST STOPS =====
@@ -2247,6 +2658,8 @@
     document.getElementById('m-dateInput').value = todayStr();
     initStopSearch('stopSearchInput', 'stopSearchResults');
     initStopSearch('m-stopSearchInput', 'm-stopSearchResults');
+    initStopSearch('multiStopSearchInput', 'multiStopSearchResults', selectMultiStopFromSearch);
+    initStopSearch('m-multiStopSearchInput', 'm-multiStopSearchResults', selectMultiStopFromSearch);
   </script>
 </body>
 </html>
