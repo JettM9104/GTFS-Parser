@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory # type: ignore
+from flask import Flask, jsonify, send_from_directory, request # type: ignore
 import subprocess
 import json
 import os
@@ -53,7 +53,8 @@ def search_stop(query):
 @app.route('/api/nearest/<lat>/<lon>')
 def get_nearest_stops(lat, lon):
     try:
-        result = subprocess.run(['./tools/getneareststopsjson', lat, lon], capture_output=True, text=True)
+        limit = request.args.get('limit', '10')
+        result = subprocess.run(['./tools/getneareststopsjson', lat, lon, '-t', limit], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)

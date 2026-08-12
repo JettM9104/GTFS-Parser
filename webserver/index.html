@@ -769,6 +769,7 @@
       color: var(--text);
       letter-spacing: -0.02em;
       line-height: 1;
+      white-space: nowrap;
     }
 
     .dep-time-sched.dep-time-sched-strike {
@@ -777,11 +778,10 @@
     }
 
     .dep-time-actual {
-      margin-left: 7px;
-      font-size: 0.8em;
+      font-size: 15px;
       font-weight: 800;
-      vertical-align: middle;
       letter-spacing: -0.01em;
+      white-space: nowrap;
     }
     .dep-time-actual.dep-time-early { color: var(--positive); }
     .dep-time-actual.dep-time-late  { color: var(--negative); }
@@ -1269,9 +1269,10 @@
       }
       .board-header-row .bhr-route    { flex: 0 0 110px; }
       .board-header-row .bhr-headsign { flex: 1; }
-      .board-header-row .bhr-time     { flex: 0 0 140px; text-align: right; }
+      .board-header-row .bhr-time     { flex: 0 0 134px; text-align: right; }
+      .board-header-row .bhr-actual   { flex: 0 0 90px; text-align: right; }
       .board-header-row .bhr-eta      { flex: 0 0 100px; text-align: right; }
-      .board-header-row .bhr-badge    { flex: 0 0 100px; }
+      .board-header-row .bhr-badge    { flex: 0 0 118px; }
 
       .board-list {
         border: 1px solid var(--border);
@@ -1301,13 +1302,14 @@
 
       .board-row .dep-route      { order: 1; flex: 0 0 110px; }
       .board-row .dep-headsign   { order: 2; flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .board-row .dep-time       { order: 3; flex: 0 0 140px; text-align: right; font-size: 22px; }
-      .board-row .dep-eta        { order: 4; flex: 0 0 auto; margin-left: 0; }
-      .board-row .dep-badge-slot { order: 5; flex: 0 0 auto; min-width: 70px; display: flex; justify-content: flex-end; }
+      .board-row .dep-time       { order: 3; flex: 0 0 134px; text-align: right; font-size: 22px; }
+      .board-row .dep-time-actual { order: 4; flex: 0 0 90px; text-align: right; margin: 0; }
+      .board-row .dep-eta        { order: 5; flex: 0 0 100px; margin-left: 0; text-align: right; }
+      .board-row .dep-badge-slot { order: 6; flex: 0 0 118px; display: flex; justify-content: flex-end; }
 
       /* Trip id / stop name sit on their own line below the flattened row */
       .board-row .dep-card-footer {
-        order: 6;
+        order: 7;
         flex: 1 0 100%;
         margin-top: 2px;
         padding-top: 6px;
@@ -1735,6 +1737,7 @@
         <span class="bhr-route">Route</span>
         <span class="bhr-headsign">Destination</span>
         <span class="bhr-time">Departs</span>
+        <span class="bhr-actual"></span>
         <span class="bhr-eta">Status</span>
         <span class="bhr-badge"></span>
       </div>
@@ -2937,7 +2940,7 @@
     }
 
     // ===== DEPARTURE BOARD (fullscreen "More" feature) =====
-    // Gets the 10 nearest stops, keeps those within BOARD_RADIUS_KM, and shows
+    // Gets the top 20 nearest stops, keeps those within BOARD_RADIUS_KM, and shows
     // all their departures as one live, deduped board — re-checking location
     // and refreshing the data every BOARD_REFRESH_MS.
     const BOARD_RADIUS_KM = 8;
@@ -2992,7 +2995,7 @@
       const sub = document.getElementById('boardOverlaySub');
       sub.textContent = 'Finding nearby stops…';
 
-      fetch(`/api/nearest/${boardLat}/${boardLon}`)
+      fetch(`/api/nearest/${boardLat}/${boardLon}?limit=20`)
         .then(r => r.json())
         .then(data => {
           const stops = (data.nearest_stops || []).filter(s => s.distanceKM <= BOARD_RADIUS_KM);
@@ -3021,24 +3024,23 @@
         combined.push({ ...dep, _stopId: s.stop_id, _stopName: s._stopName, _stopCode: s._stopCode, _distanceKM: s._distanceKM });
       }));
 
-      combined.sort((a, b) =>
-        (parseTime(a.arrival_time) + getRTDelaySeconds(a.trip_id)) -
-        (parseTime(b.arrival_time) + getRTDelaySeconds(b.trip_id))
-      );
-
       // Same trip can serve more than one nearby stop (continuing down the
-      // road) — keep only its earliest occurrence now that the list is sorted.
-      const now = nowInSeconds();
-      const seen = new Set();
-      const deduped = [];
+      // road) — keep only the occurrence at the stop closest to the user.
+      const byTrip = new Map();
       combined.forEach(dep => {
-        if (seen.has(dep.trip_id)) return;
-        seen.add(dep.trip_id);
-        // Drop buses that have already departed so the board stays sorted
-        // with the next bus on top and refreshes as buses pass.
-        if (parseTime(dep.arrival_time) + getRTDelaySeconds(dep.trip_id) < now) return;
-        deduped.push(dep);
+        const existing = byTrip.get(dep.trip_id);
+        if (!existing || dep._distanceKM < existing._distanceKM) byTrip.set(dep.trip_id, dep);
       });
+
+      // Drop buses that have already departed so the board stays sorted
+      // with the next bus on top and refreshes as buses pass.
+      const now = nowInSeconds();
+      const deduped = [...byTrip.values()]
+        .filter(dep => parseTime(dep.arrival_time) + getRTDelaySeconds(dep.trip_id) >= now)
+        .sort((a, b) =>
+          (parseTime(a.arrival_time) + getRTDelaySeconds(a.trip_id)) -
+          (parseTime(b.arrival_time) + getRTDelaySeconds(b.trip_id))
+        );
 
       sub.textContent = `${deduped.length} departure${deduped.length !== 1 ? 's' : ''} · within ${BOARD_RADIUS_KM} km`;
 
@@ -3058,7 +3060,8 @@
               <div class="dep-badge-slot"></div>
             </div>
             <div class="dep-time-row">
-              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span></div>
+              <div class="dep-time-actual"></div>
               <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
             </div>
             ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
