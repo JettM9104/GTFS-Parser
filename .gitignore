@@ -61,6 +61,7 @@ static-gtfs/data/
 webserver/t_confidental_info.py
 static-gtfs/spam.py
 static-gtfs/confidential_info.hpp
+todo.txt
 
 # Personal notes
 gtfs-rt/noteToSelf.md
