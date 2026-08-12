@@ -1,4 +1,16 @@
-└── use map and csv parser to parse first line and get indexes of the fields to then use onto the assigners
-    ├── you have all the fields for stops
-    ├── you need sort_order for routes
-    └── first #include <map> then std::map<string, int> ohio; then ohio["yes"] = 67; 
+[ ] not yet started
+[/] in progress
+[X] completed + date
+
+[R] needs review
+[O] completed but check again
+
+
+AUG 12 12:42:31
+[X] In webserver/index.html:
+    In the departure board:
+    Stop code should be shown
+    Next bus should be at top
+    Should refresh once a bus passes (i.e. time + delay < time).
+    Should not be able to click on any of the departure cards
+

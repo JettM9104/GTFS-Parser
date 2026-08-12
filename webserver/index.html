@@ -680,20 +680,32 @@
     }
 
     .departures-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      /* extras scroll instead of pushing the rest of the panel down */
+      max-height: 420px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      padding-right: 3px;
     }
+    .departures-grid::-webkit-scrollbar { width: 4px; }
+    .departures-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     .dep-card {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--card-radius);
-      padding: 10px 11px;
+      padding: 9px 11px 8px;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
       transition: border-color var(--transition), background var(--transition), transform 0.15s, box-shadow var(--transition);
       position: relative;
-      overflow: hidden;
       touch-action: manipulation;
     }
 
@@ -712,70 +724,111 @@
       box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.2);
     }
 
+    .dep-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
     .dep-route {
       font-family: var(--font-mono);
       font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 4px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 9px 2px 7px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: flex;
+      max-width: 60%;
+      display: inline-flex;
       align-items: center;
       gap: 5px;
     }
 
+    .dep-badge-slot {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .dep-time-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .dep-time {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 700;
       color: var(--text);
       letter-spacing: -0.02em;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .dep-time-sched.dep-time-sched-strike {
-      text-decoration: line-through;
       color: var(--text-dim);
-      opacity: 0.75;
+      opacity: 0.7;
     }
 
     .dep-time-actual {
-      margin-left: 6px;
-      font-size: 0.62em;
-      font-weight: 700;
-      vertical-align: middle;
+      font-size: 15px;
+      font-weight: 800;
       letter-spacing: -0.01em;
+      white-space: nowrap;
     }
     .dep-time-actual.dep-time-early { color: var(--positive); }
     .dep-time-actual.dep-time-late  { color: var(--negative); }
 
     .dep-eta {
-      font-size: 11.5px;
-      font-weight: 500;
-      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
       font-family: var(--font-mono);
-      margin-top: 3px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex-shrink: 0;
     }
-    .dep-eta.dep-eta-due { color: var(--accent3); }
+    .dep-eta.dep-eta-due {
+      color: var(--accent3);
+      background: rgba(var(--accent3-rgb), 0.12);
+      border-color: rgba(var(--accent3-rgb), 0.4);
+    }
     .dep-eta.dep-eta-past { color: var(--text-dim); opacity: 0.6; }
 
     .dep-headsign {
       font-size: 12px;
       color: var(--text-muted);
-      margin-top: 3px;
-      line-height: 1.35;
+      line-height: 1.3;
       overflow-wrap: break-word;
       white-space: normal;
+    }
+
+    .dep-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 5px;
+      margin-top: 1px;
+      border-top: 1px solid var(--border);
     }
 
     .dep-trip {
       font-size: 11px;
       color: var(--text-dim);
       font-family: var(--font-mono);
-      margin-top: 3px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -789,25 +842,25 @@
     }
 
     .dep-stop-tag {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--accent2);
       background: rgba(var(--accent2-rgb), 0.12);
       border-radius: 20px;
       padding: 2px 7px;
       display: inline-block;
-      margin-top: 5px;
       font-family: var(--font-mono);
+      flex-shrink: 0;
     }
 
     .rt-delay-badge {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      margin-top: 5px;
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 20px;
       display: inline-block;
       letter-spacing: 0.03em;
+      white-space: nowrap;
     }
     .rt-ontime  { background: rgba(var(--accent3-rgb), 0.12); color: var(--accent3); }
     .rt-early   { background: rgba(var(--positive-rgb), 0.12); color: var(--positive); }
@@ -1137,6 +1190,140 @@
       }
     }
 
+    /* ===== NEARBY DEPARTURES OVERLAY ===== */
+    .nearby-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1050;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nearby-overlay-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: calc(var(--space-4) + var(--safe-top)) var(--space-5) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .nearby-overlay-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 3px;
+    }
+
+    .nearby-overlay-esc {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-dim);
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 5px;
+    }
+
+    .nearby-overlay-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: var(--space-4) var(--space-5) calc(var(--space-5) + var(--safe-bottom));
+    }
+
+    .nearby-dep-grid {
+      max-width: 640px;
+      margin: 0 auto;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
+    /* ===== DEPARTURE BOARD ===== */
+    .board-header-row { display: none; }
+
+    .board-list { max-width: 900px; gap: 6px; }
+    .board-row.dep-card { cursor: default; }
+
+    @media (min-width: 641px) {
+      .board-header-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        max-width: 900px;
+        margin: 0 auto 6px;
+        padding: 0 var(--space-4) 8px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border2);
+      }
+      .board-header-row .bhr-route    { flex: 0 0 110px; }
+      .board-header-row .bhr-headsign { flex: 1; }
+      .board-header-row .bhr-time     { flex: 0 0 134px; text-align: right; }
+      .board-header-row .bhr-actual   { flex: 0 0 90px; text-align: right; }
+      .board-header-row .bhr-eta      { flex: 0 0 100px; text-align: right; }
+      .board-header-row .bhr-badge    { flex: 0 0 118px; }
+
+      .board-list {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface2);
+        gap: 0;
+      }
+
+      .board-row.dep-card {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-4);
+        padding: 10px var(--space-4) 9px;
+        border: none;
+        border-radius: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+      }
+      .board-row.dep-card:last-child { border-bottom: none; }
+      .board-row.dep-card:hover { background: var(--surface3); transform: none; box-shadow: none; }
+      .board-row.dep-card.active { background: rgba(var(--accent-rgb), 0.08); box-shadow: none; }
+
+      .board-row .dep-card-top,
+      .board-row .dep-time-row { display: contents; }
+
+      .board-row .dep-route      { order: 1; flex: 0 0 110px; }
+      .board-row .dep-headsign   { order: 2; flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .board-row .dep-time       { order: 3; flex: 0 0 134px; text-align: right; font-size: 22px; }
+      .board-row .dep-time-actual { order: 4; flex: 0 0 90px; text-align: right; margin: 0; }
+      .board-row .dep-eta        { order: 5; flex: 0 0 100px; margin-left: 0; text-align: right; }
+      .board-row .dep-badge-slot { order: 6; flex: 0 0 118px; display: flex; justify-content: flex-end; }
+
+      /* Trip id / stop name sit on their own line below the flattened row */
+      .board-row .dep-card-footer {
+        order: 7;
+        flex: 1 0 100%;
+        margin-top: 2px;
+        padding-top: 6px;
+        border-top: 1px dashed var(--border);
+      }
+      .board-row .dep-stop-tag {
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
     /* ===== TOAST ===== */
     .toast {
       position: fixed;
@@ -1185,6 +1372,7 @@
           <button class="sb-tab active" data-sb-tab="sb-tab-stop">Stops</button>
           <button class="sb-tab" data-sb-tab="sb-tab-triproute">Trips &amp; routes</button>
           <button class="sb-tab" data-sb-tab="sb-tab-discover">Discover</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-more">More</button>
         </div>
         <div id="sidebar-body">
 
@@ -1333,6 +1521,13 @@
 
         <div id="nearestStopsInfo"></div>
       </div>
+
+      <div class="sidebar-section" id="sb-tab-more">
+        <div class="panel">
+          <div class="panel-heading">Extra features</div>
+          <button class="secondary" style="width:100%" onclick="openDepartureBoard()">Departure board</button>
+        </div>
+      </div>
         </div>
       </div>
     </div>
@@ -1373,6 +1568,7 @@
       <button class="m-tab" data-tab="m-tab-trip">Trip</button>
       <button class="m-tab" data-tab="m-tab-route">Route</button>
       <button class="m-tab" data-tab="m-tab-nearby">Nearby</button>
+      <button class="m-tab" data-tab="m-tab-more">More</button>
     </div>
 
     <div id="mobile-sheet-body">
@@ -1517,6 +1713,35 @@
         <div id="m-nearestStopsInfo"></div>
       </div>
 
+      <!-- MORE TAB -->
+      <div class="tab-panel" id="m-tab-more">
+        <div class="field-block">
+          <button class="secondary" style="width:100%" onclick="openDepartureBoard()">Departure board</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== DEPARTURE BOARD (fullscreen) ===== -->
+  <div id="boardOverlay" class="nearby-overlay" style="display:none">
+    <div class="nearby-overlay-header">
+      <div class="nearby-overlay-title">
+        <div class="section-title" style="margin-bottom:0">Departure board</div>
+        <div class="nearby-overlay-sub" id="boardOverlaySub"></div>
+      </div>
+      <button class="secondary" onclick="closeDepartureBoard()" aria-label="Close">Close <span class="nearby-overlay-esc">Esc</span></button>
+    </div>
+    <div class="nearby-overlay-body">
+      <div class="board-header-row">
+        <span class="bhr-route">Route</span>
+        <span class="bhr-headsign">Destination</span>
+        <span class="bhr-time">Departs</span>
+        <span class="bhr-actual"></span>
+        <span class="bhr-eta">Status</span>
+        <span class="bhr-badge"></span>
+      </div>
+      <div class="departures-grid nearby-dep-grid board-list" id="boardGrid"></div>
     </div>
   </div>
 
@@ -1988,7 +2213,11 @@
         document.querySelectorAll(`.dep-card[data-trip-id="${tripId}"]`).forEach(card => {
           card.classList.add('rt-live');
           let badge = card.querySelector('.rt-delay-badge');
-          if (!badge) { badge = document.createElement('div'); badge.className = 'rt-delay-badge'; card.appendChild(badge); }
+          if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'rt-delay-badge';
+            (card.querySelector('.dep-badge-slot') || card).appendChild(badge);
+          }
           let isEarly = false, isLate = false;
           if (delay === null) { badge.textContent='Live'; badge.className='rt-delay-badge rt-live-only'; }
           else if (delay <= 0) {
@@ -2039,11 +2268,18 @@
           card.dataset.arrival = dep.arrival_time;
           const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
           card.innerHTML = `
-            <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
-            <div class="dep-time" style="line-height:1"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
             ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
-            <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
-            <div class="dep-trip">Trip ${dep.trip_id}</div>
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+            </div>
           `;
           card.addEventListener('click', () => loadTrip(dep.trip_id, card));
           grid.appendChild(card);
@@ -2463,12 +2699,19 @@
           card.dataset.arrival = dep.arrival_time;
           const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
           card.innerHTML = `
-            <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
-            <div class="dep-time" style="line-height:1"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
             ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
-            <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
-            <div class="dep-trip">Trip ${dep.trip_id}</div>
-            <div class="dep-stop-tag">Stop #${dep._stopId}</div>
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+              <div class="dep-stop-tag">Stop #${dep._stopId}</div>
+            </div>
           `;
           card.addEventListener('click', () => loadTrip(dep.trip_id, card));
           grid.appendChild(card);
@@ -2696,6 +2939,149 @@
       }
     }
 
+    // ===== DEPARTURE BOARD (fullscreen "More" feature) =====
+    // Gets the top 20 nearest stops, keeps those within BOARD_RADIUS_KM, and shows
+    // all their departures as one live, deduped board — re-checking location
+    // and refreshing the data every BOARD_REFRESH_MS.
+    const BOARD_RADIUS_KM = 8;
+    const BOARD_REFRESH_MS = 15000;
+    let boardOverlayOpen = false;
+    let boardRefreshId = null;
+    let boardLat = null, boardLon = null;
+
+    function openDepartureBoard() {
+      const overlay = document.getElementById('boardOverlay');
+      overlay.style.display = 'flex';
+      boardOverlayOpen = true;
+      document.addEventListener('keydown', onBoardOverlayKeydown);
+      loadDepartureBoardLocation();
+      if (boardRefreshId === null) {
+        boardRefreshId = setInterval(() => { if (boardOverlayOpen) loadDepartureBoardLocation(); }, BOARD_REFRESH_MS);
+      }
+    }
+
+    function closeDepartureBoard() {
+      const overlay = document.getElementById('boardOverlay');
+      overlay.style.display = 'none';
+      boardOverlayOpen = false;
+      document.removeEventListener('keydown', onBoardOverlayKeydown);
+      if (boardRefreshId !== null) { clearInterval(boardRefreshId); boardRefreshId = null; }
+    }
+
+    function onBoardOverlayKeydown(e) {
+      if (e.key === 'Escape') closeDepartureBoard();
+    }
+
+    function loadDepartureBoardLocation() {
+      const sub = document.getElementById('boardOverlaySub');
+      if (!navigator.geolocation) { sub.textContent = 'Geolocation is not supported by this browser.'; return; }
+
+      if (boardLat == null) {
+        const grid = document.getElementById('boardGrid');
+        grid.innerHTML = '';
+        grid.dataset.tripKey = '';
+        sub.textContent = 'Locating you…';
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        boardLat = pos.coords.latitude;
+        boardLon = pos.coords.longitude;
+        fetchDepartureBoard();
+      }, () => { if (boardLat == null) sub.textContent = 'Unable to get your location.'; });
+    }
+
+    function fetchDepartureBoard() {
+      if (boardLat == null || boardLon == null) return;
+      const sub = document.getElementById('boardOverlaySub');
+      sub.textContent = 'Finding nearby stops…';
+
+      fetch(`/api/nearest/${boardLat}/${boardLon}?limit=20`)
+        .then(r => r.json())
+        .then(data => {
+          const stops = (data.nearest_stops || []).filter(s => s.distanceKM <= BOARD_RADIUS_KM);
+          if (!stops.length) {
+            sub.textContent = `No stops found within ${BOARD_RADIUS_KM} km.`;
+            document.getElementById('boardGrid').innerHTML = '';
+            return;
+          }
+          sub.textContent = `Loading departures from ${stops.length} stop${stops.length !== 1 ? 's' : ''}…`;
+          const date = document.getElementById('dateInput')?.value || todayStr();
+          return Promise.all(stops.map(s => Promise.all([
+            fetch(`/api/stop/${s.stop_id}/${date}`).then(r => r.json()),
+            fetch(`/api/stopinfo/${s.stop_id}`).then(r => r.json())
+          ]).then(([sd, info]) => ({ ...sd, _distanceKM: s.distanceKM, _stopName: info.stop_name || sd.stop_name, _stopCode: info.stop_code }))
+          )).then(stopDatas => renderDepartureBoard(stopDatas.filter(s => !s.error)));
+        })
+        .catch(() => { sub.textContent = 'Error loading departure board.'; });
+    }
+
+    function renderDepartureBoard(stopDatas) {
+      const grid = document.getElementById('boardGrid');
+      const sub = document.getElementById('boardOverlaySub');
+
+      const combined = [];
+      stopDatas.forEach(s => (s.departures || []).forEach(dep => {
+        combined.push({ ...dep, _stopId: s.stop_id, _stopName: s._stopName, _stopCode: s._stopCode, _distanceKM: s._distanceKM });
+      }));
+
+      // Same trip can serve more than one nearby stop (continuing down the
+      // road) — keep only the occurrence at the stop closest to the user.
+      const byTrip = new Map();
+      combined.forEach(dep => {
+        const existing = byTrip.get(dep.trip_id);
+        if (!existing || dep._distanceKM < existing._distanceKM) byTrip.set(dep.trip_id, dep);
+      });
+
+      // Drop buses that have already departed so the board stays sorted
+      // with the next bus on top and refreshes as buses pass.
+      const now = nowInSeconds();
+      const deduped = [...byTrip.values()]
+        .filter(dep => parseTime(dep.arrival_time) + getRTDelaySeconds(dep.trip_id) >= now)
+        .sort((a, b) =>
+          (parseTime(a.arrival_time) + getRTDelaySeconds(a.trip_id)) -
+          (parseTime(b.arrival_time) + getRTDelaySeconds(b.trip_id))
+        );
+
+      sub.textContent = `${deduped.length} departure${deduped.length !== 1 ? 's' : ''} · within ${BOARD_RADIUS_KM} km`;
+
+      const tripKey = deduped.map(d => d.trip_id).join(',');
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        deduped.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card board-row';
+          card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span></div>
+              <div class="dep-time-actual"></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+              <div class="dep-stop-tag">${dep._stopName ? dep._stopName + ' · ' : ''}${dep._stopCode ? 'Stop ' + dep._stopCode + ' · ' : ''}${dep._distanceKM.toFixed(2)} km</div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      if (!deduped.length) {
+        grid.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px">No upcoming departures nearby.</div>`;
+      }
+
+      updateGridETAs(grid);
+      stopDatas.forEach(s => { reapplyCachedRT(s.stop_id); loadRTStopUpdates(s.stop_id); });
+    }
+
     // ===== MOBILE SHEET =====
     let sheetExpanded = false;
 
@@ -2771,7 +3157,7 @@
     function switchTab(tabId) {
       document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
-      const sbTabId = { 'm-tab-stop': 'sb-tab-stop', 'm-tab-trip': 'sb-tab-triproute', 'm-tab-route': 'sb-tab-triproute', 'm-tab-nearby': 'sb-tab-discover' }[tabId];
+      const sbTabId = { 'm-tab-stop': 'sb-tab-stop', 'm-tab-trip': 'sb-tab-triproute', 'm-tab-route': 'sb-tab-triproute', 'm-tab-nearby': 'sb-tab-discover', 'm-tab-more': 'sb-tab-more' }[tabId];
       if (sbTabId) switchSidebarTab(sbTabId);
     }
 
