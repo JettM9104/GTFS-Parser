@@ -2,6 +2,9 @@
 [/] in progress
 [X] completed + date
 
+[R] needs review
+[O] completed but check again
+
 
 [ ] In webserver/index.html:
     In the departure board:
