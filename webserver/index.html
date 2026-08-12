@@ -1249,6 +1249,7 @@
     .board-header-row { display: none; }
 
     .board-list { max-width: 900px; gap: 6px; }
+    .board-row.dep-card { cursor: default; }
 
     @media (min-width: 641px) {
       .board-header-row {
@@ -3005,7 +3006,7 @@
           return Promise.all(stops.map(s => Promise.all([
             fetch(`/api/stop/${s.stop_id}/${date}`).then(r => r.json()),
             fetch(`/api/stopinfo/${s.stop_id}`).then(r => r.json())
-          ]).then(([sd, info]) => ({ ...sd, _distanceKM: s.distanceKM, _stopName: info.stop_name || sd.stop_name }))
+          ]).then(([sd, info]) => ({ ...sd, _distanceKM: s.distanceKM, _stopName: info.stop_name || sd.stop_name, _stopCode: info.stop_code }))
           )).then(stopDatas => renderDepartureBoard(stopDatas.filter(s => !s.error)));
         })
         .catch(() => { sub.textContent = 'Error loading departure board.'; });
@@ -3017,7 +3018,7 @@
 
       const combined = [];
       stopDatas.forEach(s => (s.departures || []).forEach(dep => {
-        combined.push({ ...dep, _stopId: s.stop_id, _stopName: s._stopName, _distanceKM: s._distanceKM });
+        combined.push({ ...dep, _stopId: s.stop_id, _stopName: s._stopName, _stopCode: s._stopCode, _distanceKM: s._distanceKM });
       }));
 
       combined.sort((a, b) =>
@@ -3027,11 +3028,15 @@
 
       // Same trip can serve more than one nearby stop (continuing down the
       // road) — keep only its earliest occurrence now that the list is sorted.
+      const now = nowInSeconds();
       const seen = new Set();
       const deduped = [];
       combined.forEach(dep => {
         if (seen.has(dep.trip_id)) return;
         seen.add(dep.trip_id);
+        // Drop buses that have already departed so the board stays sorted
+        // with the next bus on top and refreshes as buses pass.
+        if (parseTime(dep.arrival_time) + getRTDelaySeconds(dep.trip_id) < now) return;
         deduped.push(dep);
       });
 
@@ -3059,10 +3064,9 @@
             ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
             <div class="dep-card-footer">
               <div class="dep-trip">Trip ${dep.trip_id}</div>
-              <div class="dep-stop-tag">${dep._stopName ? dep._stopName + ' · ' : ''}${dep._distanceKM.toFixed(2)} km</div>
+              <div class="dep-stop-tag">${dep._stopName ? dep._stopName + ' · ' : ''}${dep._stopCode ? 'Stop ' + dep._stopCode + ' · ' : ''}${dep._distanceKM.toFixed(2)} km</div>
             </div>
           `;
-          card.addEventListener('click', () => { closeDepartureBoard(); loadTrip(dep.trip_id, card); });
           grid.appendChild(card);
         });
       }

@@ -6,7 +6,8 @@
 [O] completed but check again
 
 
-[ ] In webserver/index.html:
+AUG 12 12:42:31
+[X] In webserver/index.html:
     In the departure board:
     Stop code should be shown
     Next bus should be at top
