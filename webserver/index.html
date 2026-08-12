@@ -1506,8 +1506,8 @@
     let showingAllDeps_d = false, showingNext4_d = false;
     let showingAllDeps_m = false, showingNext4_m = false;
     let depsRefreshId = null;
-    let rtStopCache = { stopId: null, data: null, receivedAt: null };
-    const RT_STALE_MS = 60 * 1000;
+    let rtStopCache = new Map(); // stopId -> {data, receivedAt}
+    const RT_STALE_MS = 2 * 60 * 1000;
     let activeRouteTripCard = null;
     let currentStopId = null;
     let pickModeActive = false;
@@ -1571,11 +1571,14 @@
     }
 
     function getRTDelaySeconds(tripId) {
-      if (!rtStopCache.data) return 0;
-      const entity = (rtStopCache.data.entity || []).find(e => e.trip_update?.trip?.trip_id === tripId);
-      if (!entity) return 0;
-      const stu = entity.trip_update.stop_time_update?.[0];
-      return stu?.departure?.delay ?? stu?.arrival?.delay ?? 0;
+      for (const { data } of rtStopCache.values()) {
+        const entity = (data.entity || []).find(e => e.trip_update?.trip?.trip_id === tripId);
+        if (entity) {
+          const stu = entity.trip_update.stop_time_update?.[0];
+          return stu?.departure?.delay ?? stu?.arrival?.delay ?? 0;
+        }
+      }
+      return 0;
     }
 
     function filterNext3h(departures) {
@@ -1902,16 +1905,21 @@
     function loadRTStopUpdates(stopId) {
       fetch(`/api/rt/stop/${stopId}`)
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then(data => { rtStopCache = {stopId,data,receivedAt:Date.now()}; applyRTtoDepartures(data); })
+        .then(data => { rtStopCache.set(stopId, {data, receivedAt: Date.now()}); applyRTtoDepartures(data); })
         .catch(() => {
-          if (rtStopCache.stopId===stopId && rtStopCache.data && (Date.now()-rtStopCache.receivedAt)<RT_STALE_MS)
-            applyRTtoDepartures(rtStopCache.data);
+          // Fetch failed (or the feed is briefly empty) — keep showing the last
+          // good RT badges for this stop instead of clearing them, for up to
+          // RT_STALE_MS after they were received.
+          const cached = rtStopCache.get(stopId);
+          if (cached && (Date.now() - cached.receivedAt) < RT_STALE_MS)
+            applyRTtoDepartures(cached.data);
         });
     }
 
     function reapplyCachedRT(stopId) {
-      if (rtStopCache.stopId===stopId && rtStopCache.data && (Date.now()-rtStopCache.receivedAt)<RT_STALE_MS)
-        applyRTtoDepartures(rtStopCache.data);
+      const cached = rtStopCache.get(stopId);
+      if (cached && (Date.now() - cached.receivedAt) < RT_STALE_MS)
+        applyRTtoDepartures(cached.data);
     }
 
     function applyRTtoDepartures(data) {
@@ -1943,21 +1951,28 @@
     function renderDepartureCards(departures, stopId, prefix) {
       const grid = document.getElementById(prefix + 'departuresGrid');
       if (!grid) return;
-      grid.innerHTML = '';
-      departures.forEach(dep => {
-        const card = document.createElement('div');
-        card.className = 'dep-card';
-        card.dataset.tripId = dep.trip_id;
-        const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
-        card.innerHTML = `
-          <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
-          <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
-          ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
-          <div class="dep-trip">Trip ${dep.trip_id}</div>
-        `;
-        card.addEventListener('click', () => loadTrip(dep.trip_id, card));
-        grid.appendChild(card);
-      });
+      // Skip the rebuild (and the resulting flash) when a periodic refresh
+      // produces the exact same set of trips already on screen — only RT
+      // badges need to move in that case, not the whole card list.
+      const tripKey = departures.map(d => d.trip_id).join(',');
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        departures.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card';
+          card.dataset.tripId = dep.trip_id;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+            <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-trip">Trip ${dep.trip_id}</div>
+          `;
+          card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+          grid.appendChild(card);
+        });
+      }
       reapplyCachedRT(stopId);
       loadRTStopUpdates(stopId);
     }
@@ -2358,6 +2373,11 @@
     function renderMultiDepartureCards(departures, prefix) {
       const grid = document.getElementById(prefix + 'multiDeparturesGrid');
       if (!grid) return;
+      // Same no-op-rebuild guard as renderDepartureCards, keyed on trip+stop
+      // since a trip id alone isn't unique across the combined stop group.
+      const tripKey = departures.map(d => `${d.trip_id}@${d._stopId}`).join(',');
+      if (grid.dataset.tripKey === tripKey) return;
+      grid.dataset.tripKey = tripKey;
       grid.innerHTML = '';
       departures.forEach(dep => {
         const card = document.createElement('div');
@@ -2446,8 +2466,6 @@
 
     function displayStop(data) {
       if (window.stopMarker) map.removeLayer(window.stopMarker);
-      if (rtStopCache.stopId !== data.stop_id)
-        rtStopCache = {stopId:null,data:null,receivedAt:null};
 
       ['stopHeader','m-stopHeader'].forEach(id => {
         const el = document.getElementById(id);
