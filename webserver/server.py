@@ -28,6 +28,17 @@ def get_stop(stop_id, date):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stopinfo/<stop_id>')
+def get_stop_info(stop_id):
+    try:
+        result = subprocess.run(['./tools/stopinfo', stop_id], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/searchstop/<path:query>')
 def search_stop(query):
     try:

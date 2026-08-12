@@ -46,6 +46,7 @@ webserver/tools/searchstop
 webserver/tools/tripjson
 webserver/tools/stopjson
 webserver/tools/getneareststopsjson
+webserver/tools/stopinfo
 
 # Generated / downloaded data
 data-collection/decoded_gtfs.json

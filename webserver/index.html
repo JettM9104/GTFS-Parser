@@ -682,21 +682,30 @@
     .departures-grid {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+      /* extras scroll instead of pushing the rest of the panel down */
+      max-height: 420px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      padding-right: 3px;
     }
+    .departures-grid::-webkit-scrollbar { width: 4px; }
+    .departures-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     .dep-card {
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 13px 14px 11px;
+      border-radius: var(--card-radius);
+      padding: 9px 11px 8px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 5px;
+      flex-shrink: 0;
       transition: border-color var(--transition), background var(--transition), transform 0.15s, box-shadow var(--transition);
       position: relative;
-      overflow: hidden;
       touch-action: manipulation;
     }
 
@@ -724,20 +733,20 @@
 
     .dep-route {
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text);
       background: var(--surface3);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 4px 11px 4px 8px;
+      padding: 2px 9px 2px 7px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 60%;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .dep-badge-slot {
@@ -755,7 +764,7 @@
     }
 
     .dep-time {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -0.02em;
@@ -768,8 +777,8 @@
     }
 
     .dep-time-actual {
-      margin-left: 8px;
-      font-size: 0.82em;
+      margin-left: 7px;
+      font-size: 0.8em;
       font-weight: 800;
       vertical-align: middle;
       letter-spacing: -0.01em;
@@ -778,14 +787,14 @@
     .dep-time-actual.dep-time-late  { color: var(--negative); }
 
     .dep-eta {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
       font-family: var(--font-mono);
       background: var(--surface3);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 3px 10px;
+      padding: 2px 8px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -799,9 +808,9 @@
     .dep-eta.dep-eta-past { color: var(--text-dim); opacity: 0.6; }
 
     .dep-headsign {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.4;
+      line-height: 1.3;
       overflow-wrap: break-word;
       white-space: normal;
     }
@@ -811,7 +820,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding-top: 7px;
+      padding-top: 5px;
       margin-top: 1px;
       border-top: 1px solid var(--border);
     }
@@ -826,28 +835,28 @@
     }
 
     .dep-dot {
-      width: 8px; height: 8px;
+      width: 7px; height: 7px;
       border-radius: 50%;
       display: inline-block;
       flex-shrink: 0;
     }
 
     .dep-stop-tag {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--accent2);
       background: rgba(var(--accent2-rgb), 0.12);
       border-radius: 20px;
-      padding: 2px 8px;
+      padding: 2px 7px;
       display: inline-block;
       font-family: var(--font-mono);
       flex-shrink: 0;
     }
 
     .rt-delay-badge {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      padding: 3px 9px;
+      padding: 2px 8px;
       border-radius: 20px;
       display: inline-block;
       letter-spacing: 0.03em;
@@ -1181,6 +1190,137 @@
       }
     }
 
+    /* ===== NEARBY DEPARTURES OVERLAY ===== */
+    .nearby-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1050;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nearby-overlay-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: calc(var(--space-4) + var(--safe-top)) var(--space-5) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .nearby-overlay-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 3px;
+    }
+
+    .nearby-overlay-esc {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-dim);
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 5px;
+    }
+
+    .nearby-overlay-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: var(--space-4) var(--space-5) calc(var(--space-5) + var(--safe-bottom));
+    }
+
+    .nearby-dep-grid {
+      max-width: 640px;
+      margin: 0 auto;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
+    /* ===== DEPARTURE BOARD ===== */
+    .board-header-row { display: none; }
+
+    .board-list { max-width: 900px; gap: 6px; }
+
+    @media (min-width: 641px) {
+      .board-header-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        max-width: 900px;
+        margin: 0 auto 6px;
+        padding: 0 var(--space-4) 8px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border2);
+      }
+      .board-header-row .bhr-route    { flex: 0 0 110px; }
+      .board-header-row .bhr-headsign { flex: 1; }
+      .board-header-row .bhr-time     { flex: 0 0 140px; text-align: right; }
+      .board-header-row .bhr-eta      { flex: 0 0 100px; text-align: right; }
+      .board-header-row .bhr-badge    { flex: 0 0 100px; }
+
+      .board-list {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface2);
+        gap: 0;
+      }
+
+      .board-row.dep-card {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-4);
+        padding: 10px var(--space-4) 9px;
+        border: none;
+        border-radius: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+      }
+      .board-row.dep-card:last-child { border-bottom: none; }
+      .board-row.dep-card:hover { background: var(--surface3); transform: none; box-shadow: none; }
+      .board-row.dep-card.active { background: rgba(var(--accent-rgb), 0.08); box-shadow: none; }
+
+      .board-row .dep-card-top,
+      .board-row .dep-time-row { display: contents; }
+
+      .board-row .dep-route      { order: 1; flex: 0 0 110px; }
+      .board-row .dep-headsign   { order: 2; flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .board-row .dep-time       { order: 3; flex: 0 0 140px; text-align: right; font-size: 22px; }
+      .board-row .dep-eta        { order: 4; flex: 0 0 auto; margin-left: 0; }
+      .board-row .dep-badge-slot { order: 5; flex: 0 0 auto; min-width: 70px; display: flex; justify-content: flex-end; }
+
+      /* Trip id / stop name sit on their own line below the flattened row */
+      .board-row .dep-card-footer {
+        order: 6;
+        flex: 1 0 100%;
+        margin-top: 2px;
+        padding-top: 6px;
+        border-top: 1px dashed var(--border);
+      }
+      .board-row .dep-stop-tag {
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
     /* ===== TOAST ===== */
     .toast {
       position: fixed;
@@ -1229,6 +1369,7 @@
           <button class="sb-tab active" data-sb-tab="sb-tab-stop">Stops</button>
           <button class="sb-tab" data-sb-tab="sb-tab-triproute">Trips &amp; routes</button>
           <button class="sb-tab" data-sb-tab="sb-tab-discover">Discover</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-more">More</button>
         </div>
         <div id="sidebar-body">
 
@@ -1377,6 +1518,13 @@
 
         <div id="nearestStopsInfo"></div>
       </div>
+
+      <div class="sidebar-section" id="sb-tab-more">
+        <div class="panel">
+          <div class="panel-heading">Extra features</div>
+          <button class="secondary" style="width:100%" onclick="openDepartureBoard()">Departure board</button>
+        </div>
+      </div>
         </div>
       </div>
     </div>
@@ -1417,6 +1565,7 @@
       <button class="m-tab" data-tab="m-tab-trip">Trip</button>
       <button class="m-tab" data-tab="m-tab-route">Route</button>
       <button class="m-tab" data-tab="m-tab-nearby">Nearby</button>
+      <button class="m-tab" data-tab="m-tab-more">More</button>
     </div>
 
     <div id="mobile-sheet-body">
@@ -1561,6 +1710,34 @@
         <div id="m-nearestStopsInfo"></div>
       </div>
 
+      <!-- MORE TAB -->
+      <div class="tab-panel" id="m-tab-more">
+        <div class="field-block">
+          <button class="secondary" style="width:100%" onclick="openDepartureBoard()">Departure board</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== DEPARTURE BOARD (fullscreen) ===== -->
+  <div id="boardOverlay" class="nearby-overlay" style="display:none">
+    <div class="nearby-overlay-header">
+      <div class="nearby-overlay-title">
+        <div class="section-title" style="margin-bottom:0">Departure board</div>
+        <div class="nearby-overlay-sub" id="boardOverlaySub"></div>
+      </div>
+      <button class="secondary" onclick="closeDepartureBoard()" aria-label="Close">Close <span class="nearby-overlay-esc">Esc</span></button>
+    </div>
+    <div class="nearby-overlay-body">
+      <div class="board-header-row">
+        <span class="bhr-route">Route</span>
+        <span class="bhr-headsign">Destination</span>
+        <span class="bhr-time">Departs</span>
+        <span class="bhr-eta">Status</span>
+        <span class="bhr-badge"></span>
+      </div>
+      <div class="departures-grid nearby-dep-grid board-list" id="boardGrid"></div>
     </div>
   </div>
 
@@ -2758,6 +2935,146 @@
       }
     }
 
+    // ===== DEPARTURE BOARD (fullscreen "More" feature) =====
+    // Gets the 10 nearest stops, keeps those within BOARD_RADIUS_KM, and shows
+    // all their departures as one live, deduped board — re-checking location
+    // and refreshing the data every BOARD_REFRESH_MS.
+    const BOARD_RADIUS_KM = 8;
+    const BOARD_REFRESH_MS = 15000;
+    let boardOverlayOpen = false;
+    let boardRefreshId = null;
+    let boardLat = null, boardLon = null;
+
+    function openDepartureBoard() {
+      const overlay = document.getElementById('boardOverlay');
+      overlay.style.display = 'flex';
+      boardOverlayOpen = true;
+      document.addEventListener('keydown', onBoardOverlayKeydown);
+      loadDepartureBoardLocation();
+      if (boardRefreshId === null) {
+        boardRefreshId = setInterval(() => { if (boardOverlayOpen) loadDepartureBoardLocation(); }, BOARD_REFRESH_MS);
+      }
+    }
+
+    function closeDepartureBoard() {
+      const overlay = document.getElementById('boardOverlay');
+      overlay.style.display = 'none';
+      boardOverlayOpen = false;
+      document.removeEventListener('keydown', onBoardOverlayKeydown);
+      if (boardRefreshId !== null) { clearInterval(boardRefreshId); boardRefreshId = null; }
+    }
+
+    function onBoardOverlayKeydown(e) {
+      if (e.key === 'Escape') closeDepartureBoard();
+    }
+
+    function loadDepartureBoardLocation() {
+      const sub = document.getElementById('boardOverlaySub');
+      if (!navigator.geolocation) { sub.textContent = 'Geolocation is not supported by this browser.'; return; }
+
+      if (boardLat == null) {
+        const grid = document.getElementById('boardGrid');
+        grid.innerHTML = '';
+        grid.dataset.tripKey = '';
+        sub.textContent = 'Locating you…';
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        boardLat = pos.coords.latitude;
+        boardLon = pos.coords.longitude;
+        fetchDepartureBoard();
+      }, () => { if (boardLat == null) sub.textContent = 'Unable to get your location.'; });
+    }
+
+    function fetchDepartureBoard() {
+      if (boardLat == null || boardLon == null) return;
+      const sub = document.getElementById('boardOverlaySub');
+      sub.textContent = 'Finding nearby stops…';
+
+      fetch(`/api/nearest/${boardLat}/${boardLon}`)
+        .then(r => r.json())
+        .then(data => {
+          const stops = (data.nearest_stops || []).filter(s => s.distanceKM <= BOARD_RADIUS_KM);
+          if (!stops.length) {
+            sub.textContent = `No stops found within ${BOARD_RADIUS_KM} km.`;
+            document.getElementById('boardGrid').innerHTML = '';
+            return;
+          }
+          sub.textContent = `Loading departures from ${stops.length} stop${stops.length !== 1 ? 's' : ''}…`;
+          const date = document.getElementById('dateInput')?.value || todayStr();
+          return Promise.all(stops.map(s => Promise.all([
+            fetch(`/api/stop/${s.stop_id}/${date}`).then(r => r.json()),
+            fetch(`/api/stopinfo/${s.stop_id}`).then(r => r.json())
+          ]).then(([sd, info]) => ({ ...sd, _distanceKM: s.distanceKM, _stopName: info.stop_name || sd.stop_name }))
+          )).then(stopDatas => renderDepartureBoard(stopDatas.filter(s => !s.error)));
+        })
+        .catch(() => { sub.textContent = 'Error loading departure board.'; });
+    }
+
+    function renderDepartureBoard(stopDatas) {
+      const grid = document.getElementById('boardGrid');
+      const sub = document.getElementById('boardOverlaySub');
+
+      const combined = [];
+      stopDatas.forEach(s => (s.departures || []).forEach(dep => {
+        combined.push({ ...dep, _stopId: s.stop_id, _stopName: s._stopName, _distanceKM: s._distanceKM });
+      }));
+
+      combined.sort((a, b) =>
+        (parseTime(a.arrival_time) + getRTDelaySeconds(a.trip_id)) -
+        (parseTime(b.arrival_time) + getRTDelaySeconds(b.trip_id))
+      );
+
+      // Same trip can serve more than one nearby stop (continuing down the
+      // road) — keep only its earliest occurrence now that the list is sorted.
+      const seen = new Set();
+      const deduped = [];
+      combined.forEach(dep => {
+        if (seen.has(dep.trip_id)) return;
+        seen.add(dep.trip_id);
+        deduped.push(dep);
+      });
+
+      sub.textContent = `${deduped.length} departure${deduped.length !== 1 ? 's' : ''} · within ${BOARD_RADIUS_KM} km`;
+
+      const tripKey = deduped.map(d => d.trip_id).join(',');
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        deduped.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card board-row';
+          card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+              <div class="dep-stop-tag">${dep._stopName ? dep._stopName + ' · ' : ''}${dep._distanceKM.toFixed(2)} km</div>
+            </div>
+          `;
+          card.addEventListener('click', () => { closeDepartureBoard(); loadTrip(dep.trip_id, card); });
+          grid.appendChild(card);
+        });
+      }
+
+      if (!deduped.length) {
+        grid.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px">No upcoming departures nearby.</div>`;
+      }
+
+      updateGridETAs(grid);
+      stopDatas.forEach(s => { reapplyCachedRT(s.stop_id); loadRTStopUpdates(s.stop_id); });
+    }
+
     // ===== MOBILE SHEET =====
     let sheetExpanded = false;
 
@@ -2833,7 +3150,7 @@
     function switchTab(tabId) {
       document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
-      const sbTabId = { 'm-tab-stop': 'sb-tab-stop', 'm-tab-trip': 'sb-tab-triproute', 'm-tab-route': 'sb-tab-triproute', 'm-tab-nearby': 'sb-tab-discover' }[tabId];
+      const sbTabId = { 'm-tab-stop': 'sb-tab-stop', 'm-tab-trip': 'sb-tab-triproute', 'm-tab-route': 'sb-tab-triproute', 'm-tab-nearby': 'sb-tab-discover', 'm-tab-more': 'sb-tab-more' }[tabId];
       if (sbTabId) switchSidebarTab(sbTabId);
     }
 
