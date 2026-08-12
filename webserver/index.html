@@ -733,6 +733,35 @@
       letter-spacing: -0.02em;
     }
 
+    .dep-time-sched.dep-time-sched-strike {
+      text-decoration: line-through;
+      color: var(--text-dim);
+      opacity: 0.75;
+    }
+
+    .dep-time-actual {
+      margin-left: 6px;
+      font-size: 0.62em;
+      font-weight: 700;
+      vertical-align: middle;
+      letter-spacing: -0.01em;
+    }
+    .dep-time-actual.dep-time-early { color: var(--positive); }
+    .dep-time-actual.dep-time-late  { color: var(--negative); }
+
+    .dep-eta {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dep-eta.dep-eta-due { color: var(--accent3); }
+    .dep-eta.dep-eta-past { color: var(--text-dim); opacity: 0.6; }
+
     .dep-headsign {
       font-size: 12px;
       color: var(--text-muted);
@@ -1543,6 +1572,15 @@
       return `${h}:${m}<sup style="font-size:0.6em;vertical-align:sub">${s}</sup> ${ampm}`;
     }
 
+    function fmtClockShort(totalSeconds) {
+      let h = Math.floor(totalSeconds / 3600) % 24;
+      if (h < 0) h += 24;
+      const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2,'0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
     function fmtUnixTime(ts) {
       return new Date(Number(ts)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     }
@@ -1563,6 +1601,23 @@
         case 'INCOMING_AT':   return [`Incoming to stop${stop}`,   'incoming'];
         default:              return [s, 'in-transit'];
       }
+    }
+
+    function fmtETA(arrivalTime, tripId) {
+      const eta = parseTime(arrivalTime) + getRTDelaySeconds(tripId) - nowInSeconds();
+      if (eta < 0) return ['Departed', 'dep-eta-past'];
+      if (eta <= 30) return ['Due', 'dep-eta-due'];
+      if (eta < 3600) return [`in ${Math.round(eta/60)} min`, ''];
+      const h = Math.floor(eta/3600), m = Math.round((eta%3600)/60);
+      return [m > 0 ? `in ${h}h ${m}m` : `in ${h}h`, ''];
+    }
+
+    function updateGridETAs(grid) {
+      grid.querySelectorAll('.dep-eta').forEach(el => {
+        const [text, cls] = fmtETA(el.dataset.arrival, el.dataset.tripId);
+        el.textContent = text;
+        el.className = `dep-eta ${cls}`;
+      });
     }
 
     function nowInSeconds() {
@@ -1934,14 +1989,33 @@
           card.classList.add('rt-live');
           let badge = card.querySelector('.rt-delay-badge');
           if (!badge) { badge = document.createElement('div'); badge.className = 'rt-delay-badge'; card.appendChild(badge); }
+          let isEarly = false, isLate = false;
           if (delay === null) { badge.textContent='Live'; badge.className='rt-delay-badge rt-live-only'; }
           else if (delay <= 0) {
             const mins = Math.abs(Math.round(delay/60));
-            if (mins > 0) { badge.textContent=`▲ ${mins}m early`; badge.className='rt-delay-badge rt-early'; }
+            if (mins > 0) { badge.textContent=`▲ ${mins}m early`; badge.className='rt-delay-badge rt-early'; isEarly = true; }
             else { badge.textContent='On time'; badge.className='rt-delay-badge rt-ontime'; }
           } else {
             if (delay > 60) { badge.textContent=`▼ ${Math.round(delay/60)}m delay`; badge.className='rt-delay-badge rt-delayed'; }
             else { badge.textContent=`▼ ${delay}s delay`; badge.className='rt-delay-badge rt-delayed'; }
+            isLate = true;
+          }
+
+          // Cross out the scheduled time and show the real (delayed/early) time
+          // whenever RT data indicates an actual, non-zero offset from schedule.
+          const schedEl = card.querySelector('.dep-time-sched');
+          const actualEl = card.querySelector('.dep-time-actual');
+          if (schedEl && actualEl) {
+            if ((isEarly || isLate) && card.dataset.arrival) {
+              const actualSecs = parseTime(card.dataset.arrival) + delay;
+              schedEl.classList.add('dep-time-sched-strike');
+              actualEl.textContent = fmtClockShort(actualSecs);
+              actualEl.className = `dep-time-actual ${isEarly ? 'dep-time-early' : 'dep-time-late'}`;
+            } else {
+              schedEl.classList.remove('dep-time-sched-strike');
+              actualEl.textContent = '';
+              actualEl.className = 'dep-time-actual';
+            }
           }
         });
       });
@@ -1962,17 +2036,20 @@
           const card = document.createElement('div');
           card.className = 'dep-card';
           card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
           const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
           card.innerHTML = `
             <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
-            <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
+            <div class="dep-time" style="line-height:1"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
             ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
             <div class="dep-trip">Trip ${dep.trip_id}</div>
           `;
           card.addEventListener('click', () => loadTrip(dep.trip_id, card));
           grid.appendChild(card);
         });
       }
+      updateGridETAs(grid);
       reapplyCachedRT(stopId);
       loadRTStopUpdates(stopId);
     }
@@ -2376,24 +2453,28 @@
       // Same no-op-rebuild guard as renderDepartureCards, keyed on trip+stop
       // since a trip id alone isn't unique across the combined stop group.
       const tripKey = departures.map(d => `${d.trip_id}@${d._stopId}`).join(',');
-      if (grid.dataset.tripKey === tripKey) return;
-      grid.dataset.tripKey = tripKey;
-      grid.innerHTML = '';
-      departures.forEach(dep => {
-        const card = document.createElement('div');
-        card.className = 'dep-card';
-        card.dataset.tripId = dep.trip_id;
-        const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
-        card.innerHTML = `
-          <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
-          <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
-          ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
-          <div class="dep-trip">Trip ${dep.trip_id}</div>
-          <div class="dep-stop-tag">Stop #${dep._stopId}</div>
-        `;
-        card.addEventListener('click', () => loadTrip(dep.trip_id, card));
-        grid.appendChild(card);
-      });
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        departures.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card';
+          card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+            <div class="dep-time" style="line-height:1"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            <div class="dep-trip">Trip ${dep.trip_id}</div>
+            <div class="dep-stop-tag">Stop #${dep._stopId}</div>
+          `;
+          card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+          grid.appendChild(card);
+        });
+      }
+      updateGridETAs(grid);
     }
 
     function updateMultiDeparturesView() {
