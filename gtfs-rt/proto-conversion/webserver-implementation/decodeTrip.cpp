@@ -5,6 +5,8 @@
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/util/json_util.h>
 #include <libgen.h>
+#include <sys/stat.h>
+#include <ctime>
 
 /* build command
 clang++ -std=c++17 -O3 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc $(pkg-config --cflags --libs protobuf) -o decodeTrip
@@ -15,9 +17,18 @@ using namespace transit_realtime;
 int main(int argc, char* argv[]) {
     std::string exeDir = dirname(argv[0]);
     std::string outputPath = exeDir + "/downloaded_file.pb";
+    const int MAX_AGE_SECONDS = 15;
 
-    std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/VehiclePositions";
-    system(cmd.c_str());
+    struct stat st;
+    bool stale = true;
+    if (stat(outputPath.c_str(), &st) == 0) {
+        stale = (time(nullptr) - st.st_mtime) > MAX_AGE_SECONDS;
+    }
+
+    if (stale) {
+        std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/VehiclePositions";
+        system(cmd.c_str());
+    }
 
     if (argc != 2) {
         cerr << "Usage: " << argv[0] << " <tripID>" << endl;
