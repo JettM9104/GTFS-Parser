@@ -117,7 +117,7 @@ def run_once():
     rows = extract_trip_rows(weather)
     append_to_csv(rows)
     timestamp = rows[0]["timestamp"] if rows else "n/a"
-    print(f"Appended {len(rows)} rows to {TABLE_CSV.name} (timestamp: {timestamp})")
+    print(f"Appended {len(rows)} rows to {TABLE_CSV.name} (timestamp: {timestamp})", flush=True)
 
 
 def seconds_until_next_interval():
