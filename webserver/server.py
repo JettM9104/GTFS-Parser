@@ -12,6 +12,8 @@ def get_trip(trip_id):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -24,6 +26,8 @@ def get_stop(stop_id, date):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -35,6 +39,8 @@ def get_stop_info(stop_id):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -46,6 +52,8 @@ def search_stop(query):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -58,6 +66,8 @@ def get_nearest_stops(lat, lon):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -69,6 +79,8 @@ def get_rt_location(tripID):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -80,6 +92,8 @@ def get_rt_stop(stopID):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -108,6 +122,8 @@ def get_trip_root(route_id, year, month, day):
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
