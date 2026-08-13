@@ -7,6 +7,9 @@
 #include <libgen.h>
 #include <sys/stat.h>
 #include <ctime>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/file.h>
 
 /* build command
 clang++ -std=c++17 -O3 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc $(pkg-config --cflags --libs protobuf) -o decodeTrip
@@ -14,21 +17,57 @@ clang++ -std=c++17 -O3 decodeTrip.cpp ../transit-files/gtfs-realtime.pb.cc $(pkg
 using namespace std;
 using namespace transit_realtime;
 
+// Refreshes outputPath from url if it is older than MAX_AGE_SECONDS.
+// Uses a non-blocking flock so concurrent invocations don't race to
+// download at once, and downloads to a per-process temp file that is
+// only rename()'d over outputPath on success -- rename() is atomic, so
+// readers never observe a partially-written (truncated) feed file.
+static void refreshIfStale(const std::string& outputPath, const std::string& url, int maxAgeSeconds) {
+    struct stat st;
+    bool stale = true;
+    if (stat(outputPath.c_str(), &st) == 0) {
+        stale = (time(nullptr) - st.st_mtime) > maxAgeSeconds;
+    }
+    if (!stale) return;
+
+    std::string lockPath = outputPath + ".lock";
+    int lockFd = open(lockPath.c_str(), O_CREAT | O_RDWR, 0644);
+    if (lockFd < 0) return;
+
+    if (flock(lockFd, LOCK_EX | LOCK_NB) == 0) {
+        // Re-check now that we hold the lock: another process may have
+        // just finished refreshing while we were opening the lock file.
+        if (stat(outputPath.c_str(), &st) == 0) {
+            stale = (time(nullptr) - st.st_mtime) > maxAgeSeconds;
+        } else {
+            stale = true;
+        }
+
+        if (stale) {
+            std::string tmpPath = outputPath + ".tmp." + std::to_string(getpid());
+            std::string cmd = "wget -q --timeout=5 --tries=1 -O " + tmpPath + " " + url;
+            int rc = system(cmd.c_str());
+
+            struct stat tmpSt;
+            if (rc == 0 && stat(tmpPath.c_str(), &tmpSt) == 0 && tmpSt.st_size > 0) {
+                rename(tmpPath.c_str(), outputPath.c_str());
+            } else {
+                unlink(tmpPath.c_str());
+            }
+        }
+        flock(lockFd, LOCK_UN);
+    }
+    // If we didn't get the lock, another process is already refreshing --
+    // just fall through and read whatever is currently on disk.
+    close(lockFd);
+}
+
 int main(int argc, char* argv[]) {
     std::string exeDir = dirname(argv[0]);
     std::string outputPath = exeDir + "/downloaded_file.pb";
     const int MAX_AGE_SECONDS = 15;
 
-    struct stat st;
-    bool stale = true;
-    if (stat(outputPath.c_str(), &st) == 0) {
-        stale = (time(nullptr) - st.st_mtime) > MAX_AGE_SECONDS;
-    }
-
-    if (stale) {
-        std::string cmd = "wget -q -O " + outputPath + " https://rtu.york.ca/gtfsrealtime/VehiclePositions";
-        system(cmd.c_str());
-    }
+    refreshIfStale(outputPath, "https://rtu.york.ca/gtfsrealtime/VehiclePositions", MAX_AGE_SECONDS);
 
     if (argc != 2) {
         cerr << "Usage: " << argv[0] << " <tripID>" << endl;
@@ -37,7 +76,7 @@ int main(int argc, char* argv[]) {
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    string inputFile = exeDir + "/downloaded_file.pb";
+    string inputFile = outputPath;
     string targetTripId = argv[1];
 
     fstream input(inputFile, ios::in | ios::binary);
@@ -55,7 +94,6 @@ int main(int argc, char* argv[]) {
     FeedMessage filteredFeed;
     *filteredFeed.mutable_header() = feed.header();
 
-    bool found = false;
     for (const auto& entity : feed.entity()) {
         bool matches = false;
 
@@ -82,15 +120,12 @@ int main(int argc, char* argv[]) {
 
         if (matches) {
             *filteredFeed.add_entity() = entity;
-            found = true;
         }
     }
+    // No live entities for this trip is a normal outcome (e.g. trip hasn't
+    // started or already ended) -- fall through and emit a valid feed with
+    // an empty entity list, exit 0.
 
-    if (!found) {
-        cerr << "No entities found for trip ID: " << targetTripId << endl;
-        return 1;
-    }
-    
     google::protobuf::util::JsonPrintOptions options;
     options.add_whitespace = true;
     options.always_print_fields_with_no_presence = true;
