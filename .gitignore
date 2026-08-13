@@ -12,6 +12,8 @@ __pycache__/
 
 # Compiled protobuf data files (binary blobs, not generated source)
 *.pb
+*.pb.lock
+*.pb.tmp.*
 
 # Compiled C/C++ objects and libraries
 *.o
