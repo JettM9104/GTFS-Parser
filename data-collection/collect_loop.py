@@ -127,7 +127,7 @@ def seconds_until_next_interval():
 
 def main():
     while True:
-        time.sleep(seconds_until_next_interval())
+        time.sleep(15)
         try:
             run_once()
         except Exception as e:
