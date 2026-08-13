@@ -2940,10 +2940,17 @@
     }
 
     // ===== DEPARTURE BOARD (fullscreen "More" feature) =====
-    // Gets the top 20 nearest stops, keeps those within BOARD_RADIUS_KM, and shows
-    // all their departures as one live, deduped board — re-checking location
-    // and refreshing the data every BOARD_REFRESH_MS.
-    const BOARD_RADIUS_KM = 8;
+    // Fetches the 50 nearest stops (sorted by distance), takes up to
+    // BOARD_INNER_MAX within BOARD_INNER_RADIUS_KM, then tops up with up to
+    // BOARD_OUTER_MAX more stops out to BOARD_OUTER_RADIUS_KM — so sparse
+    // areas with few stops nearby still get a reasonably full board — and
+    // shows all their departures as one live, deduped board, re-checking
+    // location and refreshing the data every BOARD_REFRESH_MS.
+    const BOARD_FETCH_LIMIT = 50;
+    const BOARD_INNER_RADIUS_KM = 3;
+    const BOARD_INNER_MAX = 30;
+    const BOARD_OUTER_RADIUS_KM = 8;
+    const BOARD_OUTER_MAX = 20;
     const BOARD_REFRESH_MS = 15000;
     let boardOverlayOpen = false;
     let boardRefreshId = null;
@@ -2995,12 +3002,26 @@
       const sub = document.getElementById('boardOverlaySub');
       sub.textContent = 'Finding nearby stops…';
 
-      fetch(`/api/nearest/${boardLat}/${boardLon}?limit=20`)
+      fetch(`/api/nearest/${boardLat}/${boardLon}?limit=${BOARD_FETCH_LIMIT}`)
         .then(r => r.json())
         .then(data => {
-          const stops = (data.nearest_stops || []).filter(s => s.distanceKM <= BOARD_RADIUS_KM);
+          // nearest_stops is sorted nearest-first: take up to BOARD_INNER_MAX
+          // within the inner radius, then keep adding stops (still sorted by
+          // distance) until BOARD_OUTER_MAX more are added or the outer
+          // radius is exceeded.
+          const all = data.nearest_stops || [];
+          const inner = all.filter(s => s.distanceKM <= BOARD_INNER_RADIUS_KM).slice(0, BOARD_INNER_MAX);
+          const innerIds = new Set(inner.map(s => s.stop_id));
+          const outer = [];
+          for (const s of all) {
+            if (outer.length >= BOARD_OUTER_MAX) break;
+            if (s.distanceKM > BOARD_OUTER_RADIUS_KM) break;
+            if (innerIds.has(s.stop_id)) continue;
+            outer.push(s);
+          }
+          const stops = [...inner, ...outer];
           if (!stops.length) {
-            sub.textContent = `No stops found within ${BOARD_RADIUS_KM} km.`;
+            sub.textContent = `No stops found within ${BOARD_OUTER_RADIUS_KM} km.`;
             document.getElementById('boardGrid').innerHTML = '';
             return;
           }
@@ -3042,7 +3063,7 @@
           (parseTime(b.arrival_time) + getRTDelaySeconds(b.trip_id))
         );
 
-      sub.textContent = `${deduped.length} departure${deduped.length !== 1 ? 's' : ''} · within ${BOARD_RADIUS_KM} km`;
+      sub.textContent = `${deduped.length} departure${deduped.length !== 1 ? 's' : ''} · within ${BOARD_OUTER_RADIUS_KM} km`;
 
       const tripKey = deduped.map(d => d.trip_id).join(',');
       if (grid.dataset.tripKey !== tripKey) {
