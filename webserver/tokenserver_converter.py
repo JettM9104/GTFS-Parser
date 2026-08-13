@@ -37,11 +37,16 @@ def main():
     with open(INPUT, 'r') as f:
         src = f.read()
 
-    # 1. Update imports: add functools + token import after existing imports block
-    src = src.replace(
-        'from flask import Flask, jsonify, send_from_directory # type: ignore\nimport subprocess\nimport json\nimport os',
-        'from flask import Flask, jsonify, send_from_directory, request, abort # type: ignore\nimport subprocess\nimport json\nimport os\n' + TOKEN_IMPORTS
+    # 1. Update imports: ensure request/abort are imported, add functools + token import
+    src, n = re.subn(
+        r"^from flask import Flask, jsonify, send_from_directory.*?# type: ignore\n",
+        "from flask import Flask, jsonify, send_from_directory, request, abort # type: ignore\n" + TOKEN_IMPORTS,
+        src,
+        count=1,
+        flags=re.MULTILINE
     )
+    if n == 0:
+        raise RuntimeError(f"Could not find flask import line in {INPUT}")
 
     # 2. Inject SECRET_TOKEN + require_token after app = Flask(__name__)
     src = src.replace(
@@ -49,7 +54,15 @@ def main():
         'app = Flask(__name__)\n' + TOKEN_SETUP
     )
 
-    # 3. Add @require_token under every @app.route(...) EXCEPT excluded ones
+    # 3. Remove the /crash test route (not present in tokenserver.py) before
+    #    decorators are injected, so the pattern still matches.
+    src = re.sub(
+        r'@app\.route\("/crash"\)\ndef home\(\):\n    raise Exception\("test error"\) \n\n',
+        '',
+        src
+    )
+
+    # 4. Add @require_token under every @app.route(...) EXCEPT excluded ones
     def inject_decorator(match):
         route_decorator = match.group(0)
         route_path_match = re.search(r"@app\.route\('([^']+)'", route_decorator)
@@ -62,7 +75,7 @@ def main():
 
     src = re.sub(r"@app\.route\([^\)]+\)\n", inject_decorator, src)
 
-    # 4. Swap index.html -> tokenindex.html for the root route only
+    # 5. Swap index.html -> tokenindex.html for the root route only
     src = re.sub(
         r"(def index\(\):.*?return send_from_directory\('.', ')index\.html('\))",
         r"\1tokenindex.html\2",
@@ -70,13 +83,11 @@ def main():
         flags=re.DOTALL
     )
 
-    # 5. Fix host: localhost -> 0.0.0.0
-    src = src.replace("host = 'localhost'", "host = '0.0.0.0'")
-
-    # 6. Remove the /crash test route (not present in tokenserver.py)
+    # 6. Force the token server to always run on 0.0.0.0:5015 with debug off,
+    #    regardless of what server.py is currently set to.
     src = re.sub(
-        r'@app\.route\("/crash"\)\ndef home\(\):\n    raise Exception\("test error"\) \n\n',
-        '',
+        r"app\.run\([^)]*\)",
+        "app.run(debug=False, port=5015, host='0.0.0.0')",
         src
     )
 

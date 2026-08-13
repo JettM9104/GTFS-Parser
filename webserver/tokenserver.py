@@ -1,10 +1,9 @@
 from flask import Flask, jsonify, send_from_directory, request, abort # type: ignore
+from functools import wraps
+from t_confidental_info import token
 import subprocess
 import json
 import os
-from functools import wraps
-from t_confidental_info import token
-
 
 app = Flask(__name__)
 
@@ -23,7 +22,7 @@ def require_token(f):
 @require_token
 def get_trip(trip_id):
     try:
-        result = subprocess.run(['./tripjson', trip_id], capture_output=True, text=True)
+        result = subprocess.run(['./tools/tripjson', trip_id], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
@@ -36,7 +35,31 @@ def get_trip(trip_id):
 def get_stop(stop_id, date):
     try:
         year, month, day = date.split('-')
-        result = subprocess.run(['./stopjson', stop_id, year, month, day], capture_output=True, text=True)
+        result = subprocess.run(['./tools/stopjson', stop_id, year, month, day], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stopinfo/<stop_id>')
+@require_token
+def get_stop_info(stop_id):
+    try:
+        result = subprocess.run(['./tools/stopinfo', stop_id], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/searchstop/<path:query>')
+@require_token
+def search_stop(query):
+    try:
+        result = subprocess.run(['./tools/searchstop', query, '-t', '50'], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
@@ -48,7 +71,8 @@ def get_stop(stop_id, date):
 @require_token
 def get_nearest_stops(lat, lon):
     try:
-        result = subprocess.run(['./getneareststopsjson', lat, lon], capture_output=True, text=True)
+        limit = request.args.get('limit', '10')
+        result = subprocess.run(['./tools/getneareststopsjson', lat, lon, '-t', limit], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
@@ -104,7 +128,7 @@ def tiles(z, x, y):
 @require_token
 def get_trip_root(route_id, year, month, day):
     try:
-        result = subprocess.run(['./getTrips', route_id, year, month, day], capture_output=True, text=True)
+        result = subprocess.run(['./tools/getTrips', route_id, year, month, day], capture_output=True, text=True)
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         data = json.loads(result.stdout)
@@ -113,11 +137,6 @@ def get_trip_root(route_id, year, month, day):
         return jsonify({'error': str(e)}), 500
 
 
-@app.route("/crash")
-@require_token
-def home():
-    raise Exception("test error") 
-
 
 if __name__ == '__main__':
-    app.run(debug=False, port=5015, host = '0.0.0.0')
+    app.run(debug=False, port=5015, host='0.0.0.0')

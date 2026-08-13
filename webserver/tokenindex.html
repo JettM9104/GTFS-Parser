@@ -22,7 +22,8 @@
     :root {
       --radius: 10px;
       --card-radius: 8px;
-      --sidebar-radius: 14px;
+      --sidebar-w: 380px;
+      --sidebar-transition: 0.32s cubic-bezier(0.16,1,0.3,1);
       --transition: 0.18s ease;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
@@ -123,51 +124,121 @@
       overscroll-behavior: none;
     }
 
-    #map {
+    /* ===== APP SHELL (full-height sidebar + map) ===== */
+    #app-shell {
       position: fixed;
       inset: 0;
       z-index: 0;
+      display: flex;
     }
 
-    /* ===== DESKTOP SIDEBAR ===== */
+    #map {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      min-width: 0;
+    }
+
+    /* ===== DESKTOP SIDEBAR (full-height, collapsible) ===== */
     #sidebar {
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      bottom: 14px;
-      z-index: 1000;
-      width: 340px;
+      position: relative;
+      flex-shrink: 0;
+      width: var(--sidebar-w);
+      height: 100%;
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--sidebar-radius);
-      display: flex;
-      flex-direction: column;
+      border-right: 1px solid var(--border);
       overflow: hidden;
       box-shadow: var(--shadow-sidebar);
+      transition: width var(--sidebar-transition), border-color var(--sidebar-transition);
     }
 
+    #app-shell.sidebar-collapsed #sidebar {
+      width: 0;
+      border-right-color: transparent;
+      box-shadow: none;
+    }
+
+    /* Fixed-width inner wrapper: the outer #sidebar clips it to a wipe/slide
+       collapse instead of squeezing its contents as the width animates down. */
+    #sidebar-inner {
+      width: var(--sidebar-w);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
+      pointer-events: none;
+    }
+
+    /* Collapse / expand tab, pinned to the sidebar's trailing edge */
+    #sidebarCollapseBtn {
+      position: absolute;
+      top: 50%;
+      left: var(--sidebar-w);
+      transform: translate(-50%, -50%);
+      z-index: 1001;
+      width: 22px;
+      height: 46px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      cursor: pointer;
+      box-shadow: var(--shadow-1);
+      transition: left var(--sidebar-transition), background var(--transition), color var(--transition), border-color var(--transition);
+    }
+    #sidebarCollapseBtn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+    #sidebarCollapseBtn svg { width: 11px; height: 11px; transition: transform var(--sidebar-transition); }
+    /* half the button's own width, so translate(-50%) leaves it flush
+       against the viewport edge instead of half clipped off-screen */
+    #app-shell.sidebar-collapsed #sidebarCollapseBtn { left: 11px; }
+    #app-shell.sidebar-collapsed #sidebarCollapseBtn svg { transform: rotate(180deg); }
+
     #sidebar-header {
-      padding: var(--space-5) var(--space-5) var(--space-4);
-      border-bottom: 1px solid var(--border);
+      padding: 13px var(--space-5);
       flex-shrink: 0;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: var(--space-3);
     }
 
+    #sidebar-header-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    #sidebar-header-titles { min-width: 0; }
+
     #sidebar-header h1 {
       font-family: var(--font-display);
-      font-size: 17px;
+      font-size: 15.5px;
       font-weight: 700;
       letter-spacing: -0.01em;
       color: var(--text);
+      line-height: 1.2;
     }
 
     #sidebar-header p {
-      margin-top: 2px;
-      font-size: 12.5px;
-      color: var(--text-muted);
+      margin-top: 1px;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .theme-toggle-btn {
@@ -178,8 +249,9 @@
 
     #sidebar-body {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
-      padding: var(--space-4);
+      padding: var(--space-1) var(--space-4) var(--space-4);
       display: flex;
       flex-direction: column;
       gap: var(--space-4);
@@ -205,6 +277,64 @@
       font-weight: 700;
       color: var(--text);
     }
+
+    .panel-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section {
+      display: none;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .sidebar-section.active { display: flex; }
+
+    #sidebar-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 var(--space-4);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sb-tab {
+      appearance: none;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 4px 9px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+      flex: 1;
+      text-align: center;
+    }
+    .sb-tab:hover { background: none; color: var(--text-muted); }
+    .sb-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
     #sidebar-body::-webkit-scrollbar { width: 3px; }
     #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -451,6 +581,63 @@
 
     .field-block { display: flex; flex-direction: column; gap: var(--space-2); }
 
+    /* ===== STOP NAME SEARCH ===== */
+    .stop-search-wrap { position: relative; }
+
+    .stop-search-results {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-2);
+      max-height: 260px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      z-index: 30;
+    }
+    .stop-search-results.visible { display: block; }
+
+    .stop-search-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+      touch-action: manipulation;
+    }
+    .stop-search-item:last-child { border-bottom: none; }
+    .stop-search-item:hover, .stop-search-item.active { background: var(--surface3); }
+
+    .stop-search-name {
+      font-size: 13px;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .stop-search-id {
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .stop-search-empty {
+      padding: 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
     .divider {
       height: 1px;
       background: var(--border);
@@ -493,20 +680,32 @@
     }
 
     .departures-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      /* extras scroll instead of pushing the rest of the panel down */
+      max-height: 420px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      padding-right: 3px;
     }
+    .departures-grid::-webkit-scrollbar { width: 4px; }
+    .departures-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     .dep-card {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--card-radius);
-      padding: 10px 11px;
+      padding: 9px 11px 8px;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
       transition: border-color var(--transition), background var(--transition), transform 0.15s, box-shadow var(--transition);
       position: relative;
-      overflow: hidden;
       touch-action: manipulation;
     }
 
@@ -525,32 +724,111 @@
       box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.2);
     }
 
+    .dep-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
     .dep-route {
       font-family: var(--font-mono);
       font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 4px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 9px 2px 7px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: flex;
+      max-width: 60%;
+      display: inline-flex;
       align-items: center;
       gap: 5px;
     }
 
+    .dep-badge-slot {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .dep-time-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .dep-time {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 700;
       color: var(--text);
       letter-spacing: -0.02em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .dep-time-sched.dep-time-sched-strike {
+      color: var(--text-dim);
+      opacity: 0.7;
+    }
+
+    .dep-time-actual {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    .dep-time-actual.dep-time-early { color: var(--positive); }
+    .dep-time-actual.dep-time-late  { color: var(--negative); }
+
+    .dep-eta {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .dep-eta.dep-eta-due {
+      color: var(--accent3);
+      background: rgba(var(--accent3-rgb), 0.12);
+      border-color: rgba(var(--accent3-rgb), 0.4);
+    }
+    .dep-eta.dep-eta-past { color: var(--text-dim); opacity: 0.6; }
+
+    .dep-headsign {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.3;
+      overflow-wrap: break-word;
+      white-space: normal;
+    }
+
+    .dep-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 5px;
+      margin-top: 1px;
+      border-top: 1px solid var(--border);
     }
 
     .dep-trip {
       font-size: 11px;
       color: var(--text-dim);
       font-family: var(--font-mono);
-      margin-top: 3px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -563,14 +841,26 @@
       flex-shrink: 0;
     }
 
-    .rt-delay-badge {
-      font-size: 11px;
+    .dep-stop-tag {
+      font-size: 10px;
       font-weight: 600;
-      margin-top: 5px;
+      color: var(--accent2);
+      background: rgba(var(--accent2-rgb), 0.12);
+      border-radius: 20px;
       padding: 2px 7px;
+      display: inline-block;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+
+    .rt-delay-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 8px;
       border-radius: 20px;
       display: inline-block;
       letter-spacing: 0.03em;
+      white-space: nowrap;
     }
     .rt-ontime  { background: rgba(var(--accent3-rgb), 0.12); color: var(--accent3); }
     .rt-early   { background: rgba(var(--positive-rgb), 0.12); color: var(--positive); }
@@ -876,6 +1166,7 @@
     /* ===== RESPONSIVE ===== */
     @media (max-width: 640px) {
       #sidebar { display: none; }
+      #sidebarCollapseBtn { display: none; }
 
       #mobile-sheet { display: flex; }
       #mobile-tabs { display: flex; }
@@ -896,6 +1187,140 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+      }
+    }
+
+    /* ===== NEARBY DEPARTURES OVERLAY ===== */
+    .nearby-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1050;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nearby-overlay-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: calc(var(--space-4) + var(--safe-top)) var(--space-5) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .nearby-overlay-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 3px;
+    }
+
+    .nearby-overlay-esc {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-dim);
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 5px;
+    }
+
+    .nearby-overlay-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: var(--space-4) var(--space-5) calc(var(--space-5) + var(--safe-bottom));
+    }
+
+    .nearby-dep-grid {
+      max-width: 640px;
+      margin: 0 auto;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
+    /* ===== DEPARTURE BOARD ===== */
+    .board-header-row { display: none; }
+
+    .board-list { max-width: 900px; gap: 6px; }
+    .board-row.dep-card { cursor: default; }
+
+    @media (min-width: 641px) {
+      .board-header-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        max-width: 900px;
+        margin: 0 auto 6px;
+        padding: 0 var(--space-4) 8px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border2);
+      }
+      .board-header-row .bhr-route    { flex: 0 0 110px; }
+      .board-header-row .bhr-headsign { flex: 1; }
+      .board-header-row .bhr-time     { flex: 0 0 134px; text-align: right; }
+      .board-header-row .bhr-actual   { flex: 0 0 90px; text-align: right; }
+      .board-header-row .bhr-eta      { flex: 0 0 100px; text-align: right; }
+      .board-header-row .bhr-badge    { flex: 0 0 118px; }
+
+      .board-list {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface2);
+        gap: 0;
+      }
+
+      .board-row.dep-card {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-4);
+        padding: 10px var(--space-4) 9px;
+        border: none;
+        border-radius: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+      }
+      .board-row.dep-card:last-child { border-bottom: none; }
+      .board-row.dep-card:hover { background: var(--surface3); transform: none; box-shadow: none; }
+      .board-row.dep-card.active { background: rgba(var(--accent-rgb), 0.08); box-shadow: none; }
+
+      .board-row .dep-card-top,
+      .board-row .dep-time-row { display: contents; }
+
+      .board-row .dep-route      { order: 1; flex: 0 0 110px; }
+      .board-row .dep-headsign   { order: 2; flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .board-row .dep-time       { order: 3; flex: 0 0 134px; text-align: right; font-size: 22px; }
+      .board-row .dep-time-actual { order: 4; flex: 0 0 90px; text-align: right; margin: 0; }
+      .board-row .dep-eta        { order: 5; flex: 0 0 100px; margin-left: 0; text-align: right; }
+      .board-row .dep-badge-slot { order: 6; flex: 0 0 118px; display: flex; justify-content: flex-end; }
+
+      /* Trip id / stop name sit on their own line below the flattened row */
+      .board-row .dep-card-footer {
+        order: 7;
+        flex: 1 0 100%;
+        margin-top: 2px;
+        padding-top: 6px;
+        border-top: 1px dashed var(--border);
+      }
+      .board-row .dep-stop-tag {
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
 
@@ -930,119 +1355,188 @@
   </style>
 </head>
 <body>
-  <div id="map"></div>
-
-  <!-- ===== DESKTOP SIDEBAR ===== -->
-  <div id="sidebar">
-    <div id="sidebar-header">
-      <div>
-        <h1>GTFS Parser</h1>
-        <p>Trip, stop &amp; route inspector</p>
-      </div>
-      <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">Light theme</button>
-    </div>
-    <div id="sidebar-body">
-
-      <div class="panel">
-        <div class="panel-heading">Trip lookup</div>
-        <div class="input-group">
-          <input type="text" id="tripIdInput" placeholder="Trip ID, e.g. 40928123" aria-label="Trip ID" />
-          <button class="primary" onclick="handleLoadTrip('tripIdInput')">Load trip</button>
+  <div id="app-shell">
+    <!-- ===== DESKTOP SIDEBAR ===== -->
+    <div id="sidebar">
+      <div id="sidebar-inner">
+        <div id="sidebar-header">
+          <div id="sidebar-header-left">
+            <div id="sidebar-header-titles">
+              <h1>GTFS Parser</h1>
+              <p id="dockSubtitle">Trip, stop &amp; route inspector</p>
+            </div>
+          </div>
+          <button class="secondary theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">Light theme</button>
         </div>
-      </div>
+        <div id="sidebar-tabs">
+          <button class="sb-tab active" data-sb-tab="sb-tab-stop">Stops</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-triproute">Trips &amp; routes</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-discover">Discover</button>
+          <button class="sb-tab" data-sb-tab="sb-tab-more">More</button>
+        </div>
+        <div id="sidebar-body">
 
-      <div class="panel">
-        <div class="panel-heading">Stop lookup</div>
-        <div class="input-group">
-          <input type="text" id="stopIdInput" placeholder="Stop ID, e.g. 4901" aria-label="Stop ID" />
-          <button class="primary" onclick="handleLoadStop('stopIdInput','dateInput')">Load stop</button>
+      <div class="sidebar-section active" id="sb-tab-stop">
+        <div class="panel">
+          <div class="panel-heading">Find a stop</div>
+
+          <div class="field-block stop-search-wrap">
+            <label class="input-row-label" for="stopSearchInput">Search by name</label>
+            <input type="text" id="stopSearchInput" placeholder="e.g. Main St" autocomplete="off" aria-label="Search stops by name" />
+            <div class="stop-search-results" id="stopSearchResults"></div>
+          </div>
+
+          <div class="field-block">
+            <label class="input-row-label" for="stopIdInput">Or by stop ID</label>
+            <div class="input-group">
+              <input type="text" id="stopIdInput" placeholder="Stop ID, e.g. 4901" aria-label="Stop ID" />
+              <button class="primary" onclick="handleLoadStop('stopIdInput','dateInput')">Load stop</button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <label class="input-row-label" for="dateInput">Date</label>
+            <div class="date-row">
+              <input type="date" id="dateInput" />
+              <button class="secondary" onclick="document.getElementById('dateInput').value=todayStr()">Today</button>
+            </div>
+          </div>
         </div>
 
-        <div class="field-block">
-          <label class="input-row-label" for="dateInput">Date</label>
-          <div class="date-row">
-            <input type="date" id="dateInput" />
-            <button class="secondary" onclick="document.getElementById('dateInput').value=todayStr()">Today</button>
+        <div id="stopHeader" class="stop-header">
+          <div class="stop-name" id="stopNameDisplay"></div>
+          <div class="stop-meta" id="stopMetaDisplay"></div>
+        </div>
+
+        <div id="departuresSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Departures</div>
+            <button class="show-all-deps-btn" id="showAllDepsBtn" onclick="cycleDepView('d')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="depWindowLabel"></div>
+          <div class="departures-grid" id="departuresGrid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-heading-row">
+            <div class="panel-heading">Search multiple stops</div>
+            <label class="toggle-row" for="mergeCrossStreetsToggle" title="Treat &quot;A / B&quot; and &quot;B / A&quot; as the same intersection">
+              <input type="checkbox" id="mergeCrossStreetsToggle" checked />
+              Merge reversed cross-streets
+            </label>
+          </div>
+
+          <div class="field-block stop-search-wrap">
+            <label class="input-row-label" for="multiStopSearchInput">Search by name (all stops with this exact name)</label>
+            <input type="text" id="multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" aria-label="Search multiple stops by name" />
+            <div class="stop-search-results" id="multiStopSearchResults"></div>
+          </div>
+        </div>
+
+        <div id="multiStopHeader" class="stop-header">
+          <div class="stop-name" id="multiStopNameDisplay"></div>
+          <div class="stop-meta" id="multiStopMetaDisplay"></div>
+        </div>
+
+        <div id="multiDeparturesSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Combined departures</div>
+            <button class="show-all-deps-btn" id="showAllMultiDepsBtn" onclick="cycleMultiDepView('d')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="multiDepWindowLabel"></div>
+          <div class="departures-grid" id="multiDeparturesGrid"></div>
+        </div>
+
+        <div id="tripInfo"></div>
+
+        <div id="rtPanel" class="rt-panel" style="display:none">
+          <div class="rt-panel-header">
+            <span class="rt-title">Live vehicle</span>
+            <span class="rt-pulse" id="rtPulse"></span>
+          </div>
+          <div class="rt-body">
+            <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="rv-id">—</span></div>
+            <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="rv-route">—</span></div>
+            <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="rv-trip">—</span></div>
+            <div class="rt-row"><span class="rt-label">Direction</span><span class="rt-val" id="rv-dir">—</span></div>
+            <div class="rt-row"><span class="rt-label">Start</span><span class="rt-val" id="rv-start">—</span></div>
+            <div class="rt-row"><span class="rt-label">Status</span><span class="rt-val" id="rv-status">—</span></div>
+            <div class="rt-row"><span class="rt-label">Stop seq</span><span class="rt-val" id="rv-seq">—</span></div>
+            <div class="rt-row"><span class="rt-label">Next stop</span><span class="rt-val" id="rv-stop">—</span></div>
+            <div class="rt-row"><span class="rt-label">Lat / Lon</span><span class="rt-val" id="rv-pos">—</span></div>
+            <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="rv-bearing">—</span></div>
+            <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="rv-speed">—</span></div>
+            <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="rv-occ">—</span></div>
+            <div class="rt-timestamp" id="rtTimestamp"></div>
           </div>
         </div>
       </div>
 
-      <div id="stopHeader" class="stop-header">
-        <div class="stop-name" id="stopNameDisplay"></div>
-        <div class="stop-meta" id="stopMetaDisplay"></div>
-      </div>
-
-      <div id="departuresSection" style="display:none">
-        <div class="departures-section-header">
-          <div class="section-title">Departures</div>
-          <button class="show-all-deps-btn" id="showAllDepsBtn" onclick="cycleDepView('d')">Show all</button>
+      <div class="sidebar-section" id="sb-tab-triproute">
+        <div class="panel">
+          <div class="panel-heading">Trip lookup</div>
+          <div class="input-group">
+            <input type="text" id="tripIdInput" placeholder="Trip ID, e.g. 40928123" aria-label="Trip ID" />
+            <button class="primary" onclick="handleLoadTrip('tripIdInput')">Load trip</button>
+          </div>
         </div>
-        <div class="dep-window-label" id="depWindowLabel"></div>
-        <div class="departures-grid" id="departuresGrid"></div>
-      </div>
 
-      <div id="tripInfo"></div>
-
-      <div id="rtPanel" class="rt-panel" style="display:none">
-        <div class="rt-panel-header">
-          <span class="rt-title">Live vehicle</span>
-          <span class="rt-pulse" id="rtPulse"></span>
+        <div class="panel">
+          <div class="panel-heading">Route lookup</div>
+          <div class="input-group">
+            <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" aria-label="Route ID" />
+            <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+          </div>
         </div>
-        <div class="rt-body">
-          <div class="rt-row"><span class="rt-label">Vehicle</span><span class="rt-val" id="rv-id">—</span></div>
-          <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val" id="rv-route">—</span></div>
-          <div class="rt-row"><span class="rt-label">Trip</span><span class="rt-val" id="rv-trip">—</span></div>
-          <div class="rt-row"><span class="rt-label">Direction</span><span class="rt-val" id="rv-dir">—</span></div>
-          <div class="rt-row"><span class="rt-label">Start</span><span class="rt-val" id="rv-start">—</span></div>
-          <div class="rt-row"><span class="rt-label">Status</span><span class="rt-val" id="rv-status">—</span></div>
-          <div class="rt-row"><span class="rt-label">Stop seq</span><span class="rt-val" id="rv-seq">—</span></div>
-          <div class="rt-row"><span class="rt-label">Next stop</span><span class="rt-val" id="rv-stop">—</span></div>
-          <div class="rt-row"><span class="rt-label">Lat / Lon</span><span class="rt-val" id="rv-pos">—</span></div>
-          <div class="rt-row"><span class="rt-label">Bearing</span><span class="rt-val" id="rv-bearing">—</span></div>
-          <div class="rt-row"><span class="rt-label">Speed</span><span class="rt-val" id="rv-speed">—</span></div>
-          <div class="rt-row"><span class="rt-label">Occupancy</span><span class="rt-val" id="rv-occ">—</span></div>
-          <div class="rt-timestamp" id="rtTimestamp"></div>
+
+        <div id="routeTripsSection" class="route-trips-section">
+          <div class="route-trips-section-header">
+            <div class="section-title">Trips</div>
+            <span id="routeTripsCount" class="route-trips-count"></span>
+          </div>
+          <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
+          <div class="route-trips-grid" id="routeTripsGrid"></div>
+          <div class="pagination" id="routeTripsPagination" style="display:none">
+            <button class="pagination-btn" id="routeTripsPrevBtn" onclick="changeRouteTripsPage('', -1)">Previous</button>
+            <span class="pagination-status" id="routeTripsPageLabel"></span>
+            <button class="pagination-btn" id="routeTripsNextBtn" onclick="changeRouteTripsPage('', 1)">Next</button>
+          </div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-heading">Route lookup</div>
-        <div class="input-group">
-          <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" aria-label="Route ID" />
-          <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+      <div class="sidebar-section" id="sb-tab-discover">
+        <div class="panel">
+          <div class="panel-heading">Nearby stops</div>
+          <div class="input-group" role="group" aria-label="Coordinates">
+            <input type="text" id="latInput" placeholder="Latitude" aria-label="Latitude" />
+            <input type="text" id="lonInput" placeholder="Longitude" aria-label="Longitude" />
+          </div>
+          <div class="input-group">
+            <button class="secondary" style="flex:1" onclick="handleFindNearest('latInput','lonInput')">Search nearby</button>
+            <button class="secondary" style="flex:1" onclick="useMyLocation('latInput','lonInput')">Use my location</button>
+          </div>
+          <button class="secondary" style="width:100%" onclick="showUserLocation()">Show my location on map</button>
+          <button class="pick-mode-btn" id="pickModeBtn" onclick="setPickMode(!pickModeActive)">Pick a point on the map</button>
         </div>
+
+        <div id="nearestStopsInfo"></div>
       </div>
 
-      <div id="routeTripsSection" class="route-trips-section">
-        <div class="route-trips-section-header">
-          <div class="section-title">Trips</div>
-          <span id="routeTripsCount" class="route-trips-count"></span>
-        </div>
-        <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
-        <div class="route-trips-grid" id="routeTripsGrid"></div>
-        <div class="pagination" id="routeTripsPagination" style="display:none">
-          <button class="pagination-btn" id="routeTripsPrevBtn" onclick="changeRouteTripsPage('', -1)">Previous</button>
-          <span class="pagination-status" id="routeTripsPageLabel"></span>
-          <button class="pagination-btn" id="routeTripsNextBtn" onclick="changeRouteTripsPage('', 1)">Next</button>
+      <div class="sidebar-section" id="sb-tab-more">
+        <div class="panel">
+          <div class="panel-heading">Extra features</div>
+          <button class="secondary" style="width:100%" onclick="openDepartureBoard()">Departure board</button>
         </div>
       </div>
-
-      <div class="panel">
-        <div class="panel-heading">Nearby stops</div>
-        <div class="input-group" role="group" aria-label="Coordinates">
-          <input type="text" id="latInput" placeholder="Latitude" aria-label="Latitude" />
-          <input type="text" id="lonInput" placeholder="Longitude" aria-label="Longitude" />
         </div>
-        <div class="input-group">
-          <button class="secondary" style="flex:1" onclick="handleFindNearest('latInput','lonInput')">Search nearby</button>
-          <button class="secondary" style="flex:1" onclick="useMyLocation('latInput','lonInput')">Use my location</button>
-        </div>
-        <button class="secondary" style="width:100%" onclick="showUserLocation()">Show my location on map</button>
-        <button class="pick-mode-btn" id="pickModeBtn" onclick="setPickMode(!pickModeActive)">Pick a point on the map</button>
       </div>
-
-      <div id="nearestStopsInfo"></div>
     </div>
+
+    <button id="sidebarCollapseBtn" type="button" onclick="toggleSidebarCollapsed()" aria-expanded="true" aria-controls="sidebar" aria-label="Collapse sidebar" title="Collapse sidebar">
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3l-5 5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div id="map"></div>
   </div>
 
   <!-- ===== MOBILE MAP CONTROLS ===== -->
@@ -1074,14 +1568,21 @@
       <button class="m-tab" data-tab="m-tab-trip">Trip</button>
       <button class="m-tab" data-tab="m-tab-route">Route</button>
       <button class="m-tab" data-tab="m-tab-nearby">Nearby</button>
+      <button class="m-tab" data-tab="m-tab-more">More</button>
     </div>
 
     <div id="mobile-sheet-body">
 
       <!-- STOP TAB -->
       <div class="tab-panel active" id="m-tab-stop">
+        <div class="field-block stop-search-wrap">
+          <label class="input-row-label" for="m-stopSearchInput">Search by name</label>
+          <input type="text" id="m-stopSearchInput" placeholder="e.g. Main St" autocomplete="off" aria-label="Search stops by name" />
+          <div class="stop-search-results" id="m-stopSearchResults"></div>
+        </div>
+
         <div class="field-block">
-          <label class="input-row-label" for="m-stopIdInput">Stop</label>
+          <label class="input-row-label" for="m-stopIdInput">Or by stop ID</label>
           <div class="input-group">
             <input type="text" id="m-stopIdInput" placeholder="Stop ID" />
             <button class="primary" onclick="handleLoadStop('m-stopIdInput','m-dateInput')">Load stop</button>
@@ -1107,6 +1608,32 @@
           </div>
           <div class="dep-window-label" id="m-depWindowLabel"></div>
           <div class="departures-grid" id="m-departuresGrid"></div>
+        </div>
+
+        <div class="field-block stop-search-wrap">
+          <div class="panel-heading-row">
+            <label class="input-row-label" for="m-multiStopSearchInput">Search multiple stops (exact name)</label>
+            <label class="toggle-row" for="m-mergeCrossStreetsToggle" title="Treat &quot;A / B&quot; and &quot;B / A&quot; as the same intersection">
+              <input type="checkbox" id="m-mergeCrossStreetsToggle" checked />
+              Merge reversed
+            </label>
+          </div>
+          <input type="text" id="m-multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" aria-label="Search multiple stops by name" />
+          <div class="stop-search-results" id="m-multiStopSearchResults"></div>
+        </div>
+
+        <div id="m-multiStopHeader" class="stop-header">
+          <div class="stop-name" id="m-multiStopNameDisplay"></div>
+          <div class="stop-meta" id="m-multiStopMetaDisplay"></div>
+        </div>
+
+        <div id="m-multiDeparturesSection" style="display:none">
+          <div class="departures-section-header">
+            <div class="section-title">Combined departures</div>
+            <button class="show-all-deps-btn" id="m-showAllMultiDepsBtn" onclick="cycleMultiDepView('m')">Show all</button>
+          </div>
+          <div class="dep-window-label" id="m-multiDepWindowLabel"></div>
+          <div class="departures-grid" id="m-multiDeparturesGrid"></div>
         </div>
 
         <div id="m-tripInfo"></div>
@@ -1186,6 +1713,35 @@
         <div id="m-nearestStopsInfo"></div>
       </div>
 
+      <!-- MORE TAB -->
+      <div class="tab-panel" id="m-tab-more">
+        <div class="field-block">
+          <button class="secondary" style="width:100%" onclick="openDepartureBoard()">Departure board</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== DEPARTURE BOARD (fullscreen) ===== -->
+  <div id="boardOverlay" class="nearby-overlay" style="display:none">
+    <div class="nearby-overlay-header">
+      <div class="nearby-overlay-title">
+        <div class="section-title" style="margin-bottom:0">Departure board</div>
+        <div class="nearby-overlay-sub" id="boardOverlaySub"></div>
+      </div>
+      <button class="secondary" onclick="closeDepartureBoard()" aria-label="Close">Close <span class="nearby-overlay-esc">Esc</span></button>
+    </div>
+    <div class="nearby-overlay-body">
+      <div class="board-header-row">
+        <span class="bhr-route">Route</span>
+        <span class="bhr-headsign">Destination</span>
+        <span class="bhr-time">Departs</span>
+        <span class="bhr-actual"></span>
+        <span class="bhr-eta">Status</span>
+        <span class="bhr-badge"></span>
+      </div>
+      <div class="departures-grid nearby-dep-grid board-list" id="boardGrid"></div>
     </div>
   </div>
 
@@ -1204,13 +1760,21 @@
     let showingAllDeps_d = false, showingNext4_d = false;
     let showingAllDeps_m = false, showingNext4_m = false;
     let depsRefreshId = null;
-    let rtStopCache = { stopId: null, data: null, receivedAt: null };
-    const RT_STALE_MS = 60 * 1000;
+    let rtStopCache = new Map(); // stopId -> {data, receivedAt}
+    const RT_STALE_MS = 2 * 60 * 1000;
     let activeRouteTripCard = null;
     let currentStopId = null;
     let pickModeActive = false;
     let clickPinMarker = null;
     let isMobile = () => window.innerWidth <= 640;
+    let multiStopMarkers = [];
+    let allMultiDepartures = [];
+    let showingAllMultiDeps_d = false, showingNext4MultiDeps_d = false;
+    let showingAllMultiDeps_m = false, showingNext4MultiDeps_m = false;
+    let multiDepsRefreshId = null;
+    let multiStopsRequestId = 0;
+    let currentMultiStopName = null;
+    let currentMultiStopIds = [];
 
     // ===== UTILS =====
     const token = new URLSearchParams(window.location.search).get('token');
@@ -1243,6 +1807,15 @@
       return `${h}:${m}<sup style="font-size:0.6em;vertical-align:sub">${s}</sup> ${ampm}`;
     }
 
+    function fmtClockShort(totalSeconds) {
+      let h = Math.floor(totalSeconds / 3600) % 24;
+      if (h < 0) h += 24;
+      const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2,'0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
     function fmtUnixTime(ts) {
       return new Date(Number(ts)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     }
@@ -1265,17 +1838,37 @@
       }
     }
 
+    function fmtETA(arrivalTime, tripId) {
+      const eta = parseTime(arrivalTime) + getRTDelaySeconds(tripId) - nowInSeconds();
+      if (eta < 0) return ['Departed', 'dep-eta-past'];
+      if (eta <= 30) return ['Due', 'dep-eta-due'];
+      if (eta < 3600) return [`in ${Math.round(eta/60)} min`, ''];
+      const h = Math.floor(eta/3600), m = Math.round((eta%3600)/60);
+      return [m > 0 ? `in ${h}h ${m}m` : `in ${h}h`, ''];
+    }
+
+    function updateGridETAs(grid) {
+      grid.querySelectorAll('.dep-eta').forEach(el => {
+        const [text, cls] = fmtETA(el.dataset.arrival, el.dataset.tripId);
+        el.textContent = text;
+        el.className = `dep-eta ${cls}`;
+      });
+    }
+
     function nowInSeconds() {
       const n = new Date();
       return n.getHours()*3600 + n.getMinutes()*60 + n.getSeconds();
     }
 
     function getRTDelaySeconds(tripId) {
-      if (!rtStopCache.data) return 0;
-      const entity = (rtStopCache.data.entity || []).find(e => e.trip_update?.trip?.trip_id === tripId);
-      if (!entity) return 0;
-      const stu = entity.trip_update.stop_time_update?.[0];
-      return stu?.departure?.delay ?? stu?.arrival?.delay ?? 0;
+      for (const { data } of rtStopCache.values()) {
+        const entity = (data.entity || []).find(e => e.trip_update?.trip?.trip_id === tripId);
+        if (entity) {
+          const stu = entity.trip_update.stop_time_update?.[0];
+          return stu?.departure?.delay ?? stu?.arrival?.delay ?? 0;
+        }
+      }
+      return 0;
     }
 
     function filterNext3h(departures) {
@@ -1337,6 +1930,36 @@
       try { localStorage.setItem('gtfs-theme', next); } catch (e) {}
       syncThemeToggleLabel();
     }
+
+    // ===== DESKTOP SIDEBAR (collapsible) =====
+    function setSidebarCollapsed(collapsed) {
+      const shell = document.getElementById('app-shell');
+      const btn = document.getElementById('sidebarCollapseBtn');
+      shell.classList.toggle('sidebar-collapsed', collapsed);
+      if (btn) {
+        btn.setAttribute('aria-expanded', String(!collapsed));
+        const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        btn.setAttribute('aria-label', label);
+        btn.title = label;
+      }
+      try { localStorage.setItem('gtfs-sidebar-collapsed', collapsed ? '1' : '0'); } catch (e) {}
+      // Leaflet doesn't observe container resizes on its own; wait for the
+      // width transition to finish, then let it re-measure and redraw tiles.
+      if (map) setTimeout(() => map.invalidateSize({ animate: true }), 340);
+    }
+
+    function toggleSidebarCollapsed() {
+      setSidebarCollapsed(!document.getElementById('app-shell').classList.contains('sidebar-collapsed'));
+    }
+
+    (function initSidebarState() {
+      let collapsed = false;
+      try {
+        const saved = localStorage.getItem('gtfs-sidebar-collapsed');
+        if (saved !== null) collapsed = saved === '1';
+      } catch (e) {}
+      if (collapsed) setSidebarCollapsed(true);
+    })();
 
     // ===== MAP =====
     function initMap() {
@@ -1418,10 +2041,8 @@
       startRTPolling(tripId);
 
       // On mobile: switch to stop tab to show live vehicle info, expand sheet
-      if (isMobile()) {
-        switchTab('m-tab-stop');
-        expandSheet();
-      }
+      switchTab('m-tab-stop');
+      if (isMobile()) expandSheet();
     }
 
     function displayTrip(data) {
@@ -1574,16 +2195,21 @@
     function loadRTStopUpdates(stopId) {
       apiFetch(`/api/rt/stop/${stopId}`)
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then(data => { rtStopCache = {stopId,data,receivedAt:Date.now()}; applyRTtoDepartures(data); })
+        .then(data => { rtStopCache.set(stopId, {data, receivedAt: Date.now()}); applyRTtoDepartures(data); })
         .catch(() => {
-          if (rtStopCache.stopId===stopId && rtStopCache.data && (Date.now()-rtStopCache.receivedAt)<RT_STALE_MS)
-            applyRTtoDepartures(rtStopCache.data);
+          // Fetch failed (or the feed is briefly empty) — keep showing the last
+          // good RT badges for this stop instead of clearing them, for up to
+          // RT_STALE_MS after they were received.
+          const cached = rtStopCache.get(stopId);
+          if (cached && (Date.now() - cached.receivedAt) < RT_STALE_MS)
+            applyRTtoDepartures(cached.data);
         });
     }
 
     function reapplyCachedRT(stopId) {
-      if (rtStopCache.stopId===stopId && rtStopCache.data && (Date.now()-rtStopCache.receivedAt)<RT_STALE_MS)
-        applyRTtoDepartures(rtStopCache.data);
+      const cached = rtStopCache.get(stopId);
+      if (cached && (Date.now() - cached.receivedAt) < RT_STALE_MS)
+        applyRTtoDepartures(cached.data);
     }
 
     function applyRTtoDepartures(data) {
@@ -1597,15 +2223,38 @@
         document.querySelectorAll(`.dep-card[data-trip-id="${tripId}"]`).forEach(card => {
           card.classList.add('rt-live');
           let badge = card.querySelector('.rt-delay-badge');
-          if (!badge) { badge = document.createElement('div'); badge.className = 'rt-delay-badge'; card.appendChild(badge); }
+          if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'rt-delay-badge';
+            (card.querySelector('.dep-badge-slot') || card).appendChild(badge);
+          }
+          let isEarly = false, isLate = false;
           if (delay === null) { badge.textContent='Live'; badge.className='rt-delay-badge rt-live-only'; }
           else if (delay <= 0) {
             const mins = Math.abs(Math.round(delay/60));
-            if (mins > 0) { badge.textContent=`▲ ${mins}m early`; badge.className='rt-delay-badge rt-early'; }
+            if (mins > 0) { badge.textContent=`▲ ${mins}m early`; badge.className='rt-delay-badge rt-early'; isEarly = true; }
             else { badge.textContent='On time'; badge.className='rt-delay-badge rt-ontime'; }
           } else {
             if (delay > 60) { badge.textContent=`▼ ${Math.round(delay/60)}m delay`; badge.className='rt-delay-badge rt-delayed'; }
             else { badge.textContent=`▼ ${delay}s delay`; badge.className='rt-delay-badge rt-delayed'; }
+            isLate = true;
+          }
+
+          // Cross out the scheduled time and show the real (delayed/early) time
+          // whenever RT data indicates an actual, non-zero offset from schedule.
+          const schedEl = card.querySelector('.dep-time-sched');
+          const actualEl = card.querySelector('.dep-time-actual');
+          if (schedEl && actualEl) {
+            if ((isEarly || isLate) && card.dataset.arrival) {
+              const actualSecs = parseTime(card.dataset.arrival) + delay;
+              schedEl.classList.add('dep-time-sched-strike');
+              actualEl.textContent = fmtClockShort(actualSecs);
+              actualEl.className = `dep-time-actual ${isEarly ? 'dep-time-early' : 'dep-time-late'}`;
+            } else {
+              schedEl.classList.remove('dep-time-sched-strike');
+              actualEl.textContent = '';
+              actualEl.className = 'dep-time-actual';
+            }
           }
         });
       });
@@ -1615,20 +2264,38 @@
     function renderDepartureCards(departures, stopId, prefix) {
       const grid = document.getElementById(prefix + 'departuresGrid');
       if (!grid) return;
-      grid.innerHTML = '';
-      departures.forEach(dep => {
-        const card = document.createElement('div');
-        card.className = 'dep-card';
-        card.dataset.tripId = dep.trip_id;
-        const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
-        card.innerHTML = `
-          <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
-          <div class="dep-time" style="line-height:1">${fmtTime(dep.arrival_time)}</div>
-          <div class="dep-trip">Trip ${dep.trip_id}</div>
-        `;
-        card.addEventListener('click', () => loadTrip(dep.trip_id, card));
-        grid.appendChild(card);
-      });
+      // Skip the rebuild (and the resulting flash) when a periodic refresh
+      // produces the exact same set of trips already on screen — only RT
+      // badges need to move in that case, not the whole card list.
+      const tripKey = departures.map(d => d.trip_id).join(',');
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        departures.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card';
+          card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+            </div>
+          `;
+          card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+          grid.appendChild(card);
+        });
+      }
+      updateGridETAs(grid);
       reapplyCachedRT(stopId);
       loadRTStopUpdates(stopId);
     }
@@ -1793,6 +2460,335 @@
         });
     }
 
+    // ===== STOP NAME SEARCH =====
+    let stopSearchRequestId = 0;
+
+    function initStopSearch(inputId, resultsId, onSelect) {
+      onSelect = onSelect || selectStopFromSearch;
+      const input = document.getElementById(inputId);
+      const results = document.getElementById(resultsId);
+      if (!input || !results) return;
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        if (!q) { hideStopSearchResults(results); return; }
+        runStopSearch(q, results, onSelect);
+      });
+
+      input.addEventListener('focus', () => {
+        if (results.childElementCount) results.classList.add('visible');
+      });
+
+      input.addEventListener('blur', () => {
+        // delay so a click on a result registers before the list is hidden
+        setTimeout(() => hideStopSearchResults(results), 150);
+      });
+    }
+
+    function hideStopSearchResults(results) {
+      results.classList.remove('visible');
+    }
+
+    function runStopSearch(query, results, onSelect) {
+      const requestId = ++stopSearchRequestId;
+      apiFetch(`/api/searchstop/${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (requestId !== stopSearchRequestId) return; // superseded by a later keystroke
+          renderStopSearchResults(data.matches || [], results, onSelect);
+        })
+        .catch(() => {
+          if (requestId !== stopSearchRequestId) return;
+          results.innerHTML = '';
+          hideStopSearchResults(results);
+        });
+    }
+
+    function renderStopSearchResults(matches, results, onSelect) {
+      results.innerHTML = '';
+
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'stop-search-empty';
+        empty.textContent = 'No matching stops';
+        results.appendChild(empty);
+        results.classList.add('visible');
+        return;
+      }
+
+      matches.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'stop-search-item';
+
+        const name = document.createElement('span');
+        name.className = 'stop-search-name';
+        name.textContent = m.stop_name;
+
+        const id = document.createElement('span');
+        id.className = 'stop-search-id';
+        id.textContent = `#${m.stop_id}`;
+
+        item.appendChild(name);
+        item.appendChild(id);
+        item.addEventListener('mousedown', e => {
+          e.preventDefault(); // fires before the input's blur handler hides the list
+          onSelect(m, results);
+        });
+        results.appendChild(item);
+      });
+
+      results.classList.add('visible');
+    }
+
+    function selectStopFromSearch(match, results) {
+      hideStopSearchResults(results);
+
+      const date = document.getElementById('dateInput')?.value
+        || document.getElementById('m-dateInput')?.value
+        || todayStr();
+
+      ['stopIdInput', 'm-stopIdInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.stop_id;
+      });
+      ['stopSearchInput', 'm-stopSearchInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.stop_name;
+      });
+
+      loadStop(match.stop_id, date);
+    }
+
+    // ===== SEARCH MULTIPLE STOPS (exact name match) =====
+
+    // Splits "A / B", "A & B", "A and B", "A at B" into segments regardless of
+    // agency naming convention, so "16TH AV / BAYVIEW AV" and "BAYVIEW AV / 16TH AV"
+    // (or any other feed's cross-street ordering) resolve to the same key.
+    const CROSS_STREET_SPLIT_RE = /\s*[\/&@]\s*|\s+AND\s+|\s+AT\s+/i;
+
+    function nameSegments(name) {
+      const norm = name.trim().toUpperCase().replace(/\s+/g, ' ');
+      return norm.split(CROSS_STREET_SPLIT_RE).map(p => p.trim()).filter(Boolean);
+    }
+
+    function canonicalStopKey(name) {
+      const parts = nameSegments(name);
+      if (parts.length < 2) return name.trim().toUpperCase().replace(/\s+/g, ' ');
+      return [...parts].sort().join('|');
+    }
+
+    function mergeCrossStreetsEnabled() {
+      const d = document.getElementById('mergeCrossStreetsToggle');
+      const m = document.getElementById('m-mergeCrossStreetsToggle');
+      if (d) return d.checked;
+      if (m) return m.checked;
+      return true;
+    }
+
+    function selectMultiStopFromSearch(match, results) {
+      hideStopSearchResults(results);
+
+      const date = document.getElementById('dateInput')?.value
+        || document.getElementById('m-dateInput')?.value
+        || todayStr();
+
+      ['multiStopSearchInput', 'm-multiStopSearchInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.stop_name;
+      });
+
+      loadMultiStops(match.stop_name, date);
+    }
+
+    function loadMultiStops(stopName, date, isRefresh) {
+      date = date || todayStr();
+      const requestId = ++multiStopsRequestId;
+      const mergeReversed = mergeCrossStreetsEnabled();
+      const target = mergeReversed ? canonicalStopKey(stopName) : stopName.trim().toUpperCase();
+
+      // The fuzzy search endpoint ranks by literal string similarity, so a
+      // reversed-order duplicate (e.g. "16TH AV / BAYVIEW AV" vs "BAYVIEW AV /
+      // 16TH AV") can score too low to appear in its results at all. When
+      // merging is on, also query the segments in reverse order so both
+      // orderings are guaranteed to be in the candidate pool before filtering.
+      const queries = [stopName];
+      if (mergeReversed) {
+        const segs = nameSegments(stopName);
+        if (segs.length >= 2) queries.push(segs.slice().reverse().join(' / '));
+      }
+
+      Promise.all(queries.map(q => apiFetch(`/api/searchstop/${encodeURIComponent(q)}`).then(r => r.json())))
+        .then(results => {
+          if (requestId !== multiStopsRequestId) return; // superseded by a later search
+          const candidates = new Map();
+          results.forEach(data => (data.matches || []).forEach(m => candidates.set(m.stop_id, m)));
+
+          const exact = [...candidates.values()].filter(m => {
+            const key = mergeReversed ? canonicalStopKey(m.stop_name) : m.stop_name.trim().toUpperCase();
+            return key === target;
+          });
+          if (!exact.length) { if (!isRefresh) showToast('No exact-name matches found.'); return; }
+
+          return Promise.all(exact.map(m => apiFetch(`/api/stop/${m.stop_id}/${date}`).then(r => r.json())))
+            .then(stops => {
+              if (requestId !== multiStopsRequestId) return;
+              displayMultiStops(stopName, stops.filter(s => !s.error), isRefresh);
+            });
+        })
+        .catch(() => { if (requestId === multiStopsRequestId && !isRefresh) showToast('Error searching stops.'); });
+    }
+
+    function clearMultiStopMarkers() {
+      multiStopMarkers.forEach(m => map.removeLayer(m));
+      multiStopMarkers = [];
+    }
+
+    function displayMultiStops(stopName, stops, isRefresh) {
+      if (!stops.length) { if (!isRefresh) showToast('No exact-name matches found.'); return; }
+
+      currentMultiStopName = stopName;
+      currentMultiStopIds = stops.map(s => s.stop_id);
+
+      ['multiStopHeader', 'm-multiStopHeader'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+      });
+
+      const metaTxt = `${stops.length} stop${stops.length !== 1 ? 's' : ''} sharing this name  ·  IDs ${stops.map(s => s.stop_id).join(', ')}`;
+      setVal('multiStopNameDisplay', stopName);
+      setVal('multiStopMetaDisplay', metaTxt);
+      setVal('m-multiStopNameDisplay', stopName);
+      setVal('m-multiStopMetaDisplay', metaTxt);
+
+      allMultiDepartures = [];
+      stops.forEach(s => {
+        (s.departures || []).forEach(dep => {
+          allMultiDepartures.push({ ...dep, _stopId: s.stop_id, _stopLat: s.lat, _stopLon: s.lon });
+        });
+      });
+      allMultiDepartures.sort((a, b) => parseTime(a.arrival_time) - parseTime(b.arrival_time));
+
+      showingAllMultiDeps_d = false; showingNext4MultiDeps_d = false;
+      showingAllMultiDeps_m = false; showingNext4MultiDeps_m = false;
+
+      updateMultiDeparturesView();
+
+      if (isRefresh) return;
+
+      startMultiDepsRefresh();
+
+      clearMultiStopMarkers();
+      multiStopMarkers = stops.map(s => {
+        const m = L.circleMarker([s.lat, s.lon], {
+          color: '#7c5cff', fillColor: '#7c5cff', fillOpacity: 0.75, radius: 8, weight: 2
+        }).addTo(map);
+        m.bindPopup(`<b>${s.stop_name}</b><br>Stop ID: ${s.stop_id}`);
+        return m;
+      });
+
+      const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lon]));
+      map.fitBounds(bounds.pad(0.2));
+
+      switchTab('m-tab-stop');
+      if (isMobile()) expandSheet();
+    }
+
+    function renderMultiDepartureCards(departures, prefix) {
+      const grid = document.getElementById(prefix + 'multiDeparturesGrid');
+      if (!grid) return;
+      // Same no-op-rebuild guard as renderDepartureCards, keyed on trip+stop
+      // since a trip id alone isn't unique across the combined stop group.
+      const tripKey = departures.map(d => `${d.trip_id}@${d._stopId}`).join(',');
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        departures.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card';
+          card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span><span class="dep-time-actual"></span></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+              <div class="dep-stop-tag">Stop #${dep._stopId}</div>
+            </div>
+          `;
+          card.addEventListener('click', () => loadTrip(dep.trip_id, card));
+          grid.appendChild(card);
+        });
+      }
+      updateGridETAs(grid);
+    }
+
+    function updateMultiDeparturesView() {
+      ['d', 'm'].forEach(prefix => {
+        const p = prefix === 'd' ? '' : 'm-';
+        const showAll = prefix === 'd' ? showingAllMultiDeps_d : showingAllMultiDeps_m;
+        const showN4  = prefix === 'd' ? showingNext4MultiDeps_d : showingNext4MultiDeps_m;
+        const btn     = document.getElementById(p + 'showAllMultiDepsBtn');
+        const label   = document.getElementById(p + 'multiDepWindowLabel');
+        const sec     = document.getElementById(p + 'multiDeparturesSection');
+        if (!sec) return;
+        if (showAll) {
+          renderMultiDepartureCards(allMultiDepartures, p);
+          if (btn) btn.textContent = 'Next 3h only';
+          if (label) label.textContent = `${allMultiDepartures.length} departure${allMultiDepartures.length !== 1 ? 's' : ''} total, across all matching stops`;
+        } else if (showN4) {
+          const next4 = filterNext4(allMultiDepartures);
+          renderMultiDepartureCards(next4, p);
+          if (btn) btn.textContent = `Show all ${allMultiDepartures.length}`;
+          if (label) label.textContent = 'Next 4 departures, across all matching stops';
+        } else {
+          const filtered = filterNext3h(allMultiDepartures);
+          renderMultiDepartureCards(filtered, p);
+          if (filtered.length === 0) {
+            if (btn) btn.textContent = `Show all ${allMultiDepartures.length}`;
+            if (label) label.textContent = 'No departures in the next 3 hours';
+          } else {
+            if (btn) btn.textContent = 'Next 4';
+            if (label) label.textContent = `Next 3 hours · ${filtered.length} departure${filtered.length !== 1 ? 's' : ''}, across all matching stops`;
+          }
+        }
+        sec.style.display = 'block';
+      });
+
+      currentMultiStopIds.forEach(id => { reapplyCachedRT(id); loadRTStopUpdates(id); });
+    }
+
+    function cycleMultiDepView(prefix) {
+      if (prefix === 'd') {
+        if (!showingAllMultiDeps_d && !showingNext4MultiDeps_d) { showingNext4MultiDeps_d = true; showingAllMultiDeps_d = false; }
+        else if (showingNext4MultiDeps_d && !showingAllMultiDeps_d) { showingNext4MultiDeps_d = false; showingAllMultiDeps_d = true; }
+        else { showingAllMultiDeps_d = false; showingNext4MultiDeps_d = false; }
+      } else {
+        if (!showingAllMultiDeps_m && !showingNext4MultiDeps_m) { showingNext4MultiDeps_m = true; showingAllMultiDeps_m = false; }
+        else if (showingNext4MultiDeps_m && !showingAllMultiDeps_m) { showingNext4MultiDeps_m = false; showingAllMultiDeps_m = true; }
+        else { showingAllMultiDeps_m = false; showingNext4MultiDeps_m = false; }
+      }
+      if (currentMultiStopName) updateMultiDeparturesView();
+    }
+
+    function startMultiDepsRefresh() {
+      if (multiDepsRefreshId !== null) clearInterval(multiDepsRefreshId);
+      multiDepsRefreshId = setInterval(() => {
+        if (currentMultiStopName) loadMultiStops(currentMultiStopName, document.getElementById('dateInput')?.value || todayStr(), true);
+      }, 15000);
+    }
+
+    function stopMultiDepsRefresh() {
+      if (multiDepsRefreshId !== null) { clearInterval(multiDepsRefreshId); multiDepsRefreshId = null; }
+    }
+
     function startDepsRefresh(stopId) {
       if (depsRefreshId !== null) clearInterval(depsRefreshId);
       depsRefreshId = setInterval(() => { updateDeparturesView(stopId); loadRTStopUpdates(stopId); }, 15000);
@@ -1804,8 +2800,6 @@
 
     function displayStop(data) {
       if (window.stopMarker) map.removeLayer(window.stopMarker);
-      if (rtStopCache.stopId !== data.stop_id)
-        rtStopCache = {stopId:null,data:null,receivedAt:null};
 
       ['stopHeader','m-stopHeader'].forEach(id => {
         const el = document.getElementById(id);
@@ -1835,10 +2829,8 @@
       map.setView([data.lat,data.lon],15);
 
       // On mobile: expand sheet and switch to stop tab
-      if (isMobile()) {
-        switchTab('m-tab-stop');
-        expandSheet();
-      }
+      switchTab('m-tab-stop');
+      if (isMobile()) expandSheet();
     }
 
     // Sync date inputs
@@ -1853,6 +2845,17 @@
       document.getElementById('m-dateInput').value = e.target.value;
       const v = document.getElementById('stopIdInput')?.value.trim();
       if (v) loadStop(v, e.target.value);
+    });
+
+    // Sync "merge reversed cross-streets" toggle, and re-run the active multi-stop
+    // search so flipping it updates results immediately.
+    document.getElementById('mergeCrossStreetsToggle').addEventListener('change', e => {
+      document.getElementById('m-mergeCrossStreetsToggle').checked = e.target.checked;
+      if (currentMultiStopName) loadMultiStops(currentMultiStopName, document.getElementById('dateInput')?.value || todayStr());
+    });
+    document.getElementById('m-mergeCrossStreetsToggle').addEventListener('change', e => {
+      document.getElementById('mergeCrossStreetsToggle').checked = e.target.checked;
+      if (currentMultiStopName) loadMultiStops(currentMultiStopName, document.getElementById('m-dateInput')?.value || todayStr());
     });
 
     // ===== NEAREST STOPS =====
@@ -1885,10 +2888,8 @@
 
     function findNearestStops(lat, lon) {
       // On mobile: switch to Nearby tab and expand sheet immediately
-      if (isMobile()) {
-        switchTab('m-tab-nearby');
-        expandSheet();
-      }
+      switchTab('m-tab-nearby');
+      if (isMobile()) expandSheet();
 
       apiFetch(`/api/nearest/${lat}/${lon}`)
         .then(r => r.json())
@@ -1946,6 +2947,170 @@
         const bounds = L.latLngBounds(data.nearest_stops.map(s => [s.stop_lat,s.stop_lon]));
         map.fitBounds(bounds.pad(0.15));
       }
+    }
+
+    // ===== DEPARTURE BOARD (fullscreen "More" feature) =====
+    // Fetches the 50 nearest stops (sorted by distance), takes up to
+    // BOARD_INNER_MAX within BOARD_INNER_RADIUS_KM, then tops up with up to
+    // BOARD_OUTER_MAX more stops out to BOARD_OUTER_RADIUS_KM — so sparse
+    // areas with few stops nearby still get a reasonably full board — and
+    // shows all their departures as one live, deduped board, re-checking
+    // location and refreshing the data every BOARD_REFRESH_MS.
+    const BOARD_FETCH_LIMIT = 50;
+    const BOARD_INNER_RADIUS_KM = 3;
+    const BOARD_INNER_MAX = 30;
+    const BOARD_OUTER_RADIUS_KM = 8;
+    const BOARD_OUTER_MAX = 20;
+    const BOARD_REFRESH_MS = 15000;
+    let boardOverlayOpen = false;
+    let boardRefreshId = null;
+    let boardLat = null, boardLon = null;
+
+    function openDepartureBoard() {
+      const overlay = document.getElementById('boardOverlay');
+      overlay.style.display = 'flex';
+      boardOverlayOpen = true;
+      document.addEventListener('keydown', onBoardOverlayKeydown);
+      loadDepartureBoardLocation();
+      if (boardRefreshId === null) {
+        boardRefreshId = setInterval(() => { if (boardOverlayOpen) loadDepartureBoardLocation(); }, BOARD_REFRESH_MS);
+      }
+    }
+
+    function closeDepartureBoard() {
+      const overlay = document.getElementById('boardOverlay');
+      overlay.style.display = 'none';
+      boardOverlayOpen = false;
+      document.removeEventListener('keydown', onBoardOverlayKeydown);
+      if (boardRefreshId !== null) { clearInterval(boardRefreshId); boardRefreshId = null; }
+    }
+
+    function onBoardOverlayKeydown(e) {
+      if (e.key === 'Escape') closeDepartureBoard();
+    }
+
+    function loadDepartureBoardLocation() {
+      const sub = document.getElementById('boardOverlaySub');
+      if (!navigator.geolocation) { sub.textContent = 'Geolocation is not supported by this browser.'; return; }
+
+      if (boardLat == null) {
+        const grid = document.getElementById('boardGrid');
+        grid.innerHTML = '';
+        grid.dataset.tripKey = '';
+        sub.textContent = 'Locating you…';
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        boardLat = pos.coords.latitude;
+        boardLon = pos.coords.longitude;
+        fetchDepartureBoard();
+      }, () => { if (boardLat == null) sub.textContent = 'Unable to get your location.'; });
+    }
+
+    function fetchDepartureBoard() {
+      if (boardLat == null || boardLon == null) return;
+      const sub = document.getElementById('boardOverlaySub');
+      sub.textContent = 'Finding nearby stops…';
+
+      apiFetch(`/api/nearest/${boardLat}/${boardLon}?limit=${BOARD_FETCH_LIMIT}`)
+        .then(r => r.json())
+        .then(data => {
+          // nearest_stops is sorted nearest-first: take up to BOARD_INNER_MAX
+          // within the inner radius, then keep adding stops (still sorted by
+          // distance) until BOARD_OUTER_MAX more are added or the outer
+          // radius is exceeded.
+          const all = data.nearest_stops || [];
+          const inner = all.filter(s => s.distanceKM <= BOARD_INNER_RADIUS_KM).slice(0, BOARD_INNER_MAX);
+          const innerIds = new Set(inner.map(s => s.stop_id));
+          const outer = [];
+          for (const s of all) {
+            if (outer.length >= BOARD_OUTER_MAX) break;
+            if (s.distanceKM > BOARD_OUTER_RADIUS_KM) break;
+            if (innerIds.has(s.stop_id)) continue;
+            outer.push(s);
+          }
+          const stops = [...inner, ...outer];
+          if (!stops.length) {
+            sub.textContent = `No stops found within ${BOARD_OUTER_RADIUS_KM} km.`;
+            document.getElementById('boardGrid').innerHTML = '';
+            return;
+          }
+          sub.textContent = `Loading departures from ${stops.length} stop${stops.length !== 1 ? 's' : ''}…`;
+          const date = document.getElementById('dateInput')?.value || todayStr();
+          return Promise.all(stops.map(s => Promise.all([
+            apiFetch(`/api/stop/${s.stop_id}/${date}`).then(r => r.json()),
+            apiFetch(`/api/stopinfo/${s.stop_id}`).then(r => r.json())
+          ]).then(([sd, info]) => ({ ...sd, _distanceKM: s.distanceKM, _stopName: info.stop_name || sd.stop_name, _stopCode: info.stop_code }))
+          )).then(stopDatas => renderDepartureBoard(stopDatas.filter(s => !s.error)));
+        })
+        .catch(() => { sub.textContent = 'Error loading departure board.'; });
+    }
+
+    function renderDepartureBoard(stopDatas) {
+      const grid = document.getElementById('boardGrid');
+      const sub = document.getElementById('boardOverlaySub');
+
+      const combined = [];
+      stopDatas.forEach(s => (s.departures || []).forEach(dep => {
+        combined.push({ ...dep, _stopId: s.stop_id, _stopName: s._stopName, _stopCode: s._stopCode, _distanceKM: s._distanceKM });
+      }));
+
+      // Same trip can serve more than one nearby stop (continuing down the
+      // road) — keep only the occurrence at the stop closest to the user.
+      const byTrip = new Map();
+      combined.forEach(dep => {
+        const existing = byTrip.get(dep.trip_id);
+        if (!existing || dep._distanceKM < existing._distanceKM) byTrip.set(dep.trip_id, dep);
+      });
+
+      // Drop buses that have already departed so the board stays sorted
+      // with the next bus on top and refreshes as buses pass.
+      const now = nowInSeconds();
+      const deduped = [...byTrip.values()]
+        .filter(dep => parseTime(dep.arrival_time) + getRTDelaySeconds(dep.trip_id) >= now)
+        .sort((a, b) =>
+          (parseTime(a.arrival_time) + getRTDelaySeconds(a.trip_id)) -
+          (parseTime(b.arrival_time) + getRTDelaySeconds(b.trip_id))
+        );
+
+      sub.textContent = `${deduped.length} departure${deduped.length !== 1 ? 's' : ''} · within ${BOARD_OUTER_RADIUS_KM} km`;
+
+      const tripKey = deduped.map(d => d.trip_id).join(',');
+      if (grid.dataset.tripKey !== tripKey) {
+        grid.dataset.tripKey = tripKey;
+        grid.innerHTML = '';
+        deduped.forEach(dep => {
+          const card = document.createElement('div');
+          card.className = 'dep-card board-row';
+          card.dataset.tripId = dep.trip_id;
+          card.dataset.arrival = dep.arrival_time;
+          const color = dep.route_color ? `#${dep.route_color}` : 'var(--accent2)';
+          card.innerHTML = `
+            <div class="dep-card-top">
+              <div class="dep-route"><span class="dep-dot" style="background:${color}"></span>${dep.route_id}</div>
+              <div class="dep-badge-slot"></div>
+            </div>
+            <div class="dep-time-row">
+              <div class="dep-time"><span class="dep-time-sched">${fmtTime(dep.arrival_time)}</span></div>
+              <div class="dep-time-actual"></div>
+              <div class="dep-eta" data-arrival="${dep.arrival_time}" data-trip-id="${dep.trip_id}"></div>
+            </div>
+            ${dep.trip_headsign ? `<div class="dep-headsign">${dep.trip_headsign}</div>` : ''}
+            <div class="dep-card-footer">
+              <div class="dep-trip">Trip ${dep.trip_id}</div>
+              <div class="dep-stop-tag">${dep._stopName ? dep._stopName + ' · ' : ''}${dep._stopCode ? 'Stop ' + dep._stopCode + ' · ' : ''}${dep._distanceKM.toFixed(2)} km</div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      if (!deduped.length) {
+        grid.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px">No upcoming departures nearby.</div>`;
+      }
+
+      updateGridETAs(grid);
+      stopDatas.forEach(s => { reapplyCachedRT(s.stop_id); loadRTStopUpdates(s.stop_id); });
     }
 
     // ===== MOBILE SHEET =====
@@ -2023,11 +3188,30 @@
     function switchTab(tabId) {
       document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
+      const sbTabId = { 'm-tab-stop': 'sb-tab-stop', 'm-tab-trip': 'sb-tab-triproute', 'm-tab-route': 'sb-tab-triproute', 'm-tab-nearby': 'sb-tab-discover', 'm-tab-more': 'sb-tab-more' }[tabId];
+      if (sbTabId) switchSidebarTab(sbTabId);
     }
 
     document.querySelectorAll('.m-tab').forEach(tab => {
       tab.addEventListener('click', () => switchTab(tab.dataset.tab));
     });
+
+    // ===== DESKTOP SIDEBAR TABS =====
+    function switchSidebarTab(tabId) {
+      document.querySelectorAll('.sb-tab').forEach(t => t.classList.toggle('active', t.dataset.sbTab === tabId));
+      document.querySelectorAll('.sidebar-section').forEach(p => p.classList.toggle('active', p.id === tabId));
+      try { localStorage.setItem('gtfs-sidebar-tab', tabId); } catch (e) {}
+    }
+
+    document.querySelectorAll('.sb-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchSidebarTab(tab.dataset.sbTab));
+    });
+
+    (function initSidebarTab() {
+      let saved = null;
+      try { saved = localStorage.getItem('gtfs-sidebar-tab'); } catch (e) {}
+      if (saved && document.getElementById(saved)) switchSidebarTab(saved);
+    })();
 
     // ===== KEYBOARD SHORTCUTS (desktop) =====
     document.getElementById('tripIdInput').addEventListener('keypress', e => { if(e.key==='Enter') handleLoadTrip('tripIdInput'); });
@@ -2042,6 +3226,10 @@
     syncThemeToggleLabel();
     document.getElementById('dateInput').value = todayStr();
     document.getElementById('m-dateInput').value = todayStr();
+    initStopSearch('stopSearchInput', 'stopSearchResults');
+    initStopSearch('m-stopSearchInput', 'm-stopSearchResults');
+    initStopSearch('multiStopSearchInput', 'multiStopSearchResults', selectMultiStopFromSearch);
+    initStopSearch('m-multiStopSearchInput', 'm-multiStopSearchResults', selectMultiStopFromSearch);
   </script>
 </body>
 </html>
