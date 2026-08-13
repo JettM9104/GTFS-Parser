@@ -126,10 +126,16 @@ def seconds_until_next_interval():
 
 
 def main():
+    print("program start")
     while True:
+        print("sleeping now")
         time.sleep(15)
+
+        print("done sleeping")
         try:
+            print("running")
             run_once()
+            print("done running")
         except Exception as e:
             print(f"Error during collection cycle: {e}")
 
