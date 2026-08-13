@@ -117,7 +117,7 @@ def run_once():
     rows = extract_trip_rows(weather)
     append_to_csv(rows)
     timestamp = rows[0]["timestamp"] if rows else "n/a"
-    print(f"Appended {len(rows)} rows to {TABLE_CSV.name} (timestamp: {timestamp})", flush=True)
+    print(f"Appended {len(rows)} rows to {TABLE_CSV.name} (timestamp: {timestamp})")
 
 
 def seconds_until_next_interval():
@@ -126,16 +126,10 @@ def seconds_until_next_interval():
 
 
 def main():
-    print("program start")
     while True:
-        print("sleeping now")
-        time.sleep(15)
-
-        print("done sleeping")
+        time.sleep(seconds_until_next_interval())
         try:
-            print("running")
             run_once()
-            print("done running")
         except Exception as e:
             print(f"Error during collection cycle: {e}")
 
