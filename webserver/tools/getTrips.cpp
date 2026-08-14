@@ -60,7 +60,12 @@ int main(int argc, char* argv[]) {
     cout << "{\n\t\"query_route_id\": \"" << argv[1] << "\",\n\t\"trips\": [\n";
     for (int i = 0; i < x.size(); i++) {
         trip x_a = x[i];
-        cout << "\t\t\"" << x_a.trip_id << ((i == (x.size() - 1) ) ? "\"" : "\",") << endl;
+        vector<trip_segment> segments = getAllStops(x_a.trip_id);
+        string first_departure = segments.empty() ? "" : segments[0].stop.departure_time.leadingRoundedTime();
+        cout << "\t\t{ \"trip_id\": \"" << x_a.trip_id <<
+                "\", \"trip_headsign\": \"" << x_a.trip_headsign <<
+                "\", \"departure_time\": \"" << first_departure << "\" }" <<
+                ((i == (x.size() - 1)) ? "\n" : ",\n");
     }
     cout << "\t]\n}\n";
 

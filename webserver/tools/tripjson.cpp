@@ -50,10 +50,11 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < length; i++) {
         gtfs::stop x = stops[i];
         gtfs::trip_segment y = tripSegments[i];
-        std::cout << "\t\t{ \"lat\": " << x.stop_lat << 
-                ", \"lng\": " << x.stop_lon << 
-                ", \"code\": \""<< x.stop_code << 
-                "\", \"id\": \"" << x.stop_id << 
+        std::cout << "\t\t{ \"lat\": " << x.stop_lat <<
+                ", \"lng\": " << x.stop_lon <<
+                ", \"code\": \""<< x.stop_code <<
+                "\", \"id\": \"" << x.stop_id <<
+                "\", \"name\": \"" << x.stop_name <<
                 "\", \"time\": \"" << y.stop.arrival_time.leadingRoundedTime() << "\"" <<
                 ", \"stop_sequence\": " << y.stop.stop_sequence <<
                 (i == (length - 1) ? " }\n" : " },\n");

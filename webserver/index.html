@@ -685,7 +685,7 @@
       flex-direction: column;
       gap: 6px;
       /* extras scroll instead of pushing the rest of the panel down */
-      max-height: 420px;
+      max-height: 560px;
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-width: thin;
@@ -1017,6 +1017,37 @@
       white-space: nowrap;
     }
 
+    .trip-stops-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 9px;
+      font-size: 12.5px;
+    }
+    .trip-stops-table th, .trip-stops-table td {
+      padding: 5px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .trip-stops-table th {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .trip-stops-table td:last-child, .trip-stops-table th:last-child {
+      font-family: var(--font-mono);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .trip-stops-table tbody tr:hover { background: var(--surface2); }
+    .trip-stops-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+    }
+
     .rt-badge {
       display: inline-block;
       padding: 3px 9px;
@@ -1152,6 +1183,22 @@
       font-size: 12px;
       color: var(--text);
       font-family: var(--font-mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rt-trip-departure {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+    .rt-trip-headsign {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1735,6 +1782,25 @@
     </div>
   </div>
 
+  <!-- ===== TRIP STOPS (fullscreen) ===== -->
+  <div id="tripStopsOverlay" class="nearby-overlay" style="display:none">
+    <div class="nearby-overlay-header">
+      <div class="nearby-overlay-title">
+        <div class="section-title" style="margin-bottom:0">Stop list</div>
+        <div class="nearby-overlay-sub" id="tripStopsOverlaySub"></div>
+      </div>
+      <button class="secondary" onclick="closeTripStops()" aria-label="Close">Close <span class="nearby-overlay-esc">Esc</span></button>
+    </div>
+    <div class="nearby-overlay-body">
+      <table class="trip-stops-table">
+        <thead>
+          <tr><th>Stop name</th><th>Stop code</th><th>Time</th></tr>
+        </thead>
+        <tbody id="tripStopsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ===== DEPARTURE BOARD (fullscreen) ===== -->
   <div id="boardOverlay" class="nearby-overlay" style="display:none">
     <div class="nearby-overlay-header">
@@ -1789,6 +1855,10 @@
     let currentMultiStopIds = [];
 
     // ===== UTILS =====
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
     function todayStr() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -2053,11 +2123,14 @@
       if (polyline) map.removeLayer(polyline);
       if (window._dirArrows) { window._dirArrows.forEach(m => map.removeLayer(m)); window._dirArrows = []; }
 
+      tripStopsData = data.stops || [];
+
       const html = `
         <div class="section-title">Trip details</div>
         <div class="rt-row"><span class="rt-label">Trip ID</span><span class="rt-val">${data.trip_id}</span></div>
         <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val">${data.route_short_name} — ${data.route_long_name}</span></div>
         <div class="rt-row"><span class="rt-label">Stops</span><span class="rt-val">${data.total}</span></div>
+        <button class="secondary" style="width:100%;margin-top:9px" onclick="openTripStops('${data.trip_id}')">View stop list</button>
       `;
       document.getElementById('tripInfo').innerHTML = html;
       document.getElementById('m-tripInfo').innerHTML = html;
@@ -2420,11 +2493,16 @@
       const start = page * ROUTE_TRIPS_PAGE_SIZE;
       const pageTrips = trips.slice(start, start + ROUTE_TRIPS_PAGE_SIZE);
 
-      pageTrips.forEach(tripId => {
+      pageTrips.forEach(t => {
+        const tripId = typeof t === 'string' ? t : t.trip_id;
         const card = document.createElement('div');
         card.className = 'rt-trip-card';
         card.dataset.tripId = tripId;
-        card.innerHTML = `<div class="rt-trip-id">${tripId}</div>`;
+        card.innerHTML = `
+          <div class="rt-trip-id">${escapeHtml(tripId)}</div>
+          ${t.trip_headsign ? `<div class="rt-trip-headsign">${escapeHtml(t.trip_headsign)}</div>` : ''}
+          ${t.departure_time ? `<div class="rt-trip-departure">${escapeHtml(t.departure_time)}</div>` : ''}
+        `;
         card.addEventListener('click', () => loadTrip(tripId, card));
         grid.appendChild(card);
       });
@@ -2989,6 +3067,32 @@
 
     function onBoardOverlayKeydown(e) {
       if (e.key === 'Escape') closeDepartureBoard();
+    }
+
+    // ===== TRIP STOPS OVERLAY =====
+    let tripStopsData = [];
+
+    function openTripStops(tripId) {
+      const overlay = document.getElementById('tripStopsOverlay');
+      document.getElementById('tripStopsOverlaySub').textContent = `Trip ${tripId} · ${tripStopsData.length} stops`;
+      document.getElementById('tripStopsTableBody').innerHTML = tripStopsData.map(stop => `
+        <tr>
+          <td>${escapeHtml(stop.name)}</td>
+          <td>${escapeHtml(stop.code)}</td>
+          <td>${escapeHtml(stop.time)}</td>
+        </tr>
+      `).join('');
+      overlay.style.display = 'flex';
+      document.addEventListener('keydown', onTripStopsOverlayKeydown);
+    }
+
+    function closeTripStops() {
+      document.getElementById('tripStopsOverlay').style.display = 'none';
+      document.removeEventListener('keydown', onTripStopsOverlayKeydown);
+    }
+
+    function onTripStopsOverlayKeydown(e) {
+      if (e.key === 'Escape') closeTripStops();
     }
 
     function loadDepartureBoardLocation() {
