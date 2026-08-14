@@ -58,6 +58,19 @@ def search_stop(query):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/searchroute/<path:query>')
+def search_route(query):
+    try:
+        result = subprocess.run(['./tools/searchroute', query, '-t', '50'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': result.stderr}), 500
+        data = json.loads(result.stdout)
+        if not data:
+            return jsonify(data), 422
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/nearest/<lat>/<lon>')
 def get_nearest_stops(lat, lon):
     try:

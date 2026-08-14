@@ -1542,9 +1542,19 @@
 
         <div class="panel">
           <div class="panel-heading">Route lookup</div>
-          <div class="input-group">
-            <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Route ID" />
-            <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+
+          <div class="field-block stop-search-wrap">
+            <label class="input-row-label" for="routeSearchInput">Search by number or name</label>
+            <input type="text" id="routeSearchInput" placeholder="e.g. 512 or Finch" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search routes by number or name" />
+            <div class="stop-search-results" id="routeSearchResults"></div>
+          </div>
+
+          <div class="field-block">
+            <label class="input-row-label" for="routeIdInput">Or by route ID</label>
+            <div class="input-group">
+              <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Route ID" />
+              <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+            </div>
           </div>
         </div>
 
@@ -1728,8 +1738,14 @@
 
       <!-- ROUTE TAB -->
       <div class="tab-panel" id="m-tab-route">
+        <div class="field-block stop-search-wrap">
+          <label class="input-row-label" for="m-routeSearchInput">Search by number or name</label>
+          <input type="text" id="m-routeSearchInput" placeholder="e.g. 512 or Finch" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          <div class="stop-search-results" id="m-routeSearchResults"></div>
+        </div>
+
         <div class="field-block">
-          <label class="input-row-label" for="m-routeIdInput">Route</label>
+          <label class="input-row-label" for="m-routeIdInput">Or by route ID</label>
           <div class="input-group">
             <input type="text" id="m-routeIdInput" placeholder="Route ID" autocapitalize="off" autocorrect="off" spellcheck="false" />
             <button class="primary" onclick="handleLoadRoute('m-routeIdInput','m-dateInput')">Search route</button>
@@ -2599,6 +2615,97 @@
       loadStop(match.stop_id, date);
     }
 
+    // ===== ROUTE NUMBER/NAME SEARCH =====
+    let routeSearchRequestId = 0;
+
+    function initRouteSearch(inputId, resultsId, dateInputId) {
+      const input = document.getElementById(inputId);
+      const results = document.getElementById(resultsId);
+      if (!input || !results) return;
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        if (!q) { hideStopSearchResults(results); return; }
+        runRouteSearch(q, results, dateInputId);
+      });
+
+      input.addEventListener('focus', () => {
+        if (results.childElementCount) results.classList.add('visible');
+      });
+
+      input.addEventListener('blur', () => {
+        setTimeout(() => hideStopSearchResults(results), 150);
+      });
+    }
+
+    function runRouteSearch(query, results, dateInputId) {
+      const requestId = ++routeSearchRequestId;
+      fetch(`/api/searchroute/${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (requestId !== routeSearchRequestId) return; // superseded by a later keystroke
+          renderRouteSearchResults(data.matches || [], results, dateInputId);
+        })
+        .catch(() => {
+          if (requestId !== routeSearchRequestId) return;
+          results.innerHTML = '';
+          hideStopSearchResults(results);
+        });
+    }
+
+    function renderRouteSearchResults(matches, results, dateInputId) {
+      results.innerHTML = '';
+
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'stop-search-empty';
+        empty.textContent = 'No matching routes';
+        results.appendChild(empty);
+        results.classList.add('visible');
+        return;
+      }
+
+      matches.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'stop-search-item';
+
+        const name = document.createElement('span');
+        name.className = 'stop-search-name';
+        name.textContent = m.route_short_name ? `${m.route_short_name} — ${m.route_long_name}` : m.route_long_name;
+
+        const id = document.createElement('span');
+        id.className = 'stop-search-id';
+        id.textContent = `#${m.route_id}`;
+
+        item.appendChild(name);
+        item.appendChild(id);
+        item.addEventListener('mousedown', e => {
+          e.preventDefault(); // fires before the input's blur handler hides the list
+          selectRouteFromSearch(m, results, dateInputId);
+        });
+        results.appendChild(item);
+      });
+
+      results.classList.add('visible');
+    }
+
+    function selectRouteFromSearch(match, results, dateInputId) {
+      hideStopSearchResults(results);
+
+      const date = document.getElementById(dateInputId)?.value || todayStr();
+
+      ['routeIdInput', 'm-routeIdInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.route_id;
+      });
+      ['routeSearchInput', 'm-routeSearchInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.route_short_name ? `${match.route_short_name} — ${match.route_long_name}` : match.route_long_name;
+      });
+
+      loadRouteTrips(match.route_id, date);
+    }
+
     // ===== SEARCH MULTIPLE STOPS (exact name match) =====
 
     // Splits "A / B", "A & B", "A and B", "A at B" into segments regardless of
@@ -3296,6 +3403,8 @@
     initStopSearch('m-stopSearchInput', 'm-stopSearchResults');
     initStopSearch('multiStopSearchInput', 'multiStopSearchResults', selectMultiStopFromSearch);
     initStopSearch('m-multiStopSearchInput', 'm-multiStopSearchResults', selectMultiStopFromSearch);
+    initRouteSearch('routeSearchInput', 'routeSearchResults', 'dateInput');
+    initRouteSearch('m-routeSearchInput', 'm-routeSearchResults', 'm-dateInput');
   </script>
 </body>
 </html>

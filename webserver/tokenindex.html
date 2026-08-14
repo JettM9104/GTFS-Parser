@@ -243,7 +243,7 @@
 
     .theme-toggle-btn {
       flex-shrink: 0;
-      padding: 6px 12px;
+      padding: 8px 12px;
       font-size: 12.5px;
     }
 
@@ -288,11 +288,12 @@
     .toggle-row {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       font-size: 11px;
       color: var(--text-muted);
       cursor: pointer;
       user-select: none;
+      padding: 4px 0;
     }
     .toggle-row input[type="checkbox"] {
       accent-color: var(--accent);
@@ -406,10 +407,10 @@
     #mobile-sheet-body {
       flex: 1;
       overflow-y: auto;
-      padding: 4px 14px 16px;
+      padding: 4px 16px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
     }
@@ -428,8 +429,8 @@
     #mobile-tabs::-webkit-scrollbar { display: none; }
 
     .m-tab {
-      padding: 9px 13px 8px;
-      font-size: 13.5px;
+      padding: 12px 14px 11px;
+      font-size: 14px;
       font-weight: 600;
       font-family: var(--font-body);
       color: var(--text-dim);
@@ -684,7 +685,7 @@
       flex-direction: column;
       gap: 6px;
       /* extras scroll instead of pushing the rest of the panel down */
-      max-height: 420px;
+      max-height: 560px;
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-width: thin;
@@ -1016,6 +1017,37 @@
       white-space: nowrap;
     }
 
+    .trip-stops-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 9px;
+      font-size: 12.5px;
+    }
+    .trip-stops-table th, .trip-stops-table td {
+      padding: 5px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .trip-stops-table th {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .trip-stops-table td:last-child, .trip-stops-table th:last-child {
+      font-family: var(--font-mono);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .trip-stops-table tbody tr:hover { background: var(--surface2); }
+    .trip-stops-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+    }
+
     .rt-badge {
       display: inline-block;
       padding: 3px 9px;
@@ -1156,6 +1188,22 @@
       text-overflow: ellipsis;
     }
 
+    .rt-trip-departure {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+    .rt-trip-headsign {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .route-trips-error {
       font-size: 13px;
       color: var(--negative);
@@ -1173,6 +1221,17 @@
       #map-controls { display: flex; bottom: calc(116px + var(--safe-bottom)); }
 
       .leaflet-control-zoom { display: none; }
+
+      button { padding: 11px 14px; }
+      input[type="text"], input[type="date"], select { padding: 11px 12px; }
+      .pagination-btn { padding: 10px 14px; }
+      .show-all-deps-btn { padding: 8px 12px; }
+
+      .nearby-overlay-esc { display: none; }
+    }
+
+    @media (max-width: 400px) {
+      .route-trips-grid { grid-template-columns: 1fr; }
     }
 
     @media (min-width: 641px) {
@@ -1382,14 +1441,14 @@
 
           <div class="field-block stop-search-wrap">
             <label class="input-row-label" for="stopSearchInput">Search by name</label>
-            <input type="text" id="stopSearchInput" placeholder="e.g. Main St" autocomplete="off" aria-label="Search stops by name" />
+            <input type="text" id="stopSearchInput" placeholder="e.g. Main St" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search stops by name" />
             <div class="stop-search-results" id="stopSearchResults"></div>
           </div>
 
           <div class="field-block">
             <label class="input-row-label" for="stopIdInput">Or by stop ID</label>
             <div class="input-group">
-              <input type="text" id="stopIdInput" placeholder="Stop ID, e.g. 4901" aria-label="Stop ID" />
+              <input type="text" id="stopIdInput" placeholder="Stop ID, e.g. 4901" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Stop ID" />
               <button class="primary" onclick="handleLoadStop('stopIdInput','dateInput')">Load stop</button>
             </div>
           </div>
@@ -1428,7 +1487,7 @@
 
           <div class="field-block stop-search-wrap">
             <label class="input-row-label" for="multiStopSearchInput">Search by name (all stops with this exact name)</label>
-            <input type="text" id="multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" aria-label="Search multiple stops by name" />
+            <input type="text" id="multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search multiple stops by name" />
             <div class="stop-search-results" id="multiStopSearchResults"></div>
           </div>
         </div>
@@ -1476,16 +1535,26 @@
         <div class="panel">
           <div class="panel-heading">Trip lookup</div>
           <div class="input-group">
-            <input type="text" id="tripIdInput" placeholder="Trip ID, e.g. 40928123" aria-label="Trip ID" />
+            <input type="text" id="tripIdInput" placeholder="Trip ID, e.g. 40928123" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Trip ID" />
             <button class="primary" onclick="handleLoadTrip('tripIdInput')">Load trip</button>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-heading">Route lookup</div>
-          <div class="input-group">
-            <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" aria-label="Route ID" />
-            <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+
+          <div class="field-block stop-search-wrap">
+            <label class="input-row-label" for="routeSearchInput">Search by number or name</label>
+            <input type="text" id="routeSearchInput" placeholder="e.g. 512 or Finch" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search routes by number or name" />
+            <div class="stop-search-results" id="routeSearchResults"></div>
+          </div>
+
+          <div class="field-block">
+            <label class="input-row-label" for="routeIdInput">Or by route ID</label>
+            <div class="input-group">
+              <input type="text" id="routeIdInput" placeholder="Route ID, e.g. 512" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Route ID" />
+              <button class="primary" onclick="handleLoadRoute('routeIdInput','dateInput')">Search route</button>
+            </div>
           </div>
         </div>
 
@@ -1496,11 +1565,6 @@
           </div>
           <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
           <div class="route-trips-grid" id="routeTripsGrid"></div>
-          <div class="pagination" id="routeTripsPagination" style="display:none">
-            <button class="pagination-btn" id="routeTripsPrevBtn" onclick="changeRouteTripsPage('', -1)">Previous</button>
-            <span class="pagination-status" id="routeTripsPageLabel"></span>
-            <button class="pagination-btn" id="routeTripsNextBtn" onclick="changeRouteTripsPage('', 1)">Next</button>
-          </div>
         </div>
       </div>
 
@@ -1508,8 +1572,8 @@
         <div class="panel">
           <div class="panel-heading">Nearby stops</div>
           <div class="input-group" role="group" aria-label="Coordinates">
-            <input type="text" id="latInput" placeholder="Latitude" aria-label="Latitude" />
-            <input type="text" id="lonInput" placeholder="Longitude" aria-label="Longitude" />
+            <input type="text" id="latInput" inputmode="decimal" placeholder="Latitude" aria-label="Latitude" />
+            <input type="text" id="lonInput" inputmode="decimal" placeholder="Longitude" aria-label="Longitude" />
           </div>
           <div class="input-group">
             <button class="secondary" style="flex:1" onclick="handleFindNearest('latInput','lonInput')">Search nearby</button>
@@ -1577,14 +1641,14 @@
       <div class="tab-panel active" id="m-tab-stop">
         <div class="field-block stop-search-wrap">
           <label class="input-row-label" for="m-stopSearchInput">Search by name</label>
-          <input type="text" id="m-stopSearchInput" placeholder="e.g. Main St" autocomplete="off" aria-label="Search stops by name" />
+          <input type="text" id="m-stopSearchInput" placeholder="e.g. Main St" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search stops by name" />
           <div class="stop-search-results" id="m-stopSearchResults"></div>
         </div>
 
         <div class="field-block">
           <label class="input-row-label" for="m-stopIdInput">Or by stop ID</label>
           <div class="input-group">
-            <input type="text" id="m-stopIdInput" placeholder="Stop ID" />
+            <input type="text" id="m-stopIdInput" placeholder="Stop ID" autocapitalize="off" autocorrect="off" spellcheck="false" />
             <button class="primary" onclick="handleLoadStop('m-stopIdInput','m-dateInput')">Load stop</button>
           </div>
         </div>
@@ -1618,7 +1682,7 @@
               Merge reversed
             </label>
           </div>
-          <input type="text" id="m-multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" aria-label="Search multiple stops by name" />
+          <input type="text" id="m-multiStopSearchInput" placeholder="e.g. Bayview Ave / 16th Ave" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search multiple stops by name" />
           <div class="stop-search-results" id="m-multiStopSearchResults"></div>
         </div>
 
@@ -1666,7 +1730,7 @@
         <div class="field-block">
           <label class="input-row-label" for="m-tripIdInput">Trip</label>
           <div class="input-group">
-            <input type="text" id="m-tripIdInput" placeholder="Trip ID" />
+            <input type="text" id="m-tripIdInput" placeholder="Trip ID" autocapitalize="off" autocorrect="off" spellcheck="false" />
             <button class="primary" onclick="handleLoadTrip('m-tripIdInput')">Load trip</button>
           </div>
         </div>
@@ -1674,10 +1738,16 @@
 
       <!-- ROUTE TAB -->
       <div class="tab-panel" id="m-tab-route">
+        <div class="field-block stop-search-wrap">
+          <label class="input-row-label" for="m-routeSearchInput">Search by number or name</label>
+          <input type="text" id="m-routeSearchInput" placeholder="e.g. 512 or Finch" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          <div class="stop-search-results" id="m-routeSearchResults"></div>
+        </div>
+
         <div class="field-block">
-          <label class="input-row-label" for="m-routeIdInput">Route</label>
+          <label class="input-row-label" for="m-routeIdInput">Or by route ID</label>
           <div class="input-group">
-            <input type="text" id="m-routeIdInput" placeholder="Route ID" />
+            <input type="text" id="m-routeIdInput" placeholder="Route ID" autocapitalize="off" autocorrect="off" spellcheck="false" />
             <button class="primary" onclick="handleLoadRoute('m-routeIdInput','m-dateInput')">Search route</button>
           </div>
         </div>
@@ -1689,11 +1759,6 @@
           </div>
           <div class="route-trips-error" id="m-routeTripsError" style="display:none"></div>
           <div class="route-trips-grid" id="m-routeTripsGrid"></div>
-          <div class="pagination" id="m-routeTripsPagination" style="display:none">
-            <button class="pagination-btn" id="m-routeTripsPrevBtn" onclick="changeRouteTripsPage('m-', -1)">Previous</button>
-            <span class="pagination-status" id="m-routeTripsPageLabel"></span>
-            <button class="pagination-btn" id="m-routeTripsNextBtn" onclick="changeRouteTripsPage('m-', 1)">Next</button>
-          </div>
         </div>
       </div>
 
@@ -1702,8 +1767,8 @@
         <div class="field-block">
           <div class="input-row-label" id="m-findNearestLabel">Coordinates</div>
           <div class="input-group" style="flex-direction:column" role="group" aria-labelledby="m-findNearestLabel">
-            <input type="text" id="m-latInput" placeholder="Latitude" aria-label="Latitude" />
-            <input type="text" id="m-lonInput" placeholder="Longitude" aria-label="Longitude" />
+            <input type="text" id="m-latInput" inputmode="decimal" placeholder="Latitude" aria-label="Latitude" />
+            <input type="text" id="m-lonInput" inputmode="decimal" placeholder="Longitude" aria-label="Longitude" />
           </div>
           <div class="input-group" style="margin-top:5px">
             <button class="secondary" style="flex:1" onclick="handleFindNearest('m-latInput','m-lonInput')">Search nearby</button>
@@ -1720,6 +1785,25 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ===== TRIP STOPS (fullscreen) ===== -->
+  <div id="tripStopsOverlay" class="nearby-overlay" style="display:none">
+    <div class="nearby-overlay-header">
+      <div class="nearby-overlay-title">
+        <div class="section-title" style="margin-bottom:0">Stop list</div>
+        <div class="nearby-overlay-sub" id="tripStopsOverlaySub"></div>
+      </div>
+      <button class="secondary" onclick="closeTripStops()" aria-label="Close">Close <span class="nearby-overlay-esc">Esc</span></button>
+    </div>
+    <div class="nearby-overlay-body">
+      <table class="trip-stops-table">
+        <thead>
+          <tr><th>Stop name</th><th>Stop code</th><th>Time</th></tr>
+        </thead>
+        <tbody id="tripStopsTableBody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1777,6 +1861,9 @@
     let currentMultiStopIds = [];
 
     // ===== UTILS =====
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
     const token = new URLSearchParams(window.location.search).get('token');
 
     function apiFetch(url, options = {}) {
@@ -1785,6 +1872,7 @@
         headers: { ...options.headers, 'X-Auth-Token': token }
         });
     }
+
 
 
     function todayStr() {
@@ -2051,11 +2139,14 @@
       if (polyline) map.removeLayer(polyline);
       if (window._dirArrows) { window._dirArrows.forEach(m => map.removeLayer(m)); window._dirArrows = []; }
 
+      tripStopsData = data.stops || [];
+
       const html = `
         <div class="section-title">Trip details</div>
         <div class="rt-row"><span class="rt-label">Trip ID</span><span class="rt-val">${data.trip_id}</span></div>
         <div class="rt-row"><span class="rt-label">Route</span><span class="rt-val">${data.route_short_name} — ${data.route_long_name}</span></div>
         <div class="rt-row"><span class="rt-label">Stops</span><span class="rt-val">${data.total}</span></div>
+        <button class="secondary" style="width:100%;margin-top:9px" onclick="openTripStops('${data.trip_id}')">View stop list</button>
       `;
       document.getElementById('tripInfo').innerHTML = html;
       document.getElementById('m-tripInfo').innerHTML = html;
@@ -2354,9 +2445,7 @@
       loadRouteTrips(v, dateVal);
     }
 
-    const ROUTE_TRIPS_PAGE_SIZE = 8;
     let currentRouteTrips = [];
-    let routeTripsPage = { '': 0, 'm-': 0 };
 
     function loadRouteTrips(routeId, dateVal) {
       const [year,month,day] = (dateVal || todayStr()).split('-');
@@ -2365,12 +2454,10 @@
         const grid    = document.getElementById(p + 'routeTripsGrid');
         const errEl   = document.getElementById(p + 'routeTripsError');
         const countEl = document.getElementById(p + 'routeTripsCount');
-        const pager   = document.getElementById(p + 'routeTripsPagination');
         if (!section) return;
         if (grid) grid.innerHTML = '';
         if (errEl) errEl.style.display = 'none';
         if (countEl) countEl.textContent = 'Loading…';
-        if (pager) pager.style.display = 'none';
         section.style.display = 'flex';
       });
 
@@ -2389,7 +2476,6 @@
 
     function renderRouteTrips(data, routeId) {
       currentRouteTrips = Array.isArray(data) ? data : (data.trips||[]);
-      routeTripsPage = { '': 0, 'm-': 0 };
       ['','m-'].forEach(p => renderRouteTripsPage(p));
     }
 
@@ -2397,10 +2483,6 @@
       const trips  = currentRouteTrips;
       const grid    = document.getElementById(prefix + 'routeTripsGrid');
       const countEl = document.getElementById(prefix + 'routeTripsCount');
-      const pager   = document.getElementById(prefix + 'routeTripsPagination');
-      const prevBtn = document.getElementById(prefix + 'routeTripsPrevBtn');
-      const nextBtn = document.getElementById(prefix + 'routeTripsNextBtn');
-      const pageLbl = document.getElementById(prefix + 'routeTripsPageLabel');
       if (!grid) return;
 
       grid.innerHTML = '';
@@ -2408,38 +2490,22 @@
 
       if (trips.length === 0) {
         grid.innerHTML = `<div style="font-size:13px;color:var(--text-muted);grid-column:1/-1;padding:4px 0">No trips found for this date.</div>`;
-        if (pager) pager.style.display = 'none';
         return;
       }
 
-      const pageCount = Math.ceil(trips.length / ROUTE_TRIPS_PAGE_SIZE);
-      const page = Math.min(routeTripsPage[prefix] || 0, pageCount - 1);
-      routeTripsPage[prefix] = page;
-      const start = page * ROUTE_TRIPS_PAGE_SIZE;
-      const pageTrips = trips.slice(start, start + ROUTE_TRIPS_PAGE_SIZE);
-
-      pageTrips.forEach(tripId => {
+      trips.forEach(t => {
+        const tripId = typeof t === 'string' ? t : t.trip_id;
         const card = document.createElement('div');
         card.className = 'rt-trip-card';
         card.dataset.tripId = tripId;
-        card.innerHTML = `<div class="rt-trip-id">${tripId}</div>`;
+        card.innerHTML = `
+          <div class="rt-trip-id">${escapeHtml(tripId)}</div>
+          ${t.trip_headsign ? `<div class="rt-trip-headsign">${escapeHtml(t.trip_headsign)}</div>` : ''}
+          ${t.departure_time ? `<div class="rt-trip-departure">${escapeHtml(t.departure_time)}</div>` : ''}
+        `;
         card.addEventListener('click', () => loadTrip(tripId, card));
         grid.appendChild(card);
       });
-
-      if (pager) {
-        pager.style.display = pageCount > 1 ? 'flex' : 'none';
-        if (prevBtn) prevBtn.disabled = page === 0;
-        if (nextBtn) nextBtn.disabled = page >= pageCount - 1;
-        if (pageLbl) pageLbl.textContent = `Page ${page + 1} of ${pageCount}`;
-      }
-    }
-
-    function changeRouteTripsPage(prefix, delta) {
-      const pageCount = Math.ceil(currentRouteTrips.length / ROUTE_TRIPS_PAGE_SIZE);
-      const next = Math.max(0, Math.min((routeTripsPage[prefix] || 0) + delta, pageCount - 1));
-      routeTripsPage[prefix] = next;
-      renderRouteTripsPage(prefix);
     }
 
     // ===== STOP =====
@@ -2557,6 +2623,97 @@
       });
 
       loadStop(match.stop_id, date);
+    }
+
+    // ===== ROUTE NUMBER/NAME SEARCH =====
+    let routeSearchRequestId = 0;
+
+    function initRouteSearch(inputId, resultsId, dateInputId) {
+      const input = document.getElementById(inputId);
+      const results = document.getElementById(resultsId);
+      if (!input || !results) return;
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        if (!q) { hideStopSearchResults(results); return; }
+        runRouteSearch(q, results, dateInputId);
+      });
+
+      input.addEventListener('focus', () => {
+        if (results.childElementCount) results.classList.add('visible');
+      });
+
+      input.addEventListener('blur', () => {
+        setTimeout(() => hideStopSearchResults(results), 150);
+      });
+    }
+
+    function runRouteSearch(query, results, dateInputId) {
+      const requestId = ++routeSearchRequestId;
+      apiFetch(`/api/searchroute/${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (requestId !== routeSearchRequestId) return; // superseded by a later keystroke
+          renderRouteSearchResults(data.matches || [], results, dateInputId);
+        })
+        .catch(() => {
+          if (requestId !== routeSearchRequestId) return;
+          results.innerHTML = '';
+          hideStopSearchResults(results);
+        });
+    }
+
+    function renderRouteSearchResults(matches, results, dateInputId) {
+      results.innerHTML = '';
+
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'stop-search-empty';
+        empty.textContent = 'No matching routes';
+        results.appendChild(empty);
+        results.classList.add('visible');
+        return;
+      }
+
+      matches.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'stop-search-item';
+
+        const name = document.createElement('span');
+        name.className = 'stop-search-name';
+        name.textContent = m.route_short_name ? `${m.route_short_name} — ${m.route_long_name}` : m.route_long_name;
+
+        const id = document.createElement('span');
+        id.className = 'stop-search-id';
+        id.textContent = `#${m.route_id}`;
+
+        item.appendChild(name);
+        item.appendChild(id);
+        item.addEventListener('mousedown', e => {
+          e.preventDefault(); // fires before the input's blur handler hides the list
+          selectRouteFromSearch(m, results, dateInputId);
+        });
+        results.appendChild(item);
+      });
+
+      results.classList.add('visible');
+    }
+
+    function selectRouteFromSearch(match, results, dateInputId) {
+      hideStopSearchResults(results);
+
+      const date = document.getElementById(dateInputId)?.value || todayStr();
+
+      ['routeIdInput', 'm-routeIdInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.route_id;
+      });
+      ['routeSearchInput', 'm-routeSearchInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = match.route_short_name ? `${match.route_short_name} — ${match.route_long_name}` : match.route_long_name;
+      });
+
+      loadRouteTrips(match.route_id, date);
     }
 
     // ===== SEARCH MULTIPLE STOPS (exact name match) =====
@@ -2989,6 +3146,32 @@
       if (e.key === 'Escape') closeDepartureBoard();
     }
 
+    // ===== TRIP STOPS OVERLAY =====
+    let tripStopsData = [];
+
+    function openTripStops(tripId) {
+      const overlay = document.getElementById('tripStopsOverlay');
+      document.getElementById('tripStopsOverlaySub').textContent = `Trip ${tripId} · ${tripStopsData.length} stops`;
+      document.getElementById('tripStopsTableBody').innerHTML = tripStopsData.map(stop => `
+        <tr>
+          <td>${escapeHtml(stop.name)}</td>
+          <td>${escapeHtml(stop.code)}</td>
+          <td>${escapeHtml(stop.time)}</td>
+        </tr>
+      `).join('');
+      overlay.style.display = 'flex';
+      document.addEventListener('keydown', onTripStopsOverlayKeydown);
+    }
+
+    function closeTripStops() {
+      document.getElementById('tripStopsOverlay').style.display = 'none';
+      document.removeEventListener('keydown', onTripStopsOverlayKeydown);
+    }
+
+    function onTripStopsOverlayKeydown(e) {
+      if (e.key === 'Escape') closeTripStops();
+    }
+
     function loadDepartureBoardLocation() {
       const sub = document.getElementById('boardOverlaySub');
       if (!navigator.geolocation) { sub.textContent = 'Geolocation is not supported by this browser.'; return; }
@@ -3230,6 +3413,8 @@
     initStopSearch('m-stopSearchInput', 'm-stopSearchResults');
     initStopSearch('multiStopSearchInput', 'multiStopSearchResults', selectMultiStopFromSearch);
     initStopSearch('m-multiStopSearchInput', 'm-multiStopSearchResults', selectMultiStopFromSearch);
+    initRouteSearch('routeSearchInput', 'routeSearchResults', 'dateInput');
+    initRouteSearch('m-routeSearchInput', 'm-routeSearchResults', 'm-dateInput');
   </script>
 </body>
 </html>
