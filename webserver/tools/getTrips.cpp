@@ -1,8 +1,46 @@
 #include "../../static-gtfs/gtfs.hpp"
 
 #include <iostream>
+#include <unordered_set>
 using namespace gtfs;
 using namespace std;
+
+// Single pass over stop_times.txt building, for each trip_id in wanted,
+// the departure_time of its lowest stop_sequence (i.e. its first stop).
+// Avoids re-scanning the whole file once per trip (what getAllStops does).
+unordered_map<string, gtfs::time> getFirstDepartures(const unordered_set<string>& wanted) {
+    unordered_map<string, gtfs::time> firstDeparture;
+    unordered_map<string, int> firstSeq;
+
+    ifstream stopTimesFile(stopTimesPath);
+    string currentLine;
+    bool firstLine = true;
+    unordered_map<string, int> refs;
+
+    while (getline(stopTimesFile, currentLine)) {
+        vector<string> parsedCurrentLine = parseDataCSV(currentLine);
+        if (firstLine) {
+            refs = createMapFromVector(parsedCurrentLine);
+            firstLine = false;
+            continue;
+        }
+
+        const string& trip_id = parsedCurrentLine[refs["trip_id"]];
+        if (wanted.find(trip_id) == wanted.end()) continue;
+
+        int seq = to_integer(parsedCurrentLine[refs["stop_sequence"]]);
+        auto it = firstSeq.find(trip_id);
+        if (it == firstSeq.end() || seq < it->second) {
+            firstSeq[trip_id] = seq;
+            auto find = refs.find("departure_time");
+            firstDeparture[trip_id] = (find != refs.end())
+                ? parseFormattedTime(parsedCurrentLine[find->second])
+                : gtfs::time();
+        }
+    }
+
+    return firstDeparture;
+}
 
 int main(int argc, char* argv[]) {
     if (argc != 5) {
@@ -57,11 +95,18 @@ int main(int argc, char* argv[]) {
             i++;
         }
     }
+    unordered_set<string> wantedTripIds;
+    for (trip& x_trip : x) wantedTripIds.insert(x_trip.trip_id);
+    unordered_map<string, gtfs::time> firstDepartures = getFirstDepartures(wantedTripIds);
+
+    sort(x.begin(), x.end(), [&](const trip& a, const trip& b) {
+        return firstDepartures[a.trip_id] < firstDepartures[b.trip_id];
+    });
+
     cout << "{\n\t\"query_route_id\": \"" << argv[1] << "\",\n\t\"trips\": [\n";
     for (int i = 0; i < x.size(); i++) {
         trip x_a = x[i];
-        vector<trip_segment> segments = getAllStops(x_a.trip_id);
-        string first_departure = segments.empty() ? "" : segments[0].stop.departure_time.leadingRoundedTime();
+        string first_departure = firstDepartures.count(x_a.trip_id) ? firstDepartures[x_a.trip_id].leadingRoundedTime() : "";
         cout << "\t\t{ \"trip_id\": \"" << x_a.trip_id <<
                 "\", \"trip_headsign\": \"" << x_a.trip_headsign <<
                 "\", \"departure_time\": \"" << first_departure << "\" }" <<
