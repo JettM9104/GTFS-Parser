@@ -1,4 +1,5 @@
 #include "gtfs.hpp"
+#include "config.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -59,7 +60,7 @@ static void writeConfigDataPath(const string& cfgFile, const string& dataPath) {
 static void applyRoot(const string& newRoot) {
     string r = newRoot;
     if (!r.empty() && r.back() != '/') r += '/';
-    gtfs::root          = r;
+    config::root          = r;
     gtfs::stopPath      = r + "stops.txt";
     gtfs::routePath     = r + "routes.txt";
     gtfs::tripsPath     = r + "trips.txt";
@@ -680,7 +681,7 @@ int cmdConfig(const Options& /*opts*/, int argc, char* argv[], const string& cfg
     if (sub == "get") {
         string saved = readConfigDataPath(cfgFile);
         cout << "Config file:  " << cfgFile << "\n"
-             << "Data path:    " << (saved.empty() ? gtfs::root + " (default)" : saved) << "\n";
+             << "Data path:    " << (saved.empty() ? config::root + " (default)" : saved) << "\n";
         return 0;
     }
 
