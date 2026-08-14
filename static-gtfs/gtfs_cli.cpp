@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -112,6 +113,41 @@ static void pauseKey(const string& msg = "press any key to continue…") {
     cout << "\n" << col::DIM << "  " << msg << col::RESET;
     cout.flush();
     term::readKey();
+}
+
+// ---- paged list ----
+// shows pre-rendered lines (ANSI already applied) a page at a time.
+// left/right (or h/l, pgup/pgdn) flip pages, esc/q exits.
+static const int kPageSize = 12;
+
+static void showPagedLines(const string& title, const string& subtitle,
+                            const vector<string>& lines,
+                            std::function<void()> preamble = nullptr,
+                            int pageSize = kPageSize) {
+    int totalPages = std::max(1, (int)((lines.size() + pageSize - 1) / pageSize));
+    int page = 0;
+    while (true) {
+        header(title, subtitle);
+        if (preamble) preamble();
+        if (lines.empty()) {
+            cout << col::GRAY << "  (nothing here)" << col::RESET << "\n";
+        } else {
+            int start = page * pageSize;
+            int end = std::min((int)lines.size(), start + pageSize);
+            for (int i = start; i < end; i++) cout << lines[i] << "\n";
+        }
+        cout << "\n" << col::GRAY << "  " << (lines.empty() ? 0 : page + 1) << "/" << totalPages
+             << "  (" << lines.size() << " total)" << col::RESET << "\n";
+        footer(totalPages > 1 ? "←/→ page   esc back" : "esc back");
+        auto ev = term::readKey();
+        if (ev.key == term::Key::Left)  page = (page - 1 + totalPages) % totalPages;
+        else if (ev.key == term::Key::Right) page = (page + 1) % totalPages;
+        else if (ev.key == term::Key::Char && ev.ch == 'h') page = (page - 1 + totalPages) % totalPages;
+        else if (ev.key == term::Key::Char && ev.ch == 'l') page = (page + 1) % totalPages;
+        else if (ev.key == term::Key::Escape || ev.key == term::Key::CtrlC) return;
+        else if (ev.key == term::Key::Enter) return;
+        else if (ev.key == term::Key::Char && (ev.ch == 'q' || ev.ch == 'Q')) return;
+    }
 }
 
 // ---- menu ----
@@ -339,9 +375,14 @@ static string fmtDate(int y, int m, int d) {
 }
 static string fmtDate(const gtfs::calendar_day& cd) { return fmtDate(cd.year, cd.month, cd.day); }
 
+static string kvLine(const string& k, const string& v) {
+    std::ostringstream os;
+    os << "  " << col::GRAY << std::left << std::setw(16) << k << col::RESET << v;
+    return os.str();
+}
+
 static void kv(const string& k, const string& v) {
-    cout << "  " << col::GRAY << std::left;
-    cout.width(16); cout << k << col::RESET << v << "\n";
+    cout << kvLine(k, v) << "\n";
 }
 
 // ============================================================================
@@ -439,39 +480,44 @@ static std::pair<bool, string> runTool(const string& toolPath, const string& arg
 
 // very small JSON syntax highlighter — line-oriented, matches the
 // add_whitespace=true / preserve_proto_field_names output of decode*.cpp
-static void printColorizedJson(const string& json) {
+static vector<string> colorizeJsonLines(const string& json) {
+    vector<string> out;
     std::istringstream iss(json);
     string line;
     while (std::getline(iss, line)) {
+        std::ostringstream os;
         size_t indentEnd = line.find_first_not_of(' ');
-        if (indentEnd == string::npos) { cout << "\n"; continue; }
+        if (indentEnd == string::npos) { out.push_back(""); continue; }
         string indent = line.substr(0, indentEnd);
         string rest = line.substr(indentEnd);
-        cout << indent;
+        os << indent;
+        bool handled = false;
         if (rest[0] == '"') {
             size_t keyEnd = rest.find('"', 1);
             if (keyEnd != string::npos && keyEnd + 1 < rest.size() && rest[keyEnd + 1] == ':') {
                 string key = rest.substr(0, keyEnd + 1);
                 string valuePart = rest.substr(keyEnd + 2); // after ':'
-                cout << col::CYAN << key << col::RESET << ":" ;
-                // trim one leading space if present, print it back plainly
+                os << col::CYAN << key << col::RESET << ":";
                 size_t vstart = valuePart.find_first_not_of(' ');
-                if (vstart == string::npos) { cout << valuePart << "\n"; continue; }
-                cout << " ";
-                string value = valuePart.substr(vstart);
-                bool trailingComma = !value.empty() && value.back() == ',';
-                string core = trailingComma ? value.substr(0, value.size() - 1) : value;
-                if (!core.empty() && core.front() == '"') cout << col::GREEN << core << col::RESET;
-                else if (core == "true" || core == "false") cout << col::MAGENTA << core << col::RESET;
-                else if (!core.empty() && (isdigit((unsigned char)core[0]) || core[0] == '-')) cout << col::YELLOW << core << col::RESET;
-                else cout << col::GRAY << core << col::RESET;
-                if (trailingComma) cout << col::GRAY << "," << col::RESET;
-                cout << "\n";
-                continue;
+                if (vstart == string::npos) { os << valuePart; }
+                else {
+                    os << " ";
+                    string value = valuePart.substr(vstart);
+                    bool trailingComma = !value.empty() && value.back() == ',';
+                    string core = trailingComma ? value.substr(0, value.size() - 1) : value;
+                    if (!core.empty() && core.front() == '"') os << col::GREEN << core << col::RESET;
+                    else if (core == "true" || core == "false") os << col::MAGENTA << core << col::RESET;
+                    else if (!core.empty() && (isdigit((unsigned char)core[0]) || core[0] == '-')) os << col::YELLOW << core << col::RESET;
+                    else os << col::GRAY << core << col::RESET;
+                    if (trailingComma) os << col::GRAY << "," << col::RESET;
+                }
+                handled = true;
             }
         }
-        cout << col::GRAY << rest << col::RESET << "\n";
+        if (!handled) os << col::GRAY << rest << col::RESET;
+        out.push_back(os.str());
     }
+    return out;
 }
 
 // ============================================================================
@@ -497,37 +543,48 @@ static void screenStopDetail(const string& stop_id) {
     pauseKey();
 }
 
+static string fmtTimeRouteTrip(const string& time, const string& routeShortName, const string& tripId) {
+    std::ostringstream os;
+    os << "  " << col::CYAN << time << col::RESET << "  " << col::BOLD << std::left << std::setw(6)
+       << routeShortName << col::RESET << col::GRAY << tripId << col::RESET;
+    return os.str();
+}
+
 static void screenStopDepartures(const string& stop_id, bool remaining) {
-    header((remaining ? "remaining departures — " : "departures — ") + stop_id);
     try {
         auto st = gtfs::getStopInfo(stop_id);
-        cout << "  " << col::BOLD << st.stop_name << col::RESET << "\n\n";
+        vector<string> lines;
+        string sub;
         if (remaining) {
             auto now   = gtfs::getCurrentTime();
             auto today = gtfs::getToday();
             auto deps  = gtfs::getRemainingDayStops(stop_id, now, today);
-            cout << col::GRAY << "  from " << now.leadingRoundedTime() << " — " << deps.size() << " departures\n\n" << col::RESET;
+            std::sort(deps.begin(), deps.end(), [](gtfs::trip_segment& a, gtfs::trip_segment& b) {
+                return a.stop.arrival_time < b.stop.arrival_time;
+            });
+            sub = st.stop_name + "  —  from " + now.leadingRoundedTime() + "  —  " + std::to_string(deps.size()) + " departures";
             for (auto& seg : deps) {
                 auto route = gtfs::getRouteInfo(seg.route_id);
-                cout << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
-                     << "  " << col::BOLD << std::left; cout.width(6); cout << route.route_short_name << col::RESET
-                     << col::GRAY << seg.stop.trip_id << col::RESET << "\n";
+                lines.push_back(fmtTimeRouteTrip(seg.stop.arrival_time.leadingRoundedTime(), route.route_short_name, seg.stop.trip_id));
             }
         } else {
             auto today = gtfs::getToday();
             auto deps  = gtfs::getDayTimesAtStop(stop_id, today.year, today.month, today.day);
-            cout << col::GRAY << "  " << fmtDate(today) << " — " << deps.size() << " departures\n\n" << col::RESET;
+            std::sort(deps.begin(), deps.end(), [](gtfs::trip_segment& a, gtfs::trip_segment& b) {
+                return a.stop.arrival_time < b.stop.arrival_time;
+            });
+            sub = st.stop_name + "  —  " + fmtDate(today) + "  —  " + std::to_string(deps.size()) + " departures";
             for (auto& seg : deps) {
                 auto route = gtfs::getRouteInfo(seg.route_id);
-                cout << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
-                     << "  " << col::BOLD << std::left; cout.width(6); cout << route.route_short_name << col::RESET
-                     << col::GRAY << seg.stop.trip_id << col::RESET << "\n";
+                lines.push_back(fmtTimeRouteTrip(seg.stop.arrival_time.leadingRoundedTime(), route.route_short_name, seg.stop.trip_id));
             }
         }
+        showPagedLines(remaining ? "remaining departures — " + stop_id : "departures — " + stop_id, sub, lines);
     } catch (const std::exception& e) {
+        header((remaining ? "remaining departures — " : "departures — ") + stop_id);
         cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
+        pauseKey();
     }
-    pauseKey();
 }
 
 static void screenNearbyStops() {
@@ -539,20 +596,24 @@ static void screenNearbyStops() {
     auto top = inputInt("nearby stops", "how many?", 10);
     if (!top) return;
 
-    header("nearby stops", fmtDate(gtfs::getToday()));
     auto stops = gtfs::getNearestStops(*lat, *lon, *top, -1);
     vector<std::pair<double,double>> pts, highlight = {{*lat, *lon}};
     for (auto& s : stops) pts.push_back({s.stop_lat, s.stop_lon});
-    drawAsciiMap(pts, highlight);
-    cout << "\n";
+
+    vector<string> lines;
     for (auto& s : stops) {
         double dist = gtfs::getDistanceKM(*lat, *lon, s.stop_lat, s.stop_lon);
         char buf[16]; snprintf(buf, sizeof(buf), "%.2f km", dist);
-        cout << "  " << col::CYAN << std::left; cout.width(10); cout << s.stop_id << col::RESET
-             << col::GRAY << std::right; cout.width(9); cout << buf << col::RESET
-             << "  " << s.stop_name << "\n";
+        std::ostringstream os;
+        os << "  " << col::CYAN << std::left << std::setw(10) << s.stop_id << col::RESET
+           << col::GRAY << std::right << std::setw(9) << buf << col::RESET
+           << "  " << s.stop_name;
+        lines.push_back(os.str());
     }
-    pauseKey();
+    showPagedLines("nearby stops", fmtDate(gtfs::getToday()), lines, [&]() {
+        drawAsciiMap(pts, highlight);
+        cout << "\n";
+    });
 }
 
 static void screenStopsMenu() {
@@ -604,26 +665,28 @@ static void screenTripDetail(const string& trip_id) {
 }
 
 static void screenTripStops(const string& trip_id) {
-    header("stops along trip " + trip_id);
     try {
         auto segs = gtfs::getAllStops(trip_id);
         vector<std::pair<double,double>> pts;
+        vector<string> lines;
         for (auto& seg : segs) {
             auto st = gtfs::getStopInfo(seg.stop.stop_id);
             pts.push_back({st.stop_lat, st.stop_lon});
+            std::ostringstream os;
+            os << "  " << col::GRAY << std::right << std::setw(3) << seg.stop.stop_sequence << col::RESET
+               << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
+               << "  " << st.stop_name;
+            lines.push_back(os.str());
         }
-        drawAsciiMap(pts);
-        cout << "\n  " << segs.size() << " stops\n\n";
-        for (auto& seg : segs) {
-            auto st = gtfs::getStopInfo(seg.stop.stop_id);
-            cout << "  " << col::GRAY << std::right; cout.width(3); cout << seg.stop.stop_sequence << col::RESET
-                 << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
-                 << "  " << st.stop_name << "\n";
-        }
+        showPagedLines("stops along trip " + trip_id, std::to_string(segs.size()) + " stops", lines, [&]() {
+            drawAsciiMap(pts);
+            cout << "\n";
+        });
     } catch (const std::exception& e) {
+        header("stops along trip " + trip_id);
         cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
+        pauseKey();
     }
-    pauseKey();
 }
 
 static void screenTripsForRoute(const string& route_id) {
@@ -634,25 +697,25 @@ static void screenTripsForRoute(const string& route_id) {
     auto d = inputInt("trips for route " + route_id, "day?", gtfs::getToday().day);
     if (!d) return;
 
-    header("trips for " + route_id, fmtDate(*y, *m, *d));
     auto trips = gtfs::getAllTrips(route_id);
     vector<gtfs::trip> valid;
     for (auto& t : trips) if (gtfs::isTripValid(t.trip_id, *y, *m, *d)) valid.push_back(gtfs::getTripInfo(t.trip_id));
-    cout << "  " << valid.size() << " trips running\n\n";
+    vector<string> lines;
     for (auto& t : valid) {
-        cout << "  " << col::CYAN << t.trip_id << col::RESET
-             << col::GRAY << "  dir=" << t.direction_id << col::RESET
-             << "  " << t.trip_headsign << "\n";
+        std::ostringstream os;
+        os << "  " << col::CYAN << t.trip_id << col::RESET
+           << col::GRAY << "  dir=" << t.direction_id << col::RESET
+           << "  " << t.trip_headsign;
+        lines.push_back(os.str());
     }
-    pauseKey();
+    showPagedLines("trips for " + route_id, fmtDate(*y, *m, *d) + "  —  " + std::to_string(valid.size()) + " trips running", lines);
 }
 
 static void screenBlockTrips(const string& block_id) {
-    header("block " + block_id);
     auto trips = gtfs::getAllBlockId(block_id);
-    cout << "  " << trips.size() << " trips share this block\n\n";
-    for (auto& t : trips) cout << "  " << col::CYAN << t.trip_id << col::RESET << "\n";
-    pauseKey();
+    vector<string> lines;
+    for (auto& t : trips) lines.push_back("  " + string(col::CYAN) + t.trip_id + col::RESET);
+    showPagedLines("block " + block_id, std::to_string(trips.size()) + " trips share this block", lines);
 }
 
 static void screenTripsMenu() {
@@ -700,17 +763,17 @@ static void screenRoutesMenu() {
 }
 
 static void screenAgency() {
-    header("agencies");
     auto agencies = gtfs::getAgencyInfo();
+    vector<string> lines;
     for (auto& a : agencies) {
-        cout << "  " << col::BOLD << a.agency_name << col::RESET << "\n";
-        kv("  id",       a.agency_id);
-        kv("  url",      a.agency_url);
-        kv("  timezone", a.agency_timezone);
-        kv("  phone",    a.agency_phone);
-        cout << "\n";
+        lines.push_back("  " + string(col::BOLD) + a.agency_name + col::RESET);
+        lines.push_back(kvLine("  id",       a.agency_id));
+        lines.push_back(kvLine("  url",      a.agency_url));
+        lines.push_back(kvLine("  timezone", a.agency_timezone));
+        lines.push_back(kvLine("  phone",    a.agency_phone));
+        lines.push_back("");
     }
-    pauseKey();
+    showPagedLines("agencies", std::to_string(agencies.size()) + " agencies", lines);
 }
 
 static void screenShape() {
@@ -730,31 +793,36 @@ static void screenShape() {
 }
 
 static void screenServiceDetail(const string& service_id) {
-    header("service " + service_id);
     try {
         auto svc = gtfs::getServiceInfo(service_id);
         auto& cal = svc.schedule;
-        kv("active", fmtDate(cal.start_date) + " to " + fmtDate(cal.end_date));
-        cout << "  " << col::GRAY << std::left; cout.width(16); cout << "schedule" << col::RESET;
         const char* names[7] = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
         bool days[7] = {cal.monday, cal.tuesday, cal.wednesday, cal.thursday, cal.friday, cal.saturday, cal.sunday};
-        for (int i = 0; i < 7; i++) {
-            if (days[i]) cout << col::GREEN << col::BOLD << names[i] << " " << col::RESET;
-            else cout << col::GRAY << "--- " << col::RESET;
+
+        vector<string> lines;
+        for (auto& ex : svc.exceptions) {
+            bool added = ex.exception_type == gtfs::calendar_date::added;
+            std::ostringstream os;
+            os << "  " << fmtDate(ex.date) << "  "
+               << (added ? col::GREEN : col::RED) << (added ? "added" : "removed") << col::RESET;
+            lines.push_back(os.str());
         }
-        cout << "\n";
-        if (!svc.exceptions.empty()) {
-            cout << "\n  exceptions (" << svc.exceptions.size() << "):\n";
-            for (auto& ex : svc.exceptions) {
-                bool added = ex.exception_type == gtfs::calendar_date::added;
-                cout << "    " << fmtDate(ex.date) << "  "
-                     << (added ? col::GREEN : col::RED) << (added ? "added" : "removed") << col::RESET << "\n";
+
+        showPagedLines("service " + service_id,
+                        "active " + fmtDate(cal.start_date) + " to " + fmtDate(cal.end_date),
+                        lines, [&]() {
+            cout << "  " << col::GRAY << std::left << std::setw(16) << "schedule" << col::RESET;
+            for (int i = 0; i < 7; i++) {
+                if (days[i]) cout << col::GREEN << col::BOLD << names[i] << " " << col::RESET;
+                else cout << col::GRAY << "--- " << col::RESET;
             }
-        }
+            cout << "\n\n  exceptions (" << lines.size() << "):\n";
+        });
     } catch (const std::exception& e) {
+        header("service " + service_id);
         cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
+        pauseKey();
     }
-    pauseKey();
 }
 
 static void screenTripValidOnDate() {
@@ -810,17 +878,21 @@ static void screenDistance() {
 static void screenRtStopArrivals() {
     auto hit = searchStopInteractive("live arrivals — pick a stop");
     if (!hit) return;
-    header("live arrivals — " + hit->label, "stop " + hit->id);
+    string title = "live arrivals — " + hit->label;
+    string sub = "stop " + hit->id;
     string toolPath = rtToolDir(g_prog.c_str()) + "/decodeStop";
     auto [ok, out] = runTool(toolPath, hit->id);
     if (!ok && out.find("not built") != string::npos) {
+        header(title, sub);
         cout << col::RED << "  " << out << col::RESET << "\n";
+        pauseKey();
     } else if (out.empty()) {
+        header(title, sub);
         cout << col::GRAY << "  no live data returned\n" << col::RESET;
+        pauseKey();
     } else {
-        printColorizedJson(out);
+        showPagedLines(title, sub, colorizeJsonLines(out));
     }
-    pauseKey();
 }
 
 static void screenRtTripStatus() {
@@ -843,33 +915,41 @@ static void screenRtTripStatus() {
     if (sel == -1) return;
     string trip_id = deps[sel].stop.trip_id;
 
-    header("live trip status", "trip " + trip_id);
+    string title = "live trip status";
+    string sub = "trip " + trip_id;
     string toolPath = rtToolDir(g_prog.c_str()) + "/decodeTrip";
     auto [ok, out] = runTool(toolPath, trip_id);
     if (!ok && out.find("not built") != string::npos) {
+        header(title, sub);
         cout << col::RED << "  " << out << col::RESET << "\n";
+        pauseKey();
     } else if (out.empty()) {
+        header(title, sub);
         cout << col::GRAY << "  no live data returned\n" << col::RESET;
+        pauseKey();
     } else {
-        printColorizedJson(out);
+        showPagedLines(title, sub, colorizeJsonLines(out));
     }
-    pauseKey();
 }
 
 static void screenRtAlerts() {
     auto hit = searchRouteInteractive("service alerts — pick a route");
     if (!hit) return;
-    header("service alerts — " + hit->label, "route " + hit->id);
+    string title = "service alerts — " + hit->label;
+    string sub = "route " + hit->id;
     string toolPath = rtToolDir(g_prog.c_str()) + "/decodeAlerts";
     auto [ok, out] = runTool(toolPath, hit->id);
     if (!ok && out.find("not built") != string::npos) {
+        header(title, sub);
         cout << col::RED << "  " << out << col::RESET << "\n";
+        pauseKey();
     } else if (out.find("No alerts found") != string::npos || out.empty()) {
+        header(title, sub);
         cout << col::GRAY << "  no active alerts for this route\n" << col::RESET;
+        pauseKey();
     } else {
-        printColorizedJson(out);
+        showPagedLines(title, sub, colorizeJsonLines(out));
     }
-    pauseKey();
 }
 
 static void screenRealtimeMenu() {
