@@ -335,6 +335,12 @@ struct matchsearch {
     intstr text;
     int score;
 };
+struct routematch {
+    string route_id;
+    string route_short_name;
+    string route_long_name;
+    int score;
+};
 
 struct route {
     enum continuous_pickup_dropoff {continuous = 0, no_continuous = 1, phone_agency = 2, driver_coordinate = 3};
@@ -1323,6 +1329,72 @@ std::vector<matchsearch> searchStop(const string& name) { // stops.txt
 
     std::sort(results.begin(), results.end(),
         [](const matchsearch& a, const matchsearch& b) {
+            return a.score > b.score;
+        });
+
+    return results;
+}
+std::vector<routematch> searchRoute(const string& name) { // routes.txt
+    ifstream routeFile(routePath);
+
+    string currentLine;
+    std::map<string, int> refs;
+    std::vector<route> routes;
+    int lineNumber = 0;
+
+    while (getline(routeFile, currentLine)) {
+        auto parsedCurrentLine = parseDataCSV(currentLine);
+        ++lineNumber;
+
+        if (lineNumber == 1) [[unlikely]] {
+            for (int i = 0; i < (int)parsedCurrentLine.size(); i++) {
+                refs[parsedCurrentLine[i]] = i;
+            }
+        } else {
+            route temp;
+            temp.route_id = parsedCurrentLine[refs.at("route_id")];
+
+            { auto find = refs.find("route_short_name");
+            if (find != refs.end()) temp.route_short_name = parsedCurrentLine[find->second]; }
+
+            { auto find = refs.find("route_long_name");
+            if (find != refs.end()) temp.route_long_name = parsedCurrentLine[find->second]; }
+
+            routes.push_back(temp);
+        }
+    }
+
+    auto toLower = [](string s) {
+        std::transform(s.begin(), s.end(), s.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        return s;
+    };
+
+    string nameLower = toLower(name);
+
+    std::vector<routematch> results;
+    results.reserve(routes.size());
+
+    for (const auto& item : routes) {
+        int bestScore = -1;
+
+        for (const string& field : { item.route_id, item.route_short_name, item.route_long_name }) {
+            if (field.empty()) continue;
+
+            int dist   = levenshtein(toLower(field), nameLower);
+            int maxLen = (int)std::max(field.size(), name.size());
+            int score  = (maxLen > 0) ? (100 - (dist * 100 / maxLen)) : 100;
+
+            bestScore = std::max(bestScore, score);
+        }
+
+        if (bestScore < 0) bestScore = 0;
+
+        results.push_back({ item.route_id, item.route_short_name, item.route_long_name, bestScore });
+    }
+
+    std::sort(results.begin(), results.end(),
+        [](const routematch& a, const routematch& b) {
             return a.score > b.score;
         });
 
