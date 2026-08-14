@@ -1,29 +1,356 @@
+// gtfs_cli — interactive, keyboard-driven terminal explorer for GTFS Schedule + Realtime data.
+// No args needed: launch it, arrow through menus, type to search. Ctrl+C / Esc always backs out.
 #include "gtfs.hpp"
 #include "config.hpp"
 #include <iostream>
-#include <iomanip>
+#include <sstream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <stdexcept>
+#include <algorithm>
+#include <optional>
+#include <functional>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <termios.h>
+#include <unistd.h>
 #include <libgen.h>
 #include <climits>
-#include <cstdlib>
 
 using std::cout, std::cerr, std::string, std::endl;
-using std::vector;
+using std::vector, std::optional;
 
-struct Options {
-    bool json = false;
-    int precision = 6;
+// ============================================================================
+// terminal / raw input
+// ============================================================================
+
+namespace term {
+
+struct RawMode {
+    termios orig{};
+    bool ok = false;
+    RawMode() {
+        if (tcgetattr(STDIN_FILENO, &orig) == -1) return;
+        termios raw = orig;
+        raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
+        raw.c_iflag &= ~(IXON | ICRNL | BRKINT | INPCK | ISTRIP);
+        raw.c_cc[VMIN] = 1;
+        raw.c_cc[VTIME] = 0;
+        ok = (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == 0);
+    }
+    ~RawMode() { if (ok) tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig); }
 };
 
-// --- config helpers ---
+enum class Key { Up, Down, Left, Right, Enter, Escape, Backspace, Tab, CtrlC, Char, Other };
+struct KeyEvent { Key key; char ch = 0; };
+
+KeyEvent readKey() {
+    char c;
+    ssize_t n = read(STDIN_FILENO, &c, 1);
+    if (n != 1) return {Key::Other};
+    if (c == 3) return {Key::CtrlC};
+    if (c == 27) {
+        char seq[2];
+        if (read(STDIN_FILENO, &seq[0], 1) != 1) return {Key::Escape};
+        if (seq[0] != '[' && seq[0] != 'O') return {Key::Escape};
+        if (read(STDIN_FILENO, &seq[1], 1) != 1) return {Key::Escape};
+        switch (seq[1]) {
+            case 'A': return {Key::Up};
+            case 'B': return {Key::Down};
+            case 'C': return {Key::Right};
+            case 'D': return {Key::Left};
+        }
+        return {Key::Escape};
+    }
+    if (c == '\r' || c == '\n') return {Key::Enter};
+    if (c == 127 || c == 8) return {Key::Backspace};
+    if (c == '\t') return {Key::Tab};
+    if ((unsigned char)c >= 32) return {Key::Char, c};
+    return {Key::Other};
+}
+
+void clear()      { cout << "\033[2J\033[H"; }
+void hideCursor()  { cout << "\033[?25l"; }
+void showCursor()  { cout << "\033[?25h"; }
+
+} // namespace term
+
+// ============================================================================
+// colors + drawing helpers
+// ============================================================================
+
+namespace col {
+const char* RESET  = "\033[0m";
+const char* BOLD    = "\033[1m";
+const char* DIM     = "\033[2m";
+const char* ORANGE  = "\033[38;5;208m";
+const char* CYAN    = "\033[38;5;80m";
+const char* GREEN   = "\033[38;5;114m";
+const char* YELLOW  = "\033[38;5;221m";
+const char* MAGENTA = "\033[38;5;176m";
+const char* RED     = "\033[38;5;203m";
+const char* GRAY    = "\033[38;5;244m";
+const char* INVERT  = "\033[7m";
+}
+
+static void header(const string& title, const string& subtitle = "") {
+    term::clear();
+    cout << col::ORANGE << col::BOLD << "  ▸ gtfs" << col::RESET
+         << col::DIM << "  —  " << col::RESET
+         << col::BOLD << title << col::RESET << "\n";
+    if (!subtitle.empty()) cout << col::GRAY << "    " << subtitle << col::RESET << "\n";
+    cout << col::GRAY << "  " << string(60, '-') << col::RESET << "\n\n";
+}
+
+static void footer(const string& hint) {
+    cout << "\n" << col::GRAY << "  " << string(60, '-') << "\n  " << hint << col::RESET << "\n";
+}
+
+static void pauseKey(const string& msg = "press any key to continue…") {
+    cout << "\n" << col::DIM << "  " << msg << col::RESET;
+    cout.flush();
+    term::readKey();
+}
+
+// ---- menu ----
+// returns selected index, or -1 if the user backed out (Esc / Ctrl+C / q)
+static int runMenu(const string& title, const vector<string>& items,
+                    const string& subtitle = "", const string& hint = "↑/↓ move   enter select   esc back") {
+    int sel = 0;
+    while (true) {
+        header(title, subtitle);
+        for (int i = 0; i < (int)items.size(); i++) {
+            if (i == sel) {
+                cout << col::ORANGE << col::BOLD << "  ❯ " << items[i] << col::RESET << "\n";
+            } else {
+                cout << "    " << col::GRAY << items[i] << col::RESET << "\n";
+            }
+        }
+        footer(hint);
+        auto ev = term::readKey();
+        if (ev.key == term::Key::Up)    sel = (sel - 1 + (int)items.size()) % items.size();
+        else if (ev.key == term::Key::Down)  sel = (sel + 1) % items.size();
+        else if (ev.key == term::Key::Enter) return sel;
+        else if (ev.key == term::Key::Escape || ev.key == term::Key::CtrlC) return -1;
+        else if (ev.key == term::Key::Char && (ev.ch == 'q' || ev.ch == 'Q')) return -1;
+        else if (ev.key == term::Key::Char && ev.ch == 'j') sel = (sel + 1) % items.size();
+        else if (ev.key == term::Key::Char && ev.ch == 'k') sel = (sel - 1 + (int)items.size()) % items.size();
+    }
+}
+
+// ---- free-text line input ----
+static optional<string> inputLine(const string& title, const string& prompt, const string& subtitle = "") {
+    string buf;
+    while (true) {
+        header(title, subtitle);
+        cout << "  " << prompt << "\n\n  " << col::CYAN << "> " << col::RESET << buf << col::INVERT << " " << col::RESET;
+        footer("type to enter   enter confirm   esc cancel");
+        auto ev = term::readKey();
+        if (ev.key == term::Key::Enter) return buf;
+        if (ev.key == term::Key::Escape || ev.key == term::Key::CtrlC) return std::nullopt;
+        if (ev.key == term::Key::Backspace) { if (!buf.empty()) buf.pop_back(); }
+        else if (ev.key == term::Key::Char) buf += ev.ch;
+    }
+}
+
+static optional<double> inputDouble(const string& title, const string& prompt) {
+    while (true) {
+        auto s = inputLine(title, prompt);
+        if (!s) return std::nullopt;
+        try { return std::stod(*s); } catch (...) {
+            cout << "\n" << col::RED << "  not a number, try again" << col::RESET;
+            pauseKey();
+        }
+    }
+}
+
+static optional<int> inputInt(const string& title, const string& prompt, optional<int> defVal = std::nullopt) {
+    while (true) {
+        auto s = inputLine(title, prompt + (defVal ? (" [" + std::to_string(*defVal) + "]") : ""));
+        if (!s) return std::nullopt;
+        if (s->empty() && defVal) return *defVal;
+        try { return std::stoi(*s); } catch (...) {
+            cout << "\n" << col::RED << "  not a number, try again" << col::RESET;
+            pauseKey();
+        }
+    }
+}
+
+// ============================================================================
+// mini ascii scatter map — plots lat/lon points in a terminal-sized grid
+// ============================================================================
+
+static void drawAsciiMap(const vector<std::pair<double,double>>& pts,
+                          const vector<std::pair<double,double>>& highlights = {},
+                          int width = 56, int height = 18) {
+    if (pts.empty()) return;
+    double minLat = pts[0].first, maxLat = pts[0].first;
+    double minLon = pts[0].second, maxLon = pts[0].second;
+    for (auto& p : pts) {
+        minLat = std::min(minLat, p.first);  maxLat = std::max(maxLat, p.first);
+        minLon = std::min(minLon, p.second); maxLon = std::max(maxLon, p.second);
+    }
+    for (auto& p : highlights) {
+        minLat = std::min(minLat, p.first);  maxLat = std::max(maxLat, p.first);
+        minLon = std::min(minLon, p.second); maxLon = std::max(maxLon, p.second);
+    }
+    double latSpan = std::max(maxLat - minLat, 1e-6);
+    double lonSpan = std::max(maxLon - minLon, 1e-6);
+    // pad a little so points don't sit on the border
+    minLat -= latSpan * 0.05; maxLat += latSpan * 0.05;
+    minLon -= lonSpan * 0.05; maxLon += lonSpan * 0.05;
+    latSpan = maxLat - minLat; lonSpan = maxLon - minLon;
+
+    vector<string> grid(height, string(width, ' '));
+    auto plot = [&](double lat, double lon, char c) {
+        int x = (int)std::round((lon - minLon) / lonSpan * (width - 1));
+        int y = (int)std::round((maxLat - lat) / latSpan * (height - 1));
+        x = std::clamp(x, 0, width - 1);
+        y = std::clamp(y, 0, height - 1);
+        grid[y][x] = c;
+    };
+    for (auto& p : pts) plot(p.first, p.second, '.');
+    for (auto& p : highlights) plot(p.first, p.second, '@');
+
+    cout << col::GRAY << "  +" << string(width, '-') << "+\n" << col::RESET;
+    for (auto& row : grid) {
+        cout << col::GRAY << "  |" << col::RESET;
+        for (char c : row) {
+            if (c == '@') cout << col::ORANGE << col::BOLD << c << col::RESET;
+            else if (c == '.') cout << col::CYAN << c << col::RESET;
+            else cout << c;
+        }
+        cout << col::GRAY << "|" << col::RESET << "\n";
+    }
+    cout << col::GRAY << "  +" << string(width, '-') << "+" << col::RESET << "\n";
+}
+
+// ============================================================================
+// live incremental search — the "fun" centerpiece: type, results update live
+// ============================================================================
+
+// generic live search over a searchFn(query) -> vector<{label, sublabel, payload id}>
+struct SearchHit { string label; string sub; string id; int score; };
+
+static optional<SearchHit> liveSearch(const string& title, const string& hintLine,
+                                       std::function<vector<SearchHit>(const string&)> searchFn) {
+    string query;
+    int sel = 0;
+    vector<SearchHit> results;
+    bool first = true;
+    while (true) {
+        header(title, hintLine);
+        cout << "  " << col::CYAN << "🔎 " << col::RESET << query << col::INVERT << " " << col::RESET << "\n\n";
+        if (!query.empty() && (first || true)) results = searchFn(query);
+        else results.clear();
+        first = false;
+
+        int show = std::min((int)results.size(), 10);
+        if (query.empty()) {
+            cout << col::GRAY << "  start typing to search…" << col::RESET << "\n";
+        } else if (show == 0) {
+            cout << col::GRAY << "  no matches" << col::RESET << "\n";
+        }
+        for (int i = 0; i < show; i++) {
+            auto& r = results[i];
+            if (i == sel) {
+                cout << col::ORANGE << col::BOLD << "  ❯ " << r.label << col::RESET;
+                if (!r.sub.empty()) cout << col::ORANGE << "  (" << r.sub << ")" << col::RESET;
+                cout << col::GRAY << "  " << r.score << "%" << col::RESET << "\n";
+            } else {
+                cout << "    " << r.label;
+                if (!r.sub.empty()) cout << col::GRAY << "  (" << r.sub << ")" << col::RESET;
+                cout << col::GRAY << "  " << r.score << "%" << col::RESET << "\n";
+            }
+        }
+        footer("type to search   ↑/↓ move   enter select   esc cancel");
+        auto ev = term::readKey();
+        if (ev.key == term::Key::Char) { query += ev.ch; sel = 0; }
+        else if (ev.key == term::Key::Backspace) { if (!query.empty()) query.pop_back(); sel = 0; }
+        else if (ev.key == term::Key::Up)   sel = show > 0 ? (sel - 1 + show) % show : 0;
+        else if (ev.key == term::Key::Down) sel = show > 0 ? (sel + 1) % show : 0;
+        else if (ev.key == term::Key::Enter) { if (show > 0) return results[sel]; }
+        else if (ev.key == term::Key::Escape || ev.key == term::Key::CtrlC) return std::nullopt;
+    }
+}
+
+static optional<SearchHit> searchStopInteractive(const string& title = "search stops") {
+    return liveSearch(title, "find a stop by name", [](const string& q) {
+        auto raw = gtfs::searchStop(q);
+        vector<SearchHit> out;
+        for (auto& r : raw) out.push_back({r.text.str, "", std::to_string(r.text.num), r.score});
+        return out;
+    });
+}
+
+static optional<SearchHit> searchRouteInteractive(const string& title = "search routes") {
+    return liveSearch(title, "find a route by number or name", [](const string& q) {
+        auto raw = gtfs::searchRoute(q);
+        vector<SearchHit> out;
+        for (auto& r : raw) out.push_back({r.route_short_name.empty() ? r.route_id : r.route_short_name,
+                                            r.route_long_name, r.route_id, r.score});
+        return out;
+    });
+}
+
+// ============================================================================
+// formatting helpers (ported from the old CLI)
+// ============================================================================
+
+static string allowableStr(gtfs::trip::allowable a) {
+    switch (a) {
+        case gtfs::trip::allowable::no_info:     return "no info";
+        case gtfs::trip::allowable::allowed:     return "allowed";
+        case gtfs::trip::allowable::not_allowed: return "not allowed";
+        default: return "unknown";
+    }
+}
+
+static string routeTypeStr(gtfs::route::type t) {
+    switch (t) {
+        case gtfs::route::type::light_rail:  return "light rail";
+        case gtfs::route::type::underground: return "underground";
+        case gtfs::route::type::rail:        return "rail";
+        case gtfs::route::type::bus:         return "bus";
+        case gtfs::route::type::ferry:       return "ferry";
+        case gtfs::route::type::cable_tram:  return "cable tram";
+        case gtfs::route::type::aerial_lift: return "aerial lift";
+        case gtfs::route::type::funicular:   return "funicular";
+        case gtfs::route::type::trolleybus:  return "trolleybus";
+        case gtfs::route::type::monorail:    return "monorail";
+        default: return "unknown";
+    }
+}
+
+static string feedStatusStr(gtfs::feedStatus fs) {
+    switch (fs) {
+        case gtfs::feedStatus::in_use:   return "in use";
+        case gtfs::feedStatus::expired:  return "expired";
+        case gtfs::feedStatus::upcoming: return "upcoming";
+        default: return "no result";
+    }
+}
+
+static string fmtDate(int y, int m, int d) {
+    return std::to_string(y) + "-" + (m < 10 ? "0" : "") + std::to_string(m) +
+           "-" + (d < 10 ? "0" : "") + std::to_string(d);
+}
+static string fmtDate(const gtfs::calendar_day& cd) { return fmtDate(cd.year, cd.month, cd.day); }
+
+static void kv(const string& k, const string& v) {
+    cout << "  " << col::GRAY << std::left;
+    cout.width(16); cout << k << col::RESET << v << "\n";
+}
+
+// ============================================================================
+// config
+// ============================================================================
 
 static string configFilePath(const char* argv0) {
     char resolved[PATH_MAX];
     char input[PATH_MAX];
-    // copy so dirname can modify it
     strncpy(input, argv0, PATH_MAX - 1);
     input[PATH_MAX - 1] = '\0';
     if (realpath(argv0, resolved)) {
@@ -32,7 +359,6 @@ static string configFilePath(const char* argv0) {
         copy[PATH_MAX - 1] = '\0';
         return string(dirname(copy)) + "/config.json";
     }
-    // fallback: directory from argv[0] as-is
     return string(dirname(input)) + "/config.json";
 }
 
@@ -43,7 +369,7 @@ static string readConfigDataPath(const string& cfgFile) {
     while (getline(f, line)) content += line;
     auto pos = content.find("\"data_path\"");
     if (pos == string::npos) return "";
-    pos = content.find('"', pos + 11);  // opening quote of value
+    pos = content.find('"', pos + 11);
     if (pos == string::npos) return "";
     ++pos;
     auto end = content.find('"', pos);
@@ -60,742 +386,621 @@ static void writeConfigDataPath(const string& cfgFile, const string& dataPath) {
 static void applyRoot(const string& newRoot) {
     string r = newRoot;
     if (!r.empty() && r.back() != '/') r += '/';
-    config::root          = r;
-    gtfs::stopPath      = r + "stops.txt";
-    gtfs::routePath     = r + "routes.txt";
-    gtfs::tripsPath     = r + "trips.txt";
-    gtfs::stopTimesPath = r + "stop_times.txt";
-    gtfs::tripPath      = r + "trips.txt";
-    gtfs::calendarPath  = r + "calendar.txt";
+    config::root           = r;
+    gtfs::stopPath         = r + "stops.txt";
+    gtfs::routePath        = r + "routes.txt";
+    gtfs::tripsPath        = r + "trips.txt";
+    gtfs::stopTimesPath    = r + "stop_times.txt";
+    gtfs::tripPath         = r + "trips.txt";
+    gtfs::calendarPath     = r + "calendar.txt";
     gtfs::calendarDatesPath = r + "calendar_dates.txt";
-    gtfs::agencyPath    = r + "agency.txt";
-    gtfs::shapePath     = r + "shapes.txt";
-    gtfs::feedInfoFile  = r + "feed_info.txt";
+    gtfs::agencyPath       = r + "agency.txt";
+    gtfs::shapePath        = r + "shapes.txt";
+    gtfs::feedInfoFile     = r + "feed_info.txt";
 }
 
-// --- string helpers ---
+// ============================================================================
+// realtime — shells out to the compiled gtfs-rt decoders (built by `make rt`)
+// ============================================================================
 
-static string allowableStr(gtfs::trip::allowable a) {
-    switch (a) {
-        case gtfs::trip::allowable::no_info:     return "no_info";
-        case gtfs::trip::allowable::allowed:     return "allowed";
-        case gtfs::trip::allowable::not_allowed: return "not_allowed";
-        default: return "unknown";
-    }
+static string rtToolDir(const char* argv0) {
+    char resolved[PATH_MAX];
+    if (!realpath(argv0, resolved)) return "";
+    char copy[PATH_MAX];
+    strncpy(copy, resolved, PATH_MAX - 1);
+    copy[PATH_MAX - 1] = '\0';
+    string staticGtfsDir = dirname(copy); // .../static-gtfs
+    string repoRoot = staticGtfsDir + "/..";
+    return repoRoot + "/gtfs-rt/proto-conversion/webserver-implementation";
 }
 
-static string routeTypeStr(gtfs::route::type t) {
-    switch (t) {
-        case gtfs::route::type::light_rail:  return "light_rail";
-        case gtfs::route::type::underground: return "underground";
-        case gtfs::route::type::rail:        return "rail";
-        case gtfs::route::type::bus:         return "bus";
-        case gtfs::route::type::ferry:       return "ferry";
-        case gtfs::route::type::cable_tram:  return "cable_tram";
-        case gtfs::route::type::aerial_lift: return "aerial_lift";
-        case gtfs::route::type::funicular:   return "funicular";
-        case gtfs::route::type::trolleybus:  return "trolleybus";
-        case gtfs::route::type::monorail:    return "monorail";
-        default: return "unknown";
-    }
-}
-
-static string feedStatusStr(gtfs::feedStatus fs) {
-    switch (fs) {
-        case gtfs::feedStatus::in_use:    return "in_use";
-        case gtfs::feedStatus::expired:   return "expired";
-        case gtfs::feedStatus::upcoming:  return "upcoming";
-        default: return "no_result";
-    }
-}
-
-static string jstr(const string& s) {
-    string out;
-    out.reserve(s.size() + 2);
-    for (char c : s) {
-        if      (c == '"')  out += "\\\"";
-        else if (c == '\\') out += "\\\\";
-        else if (c == '\n') out += "\\n";
-        else if (c == '\r') out += "\\r";
-        else if (c == '\t') out += "\\t";
-        else                out += c;
-    }
+static string shellQuote(const string& s) {
+    string out = "'";
+    for (char c : s) { if (c == '\'') out += "'\\''"; else out += c; }
+    out += "'";
     return out;
 }
 
-static string fmtDate(int y, int m, int d) {
-    return std::to_string(y) + "-" +
-           (m < 10 ? "0" : "") + std::to_string(m) + "-" +
-           (d < 10 ? "0" : "") + std::to_string(d);
+// runs `<toolDir>/<tool> <arg>`, returns {success, stdout+stderr}
+static std::pair<bool, string> runTool(const string& toolPath, const string& arg) {
+    if (access(toolPath.c_str(), X_OK) != 0) {
+        return {false, "not built — run `make rt` from the repo root (needs protobuf + pkg-config)"};
+    }
+    string cmd = shellQuote(toolPath) + " " + shellQuote(arg) + " 2>&1";
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe) return {false, "failed to launch " + toolPath};
+    string out;
+    char buf[4096];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), pipe)) > 0) out.append(buf, n);
+    int rc = pclose(pipe);
+    return {rc == 0, out};
 }
 
-static string fmtDate(const gtfs::calendar_day& cd) {
-    return fmtDate(cd.year, cd.month, cd.day);
+// very small JSON syntax highlighter — line-oriented, matches the
+// add_whitespace=true / preserve_proto_field_names output of decode*.cpp
+static void printColorizedJson(const string& json) {
+    std::istringstream iss(json);
+    string line;
+    while (std::getline(iss, line)) {
+        size_t indentEnd = line.find_first_not_of(' ');
+        if (indentEnd == string::npos) { cout << "\n"; continue; }
+        string indent = line.substr(0, indentEnd);
+        string rest = line.substr(indentEnd);
+        cout << indent;
+        if (rest[0] == '"') {
+            size_t keyEnd = rest.find('"', 1);
+            if (keyEnd != string::npos && keyEnd + 1 < rest.size() && rest[keyEnd + 1] == ':') {
+                string key = rest.substr(0, keyEnd + 1);
+                string valuePart = rest.substr(keyEnd + 2); // after ':'
+                cout << col::CYAN << key << col::RESET << ":" ;
+                // trim one leading space if present, print it back plainly
+                size_t vstart = valuePart.find_first_not_of(' ');
+                if (vstart == string::npos) { cout << valuePart << "\n"; continue; }
+                cout << " ";
+                string value = valuePart.substr(vstart);
+                bool trailingComma = !value.empty() && value.back() == ',';
+                string core = trailingComma ? value.substr(0, value.size() - 1) : value;
+                if (!core.empty() && core.front() == '"') cout << col::GREEN << core << col::RESET;
+                else if (core == "true" || core == "false") cout << col::MAGENTA << core << col::RESET;
+                else if (!core.empty() && (isdigit((unsigned char)core[0]) || core[0] == '-')) cout << col::YELLOW << core << col::RESET;
+                else cout << col::GRAY << core << col::RESET;
+                if (trailingComma) cout << col::GRAY << "," << col::RESET;
+                cout << "\n";
+                continue;
+            }
+        }
+        cout << col::GRAY << rest << col::RESET << "\n";
+    }
 }
 
-// --- subcommands ---
+// ============================================================================
+// screens
+// ============================================================================
 
-int cmdTrip(const Options& opts, int argc, char* argv[]) {
-    if (argc < 1) {
-        cerr << "Usage:\n"
-             << "  trip <trip_id>\n"
-             << "  trip --stops <trip_id>\n"
-             << "  trip --route <route_id> <year> <month> <day>\n"
-             << "  trip --block <block_id>\n";
-        return 1;
+static string g_prog;   // argv0, for locating rt tools
+static string g_cfgFile;
+
+static void screenStopDetail(const string& stop_id) {
+    header("stop " + stop_id);
+    try {
+        auto st = gtfs::getStopInfo(stop_id);
+        kv("stop id",    st.stop_id);
+        kv("stop code",  st.stop_code);
+        kv("name",       st.stop_name);
+        kv("coords",     std::to_string(st.stop_lat) + ", " + std::to_string(st.stop_lon));
+        kv("zone",       st.zone_id);
+        kv("parent",     st.parent_station.empty() ? "(none)" : st.parent_station);
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
     }
+    pauseKey();
+}
 
-    string sub = argv[0];
-
-    if (sub == "--stops") {
-        if (argc < 2) { cerr << "Usage: trip --stops <trip_id>\n"; return 1; }
-        string trip_id = argv[1];
-        auto segs = gtfs::getAllStops(trip_id);
-        cout << std::fixed << std::setprecision(opts.precision);
-        if (opts.json) {
-            cout << "{\n\t\"trip_id\": \"" << jstr(trip_id) << "\",\n"
-                 << "\t\"count\": " << segs.size() << ",\n"
-                 << "\t\"stops\": [\n";
-            for (int i = 0; i < (int)segs.size(); i++) {
-                auto& seg = segs[i];
-                auto st = gtfs::getStopInfo(seg.stop.stop_id);
-                cout << "\t\t{ \"sequence\": " << seg.stop.stop_sequence
-                     << ", \"stop_id\": \"" << jstr(seg.stop.stop_id) << "\""
-                     << ", \"stop_name\": \"" << jstr(st.stop_name) << "\""
-                     << ", \"arrival\": \"" << seg.stop.arrival_time.leadingRoundedTime() << "\""
-                     << ", \"departure\": \"" << seg.stop.departure_time.leadingRoundedTime() << "\""
-                     << ", \"lat\": " << st.stop_lat
-                     << ", \"lon\": " << st.stop_lon
-                     << (i == (int)segs.size() - 1 ? " }\n" : " },\n");
+static void screenStopDepartures(const string& stop_id, bool remaining) {
+    header((remaining ? "remaining departures — " : "departures — ") + stop_id);
+    try {
+        auto st = gtfs::getStopInfo(stop_id);
+        cout << "  " << col::BOLD << st.stop_name << col::RESET << "\n\n";
+        if (remaining) {
+            auto now   = gtfs::getCurrentTime();
+            auto today = gtfs::getToday();
+            auto deps  = gtfs::getRemainingDayStops(stop_id, now, today);
+            cout << col::GRAY << "  from " << now.leadingRoundedTime() << " — " << deps.size() << " departures\n\n" << col::RESET;
+            for (auto& seg : deps) {
+                auto route = gtfs::getRouteInfo(seg.route_id);
+                cout << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
+                     << "  " << col::BOLD << std::left; cout.width(6); cout << route.route_short_name << col::RESET
+                     << col::GRAY << seg.stop.trip_id << col::RESET << "\n";
             }
-            cout << "\t]\n}\n";
         } else {
-            cout << "Trip " << trip_id << " — " << segs.size() << " stops:\n\n";
-            for (auto& seg : segs) {
-                auto st = gtfs::getStopInfo(seg.stop.stop_id);
-                cout << "  [" << std::setw(3) << seg.stop.stop_sequence << "]  "
-                     << seg.stop.arrival_time.leadingRoundedTime()
-                     << "  " << st.stop_name
-                     << " (" << seg.stop.stop_id << ")\n";
+            auto today = gtfs::getToday();
+            auto deps  = gtfs::getDayTimesAtStop(stop_id, today.year, today.month, today.day);
+            cout << col::GRAY << "  " << fmtDate(today) << " — " << deps.size() << " departures\n\n" << col::RESET;
+            for (auto& seg : deps) {
+                auto route = gtfs::getRouteInfo(seg.route_id);
+                cout << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
+                     << "  " << col::BOLD << std::left; cout.width(6); cout << route.route_short_name << col::RESET
+                     << col::GRAY << seg.stop.trip_id << col::RESET << "\n";
             }
         }
-        return 0;
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
     }
+    pauseKey();
+}
 
-    if (sub == "--route") {
-        if (argc < 5) { cerr << "Usage: trip --route <route_id> <year> <month> <day>\n"; return 1; }
-        string route_id = argv[1];
-        int year = std::stoi(argv[2]), month = std::stoi(argv[3]), day = std::stoi(argv[4]);
-        auto trips = gtfs::getAllTrips(route_id);
-        vector<gtfs::trip> valid;
-        for (auto& t : trips) {
-            if (gtfs::isTripValid(t.trip_id, year, month, day))
-                valid.push_back(gtfs::getTripInfo(t.trip_id));
-        }
-        if (opts.json) {
-            cout << "{\n\t\"route_id\": \"" << jstr(route_id) << "\",\n"
-                 << "\t\"date\": \"" << fmtDate(year, month, day) << "\",\n"
-                 << "\t\"count\": " << valid.size() << ",\n"
-                 << "\t\"trips\": [\n";
-            for (int i = 0; i < (int)valid.size(); i++) {
-                auto& t = valid[i];
-                cout << "\t\t{ \"trip_id\": \"" << jstr(t.trip_id) << "\""
-                     << ", \"headsign\": \"" << jstr(t.trip_headsign) << "\""
-                     << ", \"direction\": " << (t.direction_id ? 1 : 0)
-                     << ", \"service_id\": \"" << jstr(t.service_id) << "\""
-                     << (i == (int)valid.size() - 1 ? " }\n" : " },\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Route " << route_id << " on " << fmtDate(year, month, day)
-                 << " — " << valid.size() << " trips:\n\n";
-            for (auto& t : valid) {
-                cout << "  " << t.trip_id
-                     << "  dir=" << t.direction_id
-                     << "  " << t.trip_headsign << "\n";
-            }
-        }
-        return 0;
+static void screenNearbyStops() {
+    header("nearby stops");
+    auto lat = inputDouble("nearby stops", "latitude?");
+    if (!lat) return;
+    auto lon = inputDouble("nearby stops", "longitude?");
+    if (!lon) return;
+    auto top = inputInt("nearby stops", "how many?", 10);
+    if (!top) return;
+
+    header("nearby stops", fmtDate(gtfs::getToday()));
+    auto stops = gtfs::getNearestStops(*lat, *lon, *top, -1);
+    vector<std::pair<double,double>> pts, highlight = {{*lat, *lon}};
+    for (auto& s : stops) pts.push_back({s.stop_lat, s.stop_lon});
+    drawAsciiMap(pts, highlight);
+    cout << "\n";
+    for (auto& s : stops) {
+        double dist = gtfs::getDistanceKM(*lat, *lon, s.stop_lat, s.stop_lon);
+        char buf[16]; snprintf(buf, sizeof(buf), "%.2f km", dist);
+        cout << "  " << col::CYAN << std::left; cout.width(10); cout << s.stop_id << col::RESET
+             << col::GRAY << std::right; cout.width(9); cout << buf << col::RESET
+             << "  " << s.stop_name << "\n";
     }
+    pauseKey();
+}
 
-    if (sub == "--block") {
-        if (argc < 2) { cerr << "Usage: trip --block <block_id>\n"; return 1; }
-        string block_id = argv[1];
-        auto trips = gtfs::getAllBlockId(block_id);
-        if (opts.json) {
-            cout << "{\n\t\"block_id\": \"" << jstr(block_id) << "\",\n"
-                 << "\t\"count\": " << trips.size() << ",\n"
-                 << "\t\"trips\": [\n";
-            for (int i = 0; i < (int)trips.size(); i++) {
-                cout << "\t\t\"" << jstr(trips[i].trip_id) << "\""
-                     << (i == (int)trips.size() - 1 ? "\n" : ",\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Block " << block_id << " — " << trips.size() << " trips:\n\n";
-            for (auto& t : trips) cout << "  " << t.trip_id << "\n";
+static void screenStopsMenu() {
+    while (true) {
+        int c = runMenu("stops", {
+            "search stops by name",
+            "look up stop by id",
+            "departures today",
+            "remaining departures (from now)",
+            "nearby stops"
+        }, "everything about a stop");
+        if (c == -1) return;
+        if (c == 0) {
+            auto hit = searchStopInteractive();
+            if (hit) screenStopDetail(hit->id);
+        } else if (c == 1) {
+            auto id = inputLine("stop lookup", "stop id?");
+            if (id) screenStopDetail(*id);
+        } else if (c == 2) {
+            auto hit = searchStopInteractive("departures today — pick a stop");
+            if (hit) screenStopDepartures(hit->id, false);
+        } else if (c == 3) {
+            auto hit = searchStopInteractive("remaining departures — pick a stop");
+            if (hit) screenStopDepartures(hit->id, true);
+        } else if (c == 4) {
+            screenNearbyStops();
         }
-        return 0;
     }
+}
 
-    // basic trip info
-    {
-        string trip_id = sub;
+static void screenTripDetail(const string& trip_id) {
+    header("trip " + trip_id);
+    try {
         auto info  = gtfs::getTripInfo(trip_id);
         auto route = gtfs::getRouteInfo(info.route_id);
-        if (opts.json) {
-            cout << "{\n"
-                 << "\t\"trip_id\": \""       << jstr(info.trip_id)       << "\",\n"
-                 << "\t\"route_id\": \""      << jstr(info.route_id)      << "\",\n"
-                 << "\t\"service_id\": \""    << jstr(info.service_id)    << "\",\n"
-                 << "\t\"headsign\": \""      << jstr(info.trip_headsign) << "\",\n"
-                 << "\t\"direction\": "       << (info.direction_id ? 1 : 0)             << ",\n"
-                 << "\t\"block_id\": \""      << jstr(info.block_id)      << "\",\n"
-                 << "\t\"shape_id\": \""      << jstr(info.shape_id)      << "\",\n"
-                 << "\t\"wheelchair\": \""    << allowableStr(info.wheelchair_accessible) << "\",\n"
-                 << "\t\"bikes\": \""         << allowableStr(info.bikes_allowed)         << "\",\n"
-                 << "\t\"route_short_name\": \"" << jstr(route.route_short_name) << "\",\n"
-                 << "\t\"route_long_name\": \"" << jstr(route.route_long_name) << "\"\n"
-                 << "}\n";
-        } else {
-            cout << "Trip:           " << info.trip_id << "\n"
-                 << "Route:          " << info.route_id
-                 << " (" << route.route_short_name << " — " << route.route_long_name << ")\n"
-                 << "Service ID:     " << info.service_id << "\n"
-                 << "Headsign:       " << info.trip_headsign << "\n"
-                 << "Direction:      " << (info.direction_id ? "1 (inbound)" : "0 (outbound)") << "\n"
-                 << "Block ID:       " << info.block_id << "\n"
-                 << "Shape ID:       " << info.shape_id << "\n"
-                 << "Wheelchair:     " << allowableStr(info.wheelchair_accessible) << "\n"
-                 << "Bikes:          " << allowableStr(info.bikes_allowed) << "\n";
-        }
+        kv("trip id",    info.trip_id);
+        kv("route",      info.route_id + "  (" + route.route_short_name + " — " + route.route_long_name + ")");
+        kv("service id", info.service_id);
+        kv("headsign",   info.trip_headsign);
+        kv("direction",  info.direction_id ? "1 (inbound)" : "0 (outbound)");
+        kv("block id",   info.block_id);
+        kv("shape id",   info.shape_id);
+        kv("wheelchair", allowableStr(info.wheelchair_accessible));
+        kv("bikes",      allowableStr(info.bikes_allowed));
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
     }
-    return 0;
+    pauseKey();
 }
 
-int cmdStop(const Options& opts, int argc, char* argv[]) {
-    if (argc < 1) {
-        cerr << "Usage:\n"
-             << "  stop <stop_id>\n"
-             << "  stop --departures <stop_id> [year month day]\n"
-             << "  stop --remaining <stop_id>\n"
-             << "  stop --nearby <lat> <lon> [-t N] [-d km]\n"
-             << "  stop --search <name...>\n";
-        return 1;
+static void screenTripStops(const string& trip_id) {
+    header("stops along trip " + trip_id);
+    try {
+        auto segs = gtfs::getAllStops(trip_id);
+        vector<std::pair<double,double>> pts;
+        for (auto& seg : segs) {
+            auto st = gtfs::getStopInfo(seg.stop.stop_id);
+            pts.push_back({st.stop_lat, st.stop_lon});
+        }
+        drawAsciiMap(pts);
+        cout << "\n  " << segs.size() << " stops\n\n";
+        for (auto& seg : segs) {
+            auto st = gtfs::getStopInfo(seg.stop.stop_id);
+            cout << "  " << col::GRAY << std::right; cout.width(3); cout << seg.stop.stop_sequence << col::RESET
+                 << "  " << col::CYAN << seg.stop.arrival_time.leadingRoundedTime() << col::RESET
+                 << "  " << st.stop_name << "\n";
+        }
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
     }
-
-    string sub = argv[0];
-
-    if (sub == "--departures") {
-        if (argc < 2) { cerr << "Usage: stop --departures <stop_id> [year month day]\n"; return 1; }
-        string stop_id = argv[1];
-        int year, month, day;
-        if (argc >= 5) {
-            year = std::stoi(argv[2]); month = std::stoi(argv[3]); day = std::stoi(argv[4]);
-        } else {
-            auto today = gtfs::getToday();
-            year = today.year; month = today.month; day = today.day;
-        }
-        auto st   = gtfs::getStopInfo(stop_id);
-        auto deps = gtfs::getDayTimesAtStop(stop_id, year, month, day);
-        if (opts.json) {
-            cout << "{\n"
-                 << "\t\"stop_id\": \""   << jstr(stop_id)    << "\",\n"
-                 << "\t\"stop_name\": \"" << jstr(st.stop_name) << "\",\n"
-                 << "\t\"date\": \""      << fmtDate(year, month, day) << "\",\n"
-                 << "\t\"count\": " << deps.size() << ",\n"
-                 << "\t\"departures\": [\n";
-            for (int i = 0; i < (int)deps.size(); i++) {
-                auto& seg   = deps[i];
-                auto  route = gtfs::getRouteInfo(seg.route_id);
-                cout << "\t\t{ \"route\": \""    << jstr(route.route_short_name) << "\""
-                     << ", \"arrival\": \""       << seg.stop.arrival_time.leadingRoundedTime() << "\""
-                     << ", \"departure\": \""     << seg.stop.departure_time.leadingRoundedTime() << "\""
-                     << ", \"trip_id\": \""       << jstr(seg.stop.trip_id) << "\""
-                     << ", \"route_color\": \"#" << jstr(route.route_color) << "\""
-                     << (i == (int)deps.size() - 1 ? " }\n" : " },\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Stop " << stop_id << " — " << st.stop_name << "\n"
-                 << "Departures on " << fmtDate(year, month, day)
-                 << " (" << deps.size() << " total):\n\n";
-            for (auto& seg : deps) {
-                auto route = gtfs::getRouteInfo(seg.route_id);
-                cout << "  " << seg.stop.arrival_time.leadingRoundedTime()
-                     << "  " << std::left << std::setw(6) << route.route_short_name
-                     << "  " << seg.stop.trip_id << "\n";
-            }
-        }
-        return 0;
-    }
-
-    if (sub == "--remaining") {
-        if (argc < 2) { cerr << "Usage: stop --remaining <stop_id>\n"; return 1; }
-        string stop_id = argv[1];
-        auto now   = gtfs::getCurrentTime();
-        auto today = gtfs::getToday();
-        auto st    = gtfs::getStopInfo(stop_id);
-        auto deps  = gtfs::getRemainingDayStops(stop_id, now, today);
-        if (opts.json) {
-            cout << "{\n"
-                 << "\t\"stop_id\": \""    << jstr(stop_id)                  << "\",\n"
-                 << "\t\"stop_name\": \""  << jstr(st.stop_name)             << "\",\n"
-                 << "\t\"from_time\": \""  << now.leadingRoundedTime()        << "\",\n"
-                 << "\t\"count\": " << deps.size() << ",\n"
-                 << "\t\"departures\": [\n";
-            for (int i = 0; i < (int)deps.size(); i++) {
-                auto& seg   = deps[i];
-                auto  route = gtfs::getRouteInfo(seg.route_id);
-                cout << "\t\t{ \"route\": \""   << jstr(route.route_short_name) << "\""
-                     << ", \"arrival\": \""       << seg.stop.arrival_time.leadingRoundedTime() << "\""
-                     << ", \"trip_id\": \""       << jstr(seg.stop.trip_id) << "\""
-                     << ", \"route_color\": \"#" << jstr(route.route_color) << "\""
-                     << (i == (int)deps.size() - 1 ? " }\n" : " },\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Stop " << stop_id << " — " << st.stop_name << "\n"
-                 << "Remaining departures after " << now.leadingRoundedTime()
-                 << " (" << deps.size() << " total):\n\n";
-            for (auto& seg : deps) {
-                auto route = gtfs::getRouteInfo(seg.route_id);
-                cout << "  " << seg.stop.arrival_time.leadingRoundedTime()
-                     << "  " << std::left << std::setw(6) << route.route_short_name
-                     << "  " << seg.stop.trip_id << "\n";
-            }
-        }
-        return 0;
-    }
-
-    if (sub == "--nearby") {
-        if (argc < 3) { cerr << "Usage: stop --nearby <lat> <lon> [-t N] [-d km]\n"; return 1; }
-        double lat = std::stod(argv[1]);
-        double lon = std::stod(argv[2]);
-        int    top     = 10;
-        double maxDist = -1;
-        for (int i = 3; i < argc; i++) {
-            string arg = argv[i];
-            if ((arg == "-t" || arg == "--total") && i + 1 < argc)
-                top = std::stoi(argv[++i]);
-            else if ((arg == "-d" || arg == "--distance") && i + 1 < argc)
-                maxDist = std::stod(argv[++i]);
-        }
-        auto stops = gtfs::getNearestStops(lat, lon, top, maxDist);
-        cout << std::fixed << std::setprecision(opts.precision);
-        if (opts.json) {
-            cout << "{\n\t\"lat\": " << lat << ", \"lon\": " << lon << ",\n"
-                 << "\t\"count\": " << stops.size() << ",\n"
-                 << "\t\"stops\": [\n";
-            for (int i = 0; i < (int)stops.size(); i++) {
-                auto& s    = stops[i];
-                double dist = gtfs::getDistanceKM(lat, lon, s.stop_lat, s.stop_lon);
-                cout << "\t\t{ \"stop_id\": \""   << jstr(s.stop_id) << "\""
-                     << ", \"stop_name\": \""      << jstr(s.stop_name) << "\""
-                     << ", \"lat\": "              << s.stop_lat
-                     << ", \"lon\": "              << s.stop_lon
-                     << ", \"distanceKM\": "       << dist
-                     << (i == (int)stops.size() - 1 ? " }\n" : " },\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Nearest stops to (" << lat << ", " << lon << "):\n\n";
-            for (auto& s : stops) {
-                double dist = gtfs::getDistanceKM(lat, lon, s.stop_lat, s.stop_lon);
-                cout << "  " << std::left << std::setw(10) << s.stop_id
-                     << std::right << std::setw(8) << std::setprecision(3) << dist << " km"
-                     << "  " << s.stop_name << "\n";
-            }
-        }
-        return 0;
-    }
-
-    if (sub == "--search") {
-        if (argc < 2) { cerr << "Usage: stop --search <name...>\n"; return 1; }
-        // join remaining args as the search query
-        string name = argv[1];
-        for (int i = 2; i < argc; i++) { name += " "; name += argv[i]; }
-        auto results = gtfs::searchStop(name);
-        int top = std::min(10, (int)results.size());
-        if (opts.json) {
-            cout << "{\n\t\"query\": \"" << jstr(name) << "\",\n"
-                 << "\t\"results\": [\n";
-            for (int i = 0; i < top; i++) {
-                auto& r = results[i];
-                cout << "\t\t{ \"stop_id\": " << r.text.num
-                     << ", \"stop_name\": \"" << jstr(r.text.str) << "\""
-                     << ", \"score\": " << r.score
-                     << (i == top - 1 ? " }\n" : " },\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Search results for \"" << name << "\":\n\n";
-            for (int i = 0; i < top; i++) {
-                auto& r = results[i];
-                cout << "  " << std::left << std::setw(10) << r.text.num
-                     << std::right << std::setw(3) << r.score << "%  "
-                     << r.text.str << "\n";
-            }
-        }
-        return 0;
-    }
-
-    // basic stop info
-    {
-        string stop_id = sub;
-        auto st = gtfs::getStopInfo(stop_id);
-        cout << std::fixed << std::setprecision(opts.precision);
-        if (opts.json) {
-            cout << "{\n"
-                 << "\t\"stop_id\": \""       << jstr(st.stop_id)       << "\",\n"
-                 << "\t\"stop_code\": \""     << jstr(st.stop_code)     << "\",\n"
-                 << "\t\"stop_name\": \""     << jstr(st.stop_name)     << "\",\n"
-                 << "\t\"lat\": "             << st.stop_lat             << ",\n"
-                 << "\t\"lon\": "             << st.stop_lon             << ",\n"
-                 << "\t\"zone_id\": \""       << jstr(st.zone_id)       << "\",\n"
-                 << "\t\"parent_station\": \"" << jstr(st.parent_station) << "\"\n"
-                 << "}\n";
-        } else {
-            cout << "Stop ID:        " << st.stop_id << "\n"
-                 << "Stop Code:      " << st.stop_code << "\n"
-                 << "Name:           " << st.stop_name << "\n"
-                 << "Coordinates:    " << st.stop_lat << ", " << st.stop_lon << "\n"
-                 << "Zone:           " << st.zone_id << "\n"
-                 << "Parent Station: " << (st.parent_station.empty() ? "(none)" : st.parent_station) << "\n";
-        }
-    }
-    return 0;
+    pauseKey();
 }
 
-int cmdRoute(const Options& opts, int argc, char* argv[]) {
-    if (argc < 1) { cerr << "Usage: route <route_id>\n"; return 1; }
-    auto r = gtfs::getRouteInfo(argv[0]);
-    if (opts.json) {
-        cout << "{\n"
-             << "\t\"route_id\": \""    << jstr(r.route_id)         << "\",\n"
-             << "\t\"agency_id\": \""   << jstr(r.agency_id)        << "\",\n"
-             << "\t\"short_name\": \""  << jstr(r.route_short_name) << "\",\n"
-             << "\t\"long_name\": \""   << jstr(r.route_long_name)  << "\",\n"
-             << "\t\"type\": \""        << routeTypeStr(r.route_type) << "\",\n"
-             << "\t\"color\": \"#"     << jstr(r.route_color)       << "\",\n"
-             << "\t\"text_color\": \"#" << jstr(r.route_text_color)  << "\"\n"
-             << "}\n";
-    } else {
-        cout << "Route ID:    " << r.route_id << "\n"
-             << "Agency:      " << r.agency_id << "\n"
-             << "Short Name:  " << r.route_short_name << "\n"
-             << "Long Name:   " << r.route_long_name << "\n"
-             << "Type:        " << routeTypeStr(r.route_type) << "\n"
-             << "Color:       #" << r.route_color << " / #" << r.route_text_color << "\n";
+static void screenTripsForRoute(const string& route_id) {
+    auto y = inputInt("trips for route " + route_id, "year?", gtfs::getToday().year);
+    if (!y) return;
+    auto m = inputInt("trips for route " + route_id, "month?", gtfs::getToday().month);
+    if (!m) return;
+    auto d = inputInt("trips for route " + route_id, "day?", gtfs::getToday().day);
+    if (!d) return;
+
+    header("trips for " + route_id, fmtDate(*y, *m, *d));
+    auto trips = gtfs::getAllTrips(route_id);
+    vector<gtfs::trip> valid;
+    for (auto& t : trips) if (gtfs::isTripValid(t.trip_id, *y, *m, *d)) valid.push_back(gtfs::getTripInfo(t.trip_id));
+    cout << "  " << valid.size() << " trips running\n\n";
+    for (auto& t : valid) {
+        cout << "  " << col::CYAN << t.trip_id << col::RESET
+             << col::GRAY << "  dir=" << t.direction_id << col::RESET
+             << "  " << t.trip_headsign << "\n";
     }
-    return 0;
+    pauseKey();
 }
 
-int cmdAgency(const Options& opts, int /*argc*/, char* /*argv*/[]) {
+static void screenBlockTrips(const string& block_id) {
+    header("block " + block_id);
+    auto trips = gtfs::getAllBlockId(block_id);
+    cout << "  " << trips.size() << " trips share this block\n\n";
+    for (auto& t : trips) cout << "  " << col::CYAN << t.trip_id << col::RESET << "\n";
+    pauseKey();
+}
+
+static void screenTripsMenu() {
+    while (true) {
+        int c = runMenu("trips", {
+            "look up trip by id",
+            "stops along a trip",
+            "trips on a route + date",
+            "trips sharing a block id"
+        }, "everything about a trip");
+        if (c == -1) return;
+        if (c == 0) { auto id = inputLine("trip lookup", "trip id?"); if (id) screenTripDetail(*id); }
+        else if (c == 1) { auto id = inputLine("trip stops", "trip id?"); if (id) screenTripStops(*id); }
+        else if (c == 2) { auto hit = searchRouteInteractive("trips on a route — pick a route"); if (hit) screenTripsForRoute(hit->id); }
+        else if (c == 3) { auto id = inputLine("block trips", "block id?"); if (id) screenBlockTrips(*id); }
+    }
+}
+
+static void screenRouteDetail(const string& route_id) {
+    header("route " + route_id);
+    try {
+        auto r = gtfs::getRouteInfo(route_id);
+        kv("route id",    r.route_id);
+        kv("agency",      r.agency_id);
+        kv("short name",  r.route_short_name);
+        kv("long name",   r.route_long_name);
+        kv("type",        routeTypeStr(r.route_type));
+        kv("color",       "#" + r.route_color + "  text #" + r.route_text_color);
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
+    }
+    pauseKey();
+}
+
+static void screenRoutesMenu() {
+    while (true) {
+        int c = runMenu("routes", {
+            "search routes",
+            "look up route by id"
+        }, "route details & colors");
+        if (c == -1) return;
+        if (c == 0) { auto hit = searchRouteInteractive(); if (hit) screenRouteDetail(hit->id); }
+        else if (c == 1) { auto id = inputLine("route lookup", "route id?"); if (id) screenRouteDetail(*id); }
+    }
+}
+
+static void screenAgency() {
+    header("agencies");
     auto agencies = gtfs::getAgencyInfo();
-    if (opts.json) {
-        cout << "[\n";
-        for (int i = 0; i < (int)agencies.size(); i++) {
-            auto& a = agencies[i];
-            cout << "\t{\n"
-                 << "\t\t\"agency_id\": \""  << jstr(a.agency_id)       << "\",\n"
-                 << "\t\t\"name\": \""       << jstr(a.agency_name)     << "\",\n"
-                 << "\t\t\"url\": \""        << jstr(a.agency_url)      << "\",\n"
-                 << "\t\t\"timezone\": \""   << jstr(a.agency_timezone) << "\",\n"
-                 << "\t\t\"lang\": \""       << jstr(a.agency_lang)     << "\",\n"
-                 << "\t\t\"phone\": \""      << jstr(a.agency_phone)    << "\"\n"
-                 << "\t}" << (i == (int)agencies.size() - 1 ? "\n" : ",\n");
-        }
-        cout << "]\n";
-    } else {
-        for (auto& a : agencies) {
-            cout << "Agency ID:  " << a.agency_id   << "\n"
-                 << "Name:       " << a.agency_name << "\n"
-                 << "URL:        " << a.agency_url  << "\n"
-                 << "Timezone:   " << a.agency_timezone << "\n"
-                 << "Phone:      " << a.agency_phone << "\n\n";
-        }
+    for (auto& a : agencies) {
+        cout << "  " << col::BOLD << a.agency_name << col::RESET << "\n";
+        kv("  id",       a.agency_id);
+        kv("  url",      a.agency_url);
+        kv("  timezone", a.agency_timezone);
+        kv("  phone",    a.agency_phone);
+        cout << "\n";
     }
-    return 0;
+    pauseKey();
 }
 
-int cmdShape(const Options& opts, int argc, char* argv[]) {
-    if (argc < 1) { cerr << "Usage: shape <shape_id>\n"; return 1; }
-    string shape_id = argv[0];
-    auto pts = gtfs::getShapeInfo(shape_id);
-    cout << std::fixed << std::setprecision(opts.precision);
-    if (opts.json) {
-        cout << "{\n\t\"shape_id\": \"" << jstr(shape_id) << "\",\n"
-             << "\t\"count\": " << pts.size() << ",\n"
-             << "\t\"points\": [\n";
-        for (int i = 0; i < (int)pts.size(); i++) {
-            auto& p = pts[i];
-            cout << "\t\t{ \"seq\": " << p.shape_pt_sequence
-                 << ", \"lat\": " << p.shape_pt_lat
-                 << ", \"lon\": " << p.shape_pt_lon
-                 << (i == (int)pts.size() - 1 ? " }\n" : " },\n");
-        }
-        cout << "\t]\n}\n";
-    } else {
-        cout << "Shape " << shape_id << " — " << pts.size() << " points:\n\n";
-        for (auto& p : pts) {
-            cout << "  [" << std::setw(5) << p.shape_pt_sequence << "]  "
-                 << p.shape_pt_lat << ", " << p.shape_pt_lon << "\n";
-        }
+static void screenShape() {
+    auto id = inputLine("shape lookup", "shape id?");
+    if (!id) return;
+    header("shape " + *id);
+    try {
+        auto pts = gtfs::getShapeInfo(*id);
+        vector<std::pair<double,double>> coords;
+        for (auto& p : pts) coords.push_back({p.shape_pt_lat, p.shape_pt_lon});
+        drawAsciiMap(coords);
+        cout << "\n  " << pts.size() << " points\n";
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
     }
-    return 0;
+    pauseKey();
 }
 
-int cmdService(const Options& opts, int argc, char* argv[]) {
-    if (argc < 1) {
-        cerr << "Usage:\n"
-             << "  service <service_id>\n"
-             << "  service --valid <trip_id> [year month day]\n"
-             << "  service --verify [year month day]\n";
-        return 1;
-    }
-
-    string sub = argv[0];
-
-    if (sub == "--valid") {
-        if (argc < 2) { cerr << "Usage: service --valid <trip_id> [year month day]\n"; return 1; }
-        string trip_id = argv[1];
-        int year, month, day;
-        if (argc >= 5) {
-            year = std::stoi(argv[2]); month = std::stoi(argv[3]); day = std::stoi(argv[4]);
-        } else {
-            auto today = gtfs::getToday();
-            year = today.year; month = today.month; day = today.day;
-        }
-        bool valid = gtfs::isTripValid(trip_id, year, month, day);
-        if (opts.json) {
-            cout << "{ \"trip_id\": \"" << jstr(trip_id) << "\""
-                 << ", \"date\": \"" << fmtDate(year, month, day) << "\""
-                 << ", \"valid\": " << (valid ? "true" : "false") << " }\n";
-        } else {
-            cout << "Trip " << trip_id << " on " << fmtDate(year, month, day)
-                 << ": " << (valid ? "VALID" : "NOT VALID") << "\n";
-        }
-        return 0;
-    }
-
-    if (sub == "--verify") {
-        int year, month, day;
-        if (argc >= 4) {
-            year = std::stoi(argv[1]); month = std::stoi(argv[2]); day = std::stoi(argv[3]);
-        } else {
-            auto today = gtfs::getToday();
-            year = today.year; month = today.month; day = today.day;
-        }
-        auto status = gtfs::verifyGTFS(year, month, day);
-        if (opts.json) {
-            cout << "{ \"date\": \"" << fmtDate(year, month, day) << "\""
-                 << ", \"status\": \"" << feedStatusStr(status) << "\" }\n";
-        } else {
-            cout << "GTFS feed on " << fmtDate(year, month, day)
-                 << ": " << feedStatusStr(status) << "\n";
-        }
-        return 0;
-    }
-
-    // service <service_id>
-    {
-        string service_id = sub;
+static void screenServiceDetail(const string& service_id) {
+    header("service " + service_id);
+    try {
         auto svc = gtfs::getServiceInfo(service_id);
         auto& cal = svc.schedule;
-        if (opts.json) {
-            cout << "{\n"
-                 << "\t\"service_id\": \"" << jstr(service_id) << "\",\n"
-                 << "\t\"start_date\": \"" << fmtDate(cal.start_date) << "\",\n"
-                 << "\t\"end_date\": \""   << fmtDate(cal.end_date)   << "\",\n"
-                 << "\t\"schedule\": {\n"
-                 << "\t\t\"mon\": " << (cal.monday    ? "true" : "false") << ",\n"
-                 << "\t\t\"tue\": " << (cal.tuesday   ? "true" : "false") << ",\n"
-                 << "\t\t\"wed\": " << (cal.wednesday ? "true" : "false") << ",\n"
-                 << "\t\t\"thu\": " << (cal.thursday  ? "true" : "false") << ",\n"
-                 << "\t\t\"fri\": " << (cal.friday    ? "true" : "false") << ",\n"
-                 << "\t\t\"sat\": " << (cal.saturday  ? "true" : "false") << ",\n"
-                 << "\t\t\"sun\": " << (cal.sunday    ? "true" : "false") << "\n"
-                 << "\t},\n"
-                 << "\t\"exceptions\": [\n";
-            for (int i = 0; i < (int)svc.exceptions.size(); i++) {
-                auto& ex = svc.exceptions[i];
-                cout << "\t\t{ \"date\": \"" << fmtDate(ex.date) << "\""
-                     << ", \"type\": \"" << (ex.exception_type == gtfs::calendar_date::added ? "added" : "removed") << "\""
-                     << (i == (int)svc.exceptions.size() - 1 ? " }\n" : " },\n");
-            }
-            cout << "\t]\n}\n";
-        } else {
-            cout << "Service ID:  " << service_id << "\n"
-                 << "Active:      " << fmtDate(cal.start_date) << " to " << fmtDate(cal.end_date) << "\n"
-                 << "Schedule:    "
-                 << (cal.monday    ? "Mon " : "--- ")
-                 << (cal.tuesday   ? "Tue " : "--- ")
-                 << (cal.wednesday ? "Wed " : "--- ")
-                 << (cal.thursday  ? "Thu " : "--- ")
-                 << (cal.friday    ? "Fri " : "--- ")
-                 << (cal.saturday  ? "Sat " : "--- ")
-                 << (cal.sunday    ? "Sun"  : "---") << "\n";
-            if (!svc.exceptions.empty()) {
-                cout << "Exceptions (" << svc.exceptions.size() << "):\n";
-                for (auto& ex : svc.exceptions) {
-                    cout << "  " << fmtDate(ex.date) << "  "
-                         << (ex.exception_type == gtfs::calendar_date::added ? "added" : "removed") << "\n";
-                }
+        kv("active", fmtDate(cal.start_date) + " to " + fmtDate(cal.end_date));
+        cout << "  " << col::GRAY << std::left; cout.width(16); cout << "schedule" << col::RESET;
+        const char* names[7] = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
+        bool days[7] = {cal.monday, cal.tuesday, cal.wednesday, cal.thursday, cal.friday, cal.saturday, cal.sunday};
+        for (int i = 0; i < 7; i++) {
+            if (days[i]) cout << col::GREEN << col::BOLD << names[i] << " " << col::RESET;
+            else cout << col::GRAY << "--- " << col::RESET;
+        }
+        cout << "\n";
+        if (!svc.exceptions.empty()) {
+            cout << "\n  exceptions (" << svc.exceptions.size() << "):\n";
+            for (auto& ex : svc.exceptions) {
+                bool added = ex.exception_type == gtfs::calendar_date::added;
+                cout << "    " << fmtDate(ex.date) << "  "
+                     << (added ? col::GREEN : col::RED) << (added ? "added" : "removed") << col::RESET << "\n";
             }
         }
+    } catch (const std::exception& e) {
+        cout << col::RED << "  error: " << e.what() << col::RESET << "\n";
     }
-    return 0;
+    pauseKey();
 }
 
-int cmdDistance(const Options& opts, int argc, char* argv[]) {
-    if (argc < 4) { cerr << "Usage: distance <lat1> <lon1> <lat2> <lon2>\n"; return 1; }
-    double lat1 = std::stod(argv[0]), lon1 = std::stod(argv[1]);
-    double lat2 = std::stod(argv[2]), lon2 = std::stod(argv[3]);
-    double dist = gtfs::getDistanceKM(lat1, lon1, lat2, lon2);
-    cout << std::fixed << std::setprecision(opts.precision);
-    if (opts.json) {
-        cout << "{ \"lat1\": " << lat1 << ", \"lon1\": " << lon1
-             << ", \"lat2\": " << lat2 << ", \"lon2\": " << lon2
-             << ", \"distanceKM\": " << dist << " }\n";
+static void screenTripValidOnDate() {
+    auto id = inputLine("check trip validity", "trip id?");
+    if (!id) return;
+    auto today = gtfs::getToday();
+    auto y = inputInt("check trip validity", "year?", today.year); if (!y) return;
+    auto m = inputInt("check trip validity", "month?", today.month); if (!m) return;
+    auto d = inputInt("check trip validity", "day?", today.day); if (!d) return;
+    header("trip validity");
+    bool valid = gtfs::isTripValid(*id, *y, *m, *d);
+    cout << "  trip " << *id << " on " << fmtDate(*y, *m, *d) << ":  "
+         << (valid ? col::GREEN : col::RED) << col::BOLD << (valid ? "VALID" : "NOT VALID") << col::RESET << "\n";
+    pauseKey();
+}
+
+static void screenVerifyFeed() {
+    auto today = gtfs::getToday();
+    header("verify feed status", fmtDate(today));
+    auto status = gtfs::verifyGTFS(today.year, today.month, today.day);
+    cout << "  feed status today:  " << col::BOLD << feedStatusStr(status) << col::RESET << "\n";
+    pauseKey();
+}
+
+static void screenServiceMenu() {
+    while (true) {
+        int c = runMenu("service & calendars", {
+            "look up service id",
+            "check if a trip runs on a date",
+            "verify feed status (today)"
+        });
+        if (c == -1) return;
+        if (c == 0) { auto id = inputLine("service lookup", "service id?"); if (id) screenServiceDetail(*id); }
+        else if (c == 1) screenTripValidOnDate();
+        else if (c == 2) screenVerifyFeed();
+    }
+}
+
+static void screenDistance() {
+    auto lat1 = inputDouble("distance calculator", "point A latitude?"); if (!lat1) return;
+    auto lon1 = inputDouble("distance calculator", "point A longitude?"); if (!lon1) return;
+    auto lat2 = inputDouble("distance calculator", "point B latitude?"); if (!lat2) return;
+    auto lon2 = inputDouble("distance calculator", "point B longitude?"); if (!lon2) return;
+    header("distance");
+    double dist = gtfs::getDistanceKM(*lat1, *lon1, *lat2, *lon2);
+    drawAsciiMap({}, {{*lat1, *lon1}, {*lat2, *lon2}});
+    cout << "\n  " << col::BOLD << dist << " km" << col::RESET << "\n";
+    pauseKey();
+}
+
+// ---- realtime ----
+
+static void screenRtStopArrivals() {
+    auto hit = searchStopInteractive("live arrivals — pick a stop");
+    if (!hit) return;
+    header("live arrivals — " + hit->label, "stop " + hit->id);
+    string toolPath = rtToolDir(g_prog.c_str()) + "/decodeStop";
+    auto [ok, out] = runTool(toolPath, hit->id);
+    if (!ok && out.find("not built") != string::npos) {
+        cout << col::RED << "  " << out << col::RESET << "\n";
+    } else if (out.empty()) {
+        cout << col::GRAY << "  no live data returned\n" << col::RESET;
     } else {
-        cout << "Distance: " << dist << " km\n";
+        printColorizedJson(out);
     }
-    return 0;
+    pauseKey();
 }
 
-static const string kDefaultRoot =
-    "/Users/jettmu/Documents/VSCode/GTFS Parser/static-gtfs/data/yrt_archive/";
-
-int cmdConfig(const Options& /*opts*/, int argc, char* argv[], const string& cfgFile) {
-    if (argc < 1) {
-        cerr << "Usage:\n"
-             << "  config get              Show current data path\n"
-             << "  config set <path>       Save data path to config.json\n"
-             << "  config reset            Remove config.json (restore default)\n";
-        return 1;
+static void screenRtTripStatus() {
+    auto stopHit = searchStopInteractive("live trip status — pick a stop first");
+    if (!stopHit) return;
+    auto today = gtfs::getToday();
+    auto deps = gtfs::getDayTimesAtStop(stopHit->id, today.year, today.month, today.day);
+    if (deps.empty()) {
+        header("live trip status");
+        cout << col::GRAY << "  no scheduled trips at this stop today\n" << col::RESET;
+        pauseKey();
+        return;
     }
-
-    string sub = argv[0];
-
-    if (sub == "get") {
-        string saved = readConfigDataPath(cfgFile);
-        cout << "Config file:  " << cfgFile << "\n"
-             << "Data path:    " << (saved.empty() ? config::root + " (default)" : saved) << "\n";
-        return 0;
+    vector<string> items;
+    for (auto& seg : deps) {
+        auto route = gtfs::getRouteInfo(seg.route_id);
+        items.push_back(seg.stop.arrival_time.leadingRoundedTime() + "  " + route.route_short_name + "  " + seg.stop.trip_id);
     }
+    int sel = runMenu("pick a scheduled trip", items, stopHit->label + " — today");
+    if (sel == -1) return;
+    string trip_id = deps[sel].stop.trip_id;
 
-    if (sub == "set") {
-        if (argc < 2) { cerr << "Usage: config set <path>\n"; return 1; }
-        string newPath = argv[1];
-        // ensure trailing slash
-        if (!newPath.empty() && newPath.back() != '/') newPath += '/';
-        writeConfigDataPath(cfgFile, newPath);
-        cout << "Saved data path: " << newPath << "\n"
-             << "Config file:     " << cfgFile << "\n";
-        return 0;
+    header("live trip status", "trip " + trip_id);
+    string toolPath = rtToolDir(g_prog.c_str()) + "/decodeTrip";
+    auto [ok, out] = runTool(toolPath, trip_id);
+    if (!ok && out.find("not built") != string::npos) {
+        cout << col::RED << "  " << out << col::RESET << "\n";
+    } else if (out.empty()) {
+        cout << col::GRAY << "  no live data returned\n" << col::RESET;
+    } else {
+        printColorizedJson(out);
     }
-
-    if (sub == "reset") {
-        if (std::remove(cfgFile.c_str()) == 0)
-            cout << "Removed " << cfgFile << " (using default path)\n";
-        else
-            cout << "No config file found; already using default path.\n";
-        return 0;
-    }
-
-    cerr << "Unknown config subcommand: " << sub << "\n";
-    return 1;
+    pauseKey();
 }
 
-void printHelp(const string& prog) {
-    cerr << "Usage: " << prog << " [--json|-j] [--precision|-p N] [-c <path>] <command> [args...]\n"
-         << "\n"
-         << "Trip commands:\n"
-         << "  trip <trip_id>                            Basic trip info\n"
-         << "  trip --stops <trip_id>                    All stops along a trip\n"
-         << "  trip --route <route_id> <y> <m> <d>       Valid trips for a route on a date\n"
-         << "  trip --block <block_id>                   All trips sharing a block\n"
-         << "\n"
-         << "Stop commands:\n"
-         << "  stop <stop_id>                            Basic stop info\n"
-         << "  stop --departures <stop_id> [y m d]       All departures at a stop\n"
-         << "  stop --remaining <stop_id>                Remaining departures from now\n"
-         << "  stop --nearby <lat> <lon> [-t N] [-d km]  Nearest stops\n"
-         << "  stop --search <name...>                   Search stops by name\n"
-         << "\n"
-         << "Other commands:\n"
-         << "  route <route_id>                          Route details\n"
-         << "  agency                                    Agency info\n"
-         << "  shape <shape_id>                          Shape geographic points\n"
-         << "  service <service_id>                      Service calendar with exceptions\n"
-         << "  service --valid <trip_id> [y m d]         Check if a trip runs on a date\n"
-         << "  service --verify [y m d]                  Verify GTFS feed status\n"
-         << "  distance <lat1> <lon1> <lat2> <lon2>      Haversine distance in km\n"
-         << "\n"
-         << "Config commands:\n"
-         << "  config get                                Show active data path\n"
-         << "  config set <path>                         Save data path to config.json\n"
-         << "  config reset                              Remove config.json (restore default)\n"
-         << "\n"
+static void screenRtAlerts() {
+    auto hit = searchRouteInteractive("service alerts — pick a route");
+    if (!hit) return;
+    header("service alerts — " + hit->label, "route " + hit->id);
+    string toolPath = rtToolDir(g_prog.c_str()) + "/decodeAlerts";
+    auto [ok, out] = runTool(toolPath, hit->id);
+    if (!ok && out.find("not built") != string::npos) {
+        cout << col::RED << "  " << out << col::RESET << "\n";
+    } else if (out.find("No alerts found") != string::npos || out.empty()) {
+        cout << col::GRAY << "  no active alerts for this route\n" << col::RESET;
+    } else {
+        printColorizedJson(out);
+    }
+    pauseKey();
+}
+
+static void screenRealtimeMenu() {
+    while (true) {
+        int c = runMenu("realtime", {
+            "live arrivals at a stop",
+            "live status of a trip",
+            "service alerts for a route"
+        }, "pulls live GTFS-RT feeds via the gtfs-rt decoders");
+        if (c == -1) return;
+        if (c == 0) screenRtStopArrivals();
+        else if (c == 1) screenRtTripStatus();
+        else if (c == 2) screenRtAlerts();
+    }
+}
+
+// ---- settings ----
+
+static void screenSettings() {
+    while (true) {
+        string saved = readConfigDataPath(g_cfgFile);
+        int c = runMenu("settings", {
+            "set data path",
+            "reset to default data path"
+        }, "data path: " + (saved.empty() ? config::root + " (default)" : saved));
+        if (c == -1) return;
+        if (c == 0) {
+            auto p = inputLine("settings", "new data path?");
+            if (p) {
+                string np = *p;
+                if (!np.empty() && np.back() != '/') np += '/';
+                writeConfigDataPath(g_cfgFile, np);
+                applyRoot(np);
+                header("settings");
+                cout << col::GREEN << "  saved: " << np << col::RESET << "\n";
+                pauseKey();
+            }
+        } else if (c == 1) {
+            std::remove(g_cfgFile.c_str());
+            applyRoot(config::root);
+            header("settings");
+            cout << col::GREEN << "  reset to default data path\n" << col::RESET;
+            pauseKey();
+        }
+    }
+}
+
+// ============================================================================
+// main menu / entry
+// ============================================================================
+
+static void mainMenu() {
+    while (true) {
+        int c = runMenu("gtfs explorer", {
+            "stops",
+            "trips",
+            "routes",
+            "agency",
+            "shapes",
+            "service & calendars",
+            "realtime",
+            "distance calculator",
+            "settings",
+            "quit"
+        }, "", "↑/↓ move   enter select   esc/q quit");
+        switch (c) {
+            case -1: case 9: return;
+            case 0: screenStopsMenu(); break;
+            case 1: screenTripsMenu(); break;
+            case 2: screenRoutesMenu(); break;
+            case 3: screenAgency(); break;
+            case 4: screenShape(); break;
+            case 5: screenServiceMenu(); break;
+            case 6: screenRealtimeMenu(); break;
+            case 7: screenDistance(); break;
+            case 8: screenSettings(); break;
+        }
+    }
+}
+
+static void printHelp(const string& prog) {
+    cerr << "Usage: " << prog << " [-c <data_path>]\n\n"
+         << "Launches an interactive, keyboard-driven GTFS explorer.\n"
+         << "Arrow keys / j,k to move, Enter to select, Esc or q to back out.\n\n"
          << "Options:\n"
-         << "  --json, -j           Output JSON instead of plain text\n"
-         << "  --precision, -p N    Decimal places for coordinates (default: 6)\n"
-         << "  -c, --config <path>  Override data path for this run (does not save)\n";
+         << "  -c, --config <path>  Override the GTFS data path for this run (not saved)\n"
+         << "  -h, --help           Show this message\n";
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) { printHelp(argv[0]); return 0; }
+    g_prog = argv[0];
+    g_cfgFile = configFilePath(argv[0]);
 
-    string cfgFile = configFilePath(argv[0]);
-
-    // auto-load saved config
-    string savedPath = readConfigDataPath(cfgFile);
+    string savedPath = readConfigDataPath(g_cfgFile);
     if (!savedPath.empty()) applyRoot(savedPath);
-
-    Options opts;
-    int cmdIdx = 1;
 
     for (int i = 1; i < argc; i++) {
         string arg = argv[i];
-        if (arg == "--json" || arg == "-j") {
-            opts.json = true;
-            cmdIdx = i + 1;
-        } else if ((arg == "--precision" || arg == "-p") && i + 1 < argc) {
-            opts.precision = std::stoi(argv[++i]);
-            cmdIdx = i + 1;
-        } else if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
-            applyRoot(argv[++i]);   // per-run override, does not save
-            cmdIdx = i + 1;
-        } else if (arg == "--help" || arg == "-h") {
+        if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
+            applyRoot(argv[++i]);
+        } else if (arg == "-h" || arg == "--help") {
             printHelp(argv[0]);
             return 0;
         } else {
-            cmdIdx = i;
-            break;
+            cerr << "Unknown argument: " << arg << "\n";
+            printHelp(argv[0]);
+            return 1;
         }
     }
 
-    if (cmdIdx >= argc) { printHelp(argv[0]); return 0; }
-
-    string cmd     = argv[cmdIdx];
-    int    subArgc = argc - cmdIdx - 1;
-    char** subArgv = argv + cmdIdx + 1;
-
-    try {
-        if (cmd == "trip")     return cmdTrip(opts, subArgc, subArgv);
-        if (cmd == "stop")     return cmdStop(opts, subArgc, subArgv);
-        if (cmd == "route")    return cmdRoute(opts, subArgc, subArgv);
-        if (cmd == "agency")   return cmdAgency(opts, subArgc, subArgv);
-        if (cmd == "shape")    return cmdShape(opts, subArgc, subArgv);
-        if (cmd == "service")  return cmdService(opts, subArgc, subArgv);
-        if (cmd == "distance") return cmdDistance(opts, subArgc, subArgv);
-        if (cmd == "config")   return cmdConfig(opts, subArgc, subArgv, cfgFile);
-        cerr << "Unknown command: " << cmd << "\n";
-        printHelp(argv[0]);
-        return 1;
-    } catch (const std::exception& e) {
-        cerr << "Error: " << e.what() << "\n";
+    if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)) {
+        cerr << "gtfs_cli is interactive and needs a real terminal (stdin/stdout must be a tty).\n";
         return 1;
     }
+
+    term::RawMode raw;
+    if (!raw.ok) {
+        cerr << "failed to enter raw terminal mode\n";
+        return 1;
+    }
+    term::hideCursor();
+    try {
+        mainMenu();
+    } catch (const std::exception& e) {
+        term::showCursor();
+        term::clear();
+        cerr << "fatal error: " << e.what() << "\n";
+        return 1;
+    }
+    term::showCursor();
+    term::clear();
+    cout << col::ORANGE << "  see you next time!" << col::RESET << "\n";
+    return 0;
 }
