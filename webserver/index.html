@@ -1555,11 +1555,6 @@
           </div>
           <div class="route-trips-error" id="routeTripsError" style="display:none"></div>
           <div class="route-trips-grid" id="routeTripsGrid"></div>
-          <div class="pagination" id="routeTripsPagination" style="display:none">
-            <button class="pagination-btn" id="routeTripsPrevBtn" onclick="changeRouteTripsPage('', -1)">Previous</button>
-            <span class="pagination-status" id="routeTripsPageLabel"></span>
-            <button class="pagination-btn" id="routeTripsNextBtn" onclick="changeRouteTripsPage('', 1)">Next</button>
-          </div>
         </div>
       </div>
 
@@ -1748,11 +1743,6 @@
           </div>
           <div class="route-trips-error" id="m-routeTripsError" style="display:none"></div>
           <div class="route-trips-grid" id="m-routeTripsGrid"></div>
-          <div class="pagination" id="m-routeTripsPagination" style="display:none">
-            <button class="pagination-btn" id="m-routeTripsPrevBtn" onclick="changeRouteTripsPage('m-', -1)">Previous</button>
-            <span class="pagination-status" id="m-routeTripsPageLabel"></span>
-            <button class="pagination-btn" id="m-routeTripsNextBtn" onclick="changeRouteTripsPage('m-', 1)">Next</button>
-          </div>
         </div>
       </div>
 
@@ -2429,9 +2419,7 @@
       loadRouteTrips(v, dateVal);
     }
 
-    const ROUTE_TRIPS_PAGE_SIZE = 8;
     let currentRouteTrips = [];
-    let routeTripsPage = { '': 0, 'm-': 0 };
 
     function loadRouteTrips(routeId, dateVal) {
       const [year,month,day] = (dateVal || todayStr()).split('-');
@@ -2440,12 +2428,10 @@
         const grid    = document.getElementById(p + 'routeTripsGrid');
         const errEl   = document.getElementById(p + 'routeTripsError');
         const countEl = document.getElementById(p + 'routeTripsCount');
-        const pager   = document.getElementById(p + 'routeTripsPagination');
         if (!section) return;
         if (grid) grid.innerHTML = '';
         if (errEl) errEl.style.display = 'none';
         if (countEl) countEl.textContent = 'Loading…';
-        if (pager) pager.style.display = 'none';
         section.style.display = 'flex';
       });
 
@@ -2464,7 +2450,6 @@
 
     function renderRouteTrips(data, routeId) {
       currentRouteTrips = Array.isArray(data) ? data : (data.trips||[]);
-      routeTripsPage = { '': 0, 'm-': 0 };
       ['','m-'].forEach(p => renderRouteTripsPage(p));
     }
 
@@ -2472,10 +2457,6 @@
       const trips  = currentRouteTrips;
       const grid    = document.getElementById(prefix + 'routeTripsGrid');
       const countEl = document.getElementById(prefix + 'routeTripsCount');
-      const pager   = document.getElementById(prefix + 'routeTripsPagination');
-      const prevBtn = document.getElementById(prefix + 'routeTripsPrevBtn');
-      const nextBtn = document.getElementById(prefix + 'routeTripsNextBtn');
-      const pageLbl = document.getElementById(prefix + 'routeTripsPageLabel');
       if (!grid) return;
 
       grid.innerHTML = '';
@@ -2483,17 +2464,10 @@
 
       if (trips.length === 0) {
         grid.innerHTML = `<div style="font-size:13px;color:var(--text-muted);grid-column:1/-1;padding:4px 0">No trips found for this date.</div>`;
-        if (pager) pager.style.display = 'none';
         return;
       }
 
-      const pageCount = Math.ceil(trips.length / ROUTE_TRIPS_PAGE_SIZE);
-      const page = Math.min(routeTripsPage[prefix] || 0, pageCount - 1);
-      routeTripsPage[prefix] = page;
-      const start = page * ROUTE_TRIPS_PAGE_SIZE;
-      const pageTrips = trips.slice(start, start + ROUTE_TRIPS_PAGE_SIZE);
-
-      pageTrips.forEach(t => {
+      trips.forEach(t => {
         const tripId = typeof t === 'string' ? t : t.trip_id;
         const card = document.createElement('div');
         card.className = 'rt-trip-card';
@@ -2506,20 +2480,6 @@
         card.addEventListener('click', () => loadTrip(tripId, card));
         grid.appendChild(card);
       });
-
-      if (pager) {
-        pager.style.display = pageCount > 1 ? 'flex' : 'none';
-        if (prevBtn) prevBtn.disabled = page === 0;
-        if (nextBtn) nextBtn.disabled = page >= pageCount - 1;
-        if (pageLbl) pageLbl.textContent = `Page ${page + 1} of ${pageCount}`;
-      }
-    }
-
-    function changeRouteTripsPage(prefix, delta) {
-      const pageCount = Math.ceil(currentRouteTrips.length / ROUTE_TRIPS_PAGE_SIZE);
-      const next = Math.max(0, Math.min((routeTripsPage[prefix] || 0) + delta, pageCount - 1));
-      routeTripsPage[prefix] = next;
-      renderRouteTripsPage(prefix);
     }
 
     // ===== STOP =====
