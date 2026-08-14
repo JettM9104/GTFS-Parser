@@ -132,7 +132,11 @@ int main(int argc, char* argv[]) {
     options.preserve_proto_field_names = true;
 
     string output;
-    google::protobuf::util::MessageToJsonString(filteredFeed, &output, options);
+    auto status = google::protobuf::util::MessageToJsonString(filteredFeed, &output, options);
+    if (!status.ok()) {
+        cerr << "Error: failed to convert feed to JSON: " << status.ToString() << endl;
+        return 1;
+    }
 
     cout << output << endl;
 

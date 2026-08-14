@@ -38,7 +38,11 @@ int main() {
     options.always_print_fields_with_no_presence = true;
     options.preserve_proto_field_names = true;
     string output;
-    google::protobuf::util::MessageToJsonString(feed, &output, options);
+    auto status = google::protobuf::util::MessageToJsonString(feed, &output, options);
+    if (!status.ok()) {
+        cerr << "Error: failed to convert feed to JSON: " << status.ToString() << endl;
+        return 1;
+    }
 
     // Write to file
     outfile << output;

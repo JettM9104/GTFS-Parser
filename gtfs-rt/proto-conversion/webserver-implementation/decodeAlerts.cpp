@@ -60,7 +60,11 @@ int main(int argc, char* argv[]) {
         if (!matchesRoute) continue;
 
         string entityJson;
-        google::protobuf::util::MessageToJsonString(entity, &entityJson, options);
+        auto status = google::protobuf::util::MessageToJsonString(entity, &entityJson, options);
+        if (!status.ok()) {
+            cerr << "Error: failed to convert alert to JSON: " << status.ToString() << endl;
+            continue;
+        }
         cout << entityJson << "\n";
         foundAny = true;
     }
