@@ -93,3 +93,14 @@ clang++ -std=c++17 -O3 main.cpp -o main && ./main
 | `10` | `feed_info.txt` not found |
 | `11` | `feed_info.txt` missing `feed_end_date` |
 | `12` | `feed_info.txt` missing `feed_start_date` |
+
+### 4. Build the CLI
+
+Once `path`/`root` are configured, the repo-root `Makefile` builds `gtfs_cli` (and the webserver tools that depend on `gtfs.hpp`) for you:
+
+```zsh
+cd ..
+make static
+```
+
+`static-gtfs/gtfs_cli` is the compiled CLI checked into git — after editing `gtfs.hpp` or `gtfs_cli.cpp`, rerun `make static` (or compile manually, see repo-root README) and commit the updated binary.

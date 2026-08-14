@@ -19,7 +19,16 @@ python3 -m pip install flask
 
 ### Step 3 — Compile C++ backends
 
-From the `webserver/tools/` directory:
+The easiest way is the `Makefile` at the repo root, which builds the webserver tools (`static` target) and, once protobuf is set up (see [gtfs-rt README](../gtfs-rt/readme.md)), the GTFS-RT decoders (`rt` target) in one go:
+
+```zsh
+cd ..
+make static   # webserver/tools/* (no protobuf needed)
+make rt       # decodeTrip, decodeStop, decodeAlerts (needs protobuf + pkg-config)
+# or just `make` / `make all` to build both
+```
+
+To compile manually instead, from the `webserver/tools/` directory:
 
 ```zsh
 find . -name "*.cpp" | xargs -I{} bash -c 'clang++ -std=c++17 -O3 -o "${0%.cpp}" "$0"' {}
@@ -27,7 +36,7 @@ find . -name "*.cpp" | xargs -I{} bash -c 'clang++ -std=c++17 -O3 -o "${0%.cpp}"
 
 ### Step 4 — Compile GTFS-RT decoders
 
-Follow the [gtfs-rt README](../gtfs-rt/readme.md) to build `decodeTrip`, `decodeStop`, and `decodeAlerts`.
+If you didn't use `make rt` above, follow the [gtfs-rt README](../gtfs-rt/readme.md) to build `decodeTrip`, `decodeStop`, and `decodeAlerts` manually.
 
 ### Step 5 — Start the server
 
