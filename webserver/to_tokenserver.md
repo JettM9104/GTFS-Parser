@@ -2,20 +2,20 @@
 ## To convert the normal server to the token server, follow the steps below:
 1. In tokenserver.py, add 
 ```py
-SECRET_TOKEN = token 
+SECRET_TOKENS = token 
 
 def require_token(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("X-Auth-Token") or request.args.get("token")
-        if token != SECRET_TOKEN:
+        if token not in SECRET_TOKENS:
             abort(401)
         return f(*args, **kwargs)
     return decorated
 ```
 2. Create t_confidential_info.py and create 
 ```py
-token = "enter_token_here"
+token = ["enter_token_here"]
 ```
 
 3. Add `@require_token` under **all** of the `@app.route` statements

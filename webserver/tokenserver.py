@@ -7,13 +7,13 @@ import os
 
 app = Flask(__name__)
 
-SECRET_TOKEN = token 
+SECRET_TOKENS = token
 
 def require_token(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("X-Auth-Token") or request.args.get("token")
-        if token != SECRET_TOKEN:
+        if token not in SECRET_TOKENS:
             abort(401)
         return f(*args, **kwargs)
     return decorated
