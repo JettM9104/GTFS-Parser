@@ -1080,6 +1080,18 @@
       100% { box-shadow: 0 0 0 0 rgba(var(--accent3-rgb), 0); }
     }
 
+    .veh-time-tooltip {
+      background: var(--map-overlay-bg);
+      color: var(--text);
+      border: none;
+      box-shadow: var(--shadow-1);
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 1px 6px;
+      border-radius: 6px;
+    }
+    .veh-time-tooltip::before { display: none; }
+
     .departures-section-header {
       display: flex;
       align-items: center;
@@ -2198,6 +2210,7 @@
         if (rtLastVehTs) {
           const txt = `GPS ${fmtUnixTime(rtLastVehTs)} · ${timeAgo(rtLastVehTs)}`;
           ['rtTimestamp','m-rtTimestamp'].forEach(id => setVal(id, txt));
+          updateVehMarkerTooltip();
         }
       }, 1000);
     }
@@ -2276,11 +2289,17 @@
           const icon = L.divIcon({className:'vehicle-rt-marker',html:'<div></div>',iconSize:[16,16],iconAnchor:[8,8]});
           vehicleRTMarker = L.marker(latlng,{icon,zIndexOffset:1000}).addTo(map);
           vehicleRTMarker.bindPopup(popupTxt);
+          vehicleRTMarker.bindTooltip(timeAgo(ts||rtLastVehTs), {permanent:true, direction:'top', offset:[0,-10], className:'veh-time-tooltip'});
         } else {
           vehicleRTMarker.setLatLng(latlng);
           vehicleRTMarker.setPopupContent(popupTxt);
         }
       }
+      updateVehMarkerTooltip();
+    }
+
+    function updateVehMarkerTooltip() {
+      if (vehicleRTMarker && rtLastVehTs) vehicleRTMarker.setTooltipContent(timeAgo(rtLastVehTs));
     }
 
     // ===== RT STOP =====
