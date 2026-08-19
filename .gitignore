@@ -32,6 +32,7 @@ static-gtfs/gtfs_cli
 static-gtfs/flag_finder
 static-gtfs/maincli
 static-gtfs/testing
+fast-static-gtfs/test
 gtfs-rt/proto-conversion/main
 gtfs-rt/proto-conversion/decodeTrip
 gtfs-rt/proto-conversion/webserver-implementation/decodeTrip
@@ -59,6 +60,7 @@ gtfs-rt/proto-conversion/decoded_gtfs.json
 gtfs-rt/testing/data/
 webserver/tiles/
 static-gtfs/data/
+fast-static-gtfs/test-data/
 
 # Confidential / local-only files
 webserver/t_confidental_info.py
