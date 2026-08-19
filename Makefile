@@ -7,6 +7,7 @@
 #   make all        # everything: static + rt (needs protobuf + pkg-config, see gtfs-rt/readme.md)
 #   make static     # static-gtfs + webserver tools only (no protobuf needed)
 #   make rt         # GTFS-RT decoders only (needs protobuf + pkg-config, see gtfs-rt/readme.md)
+#   make exp        # experimental fast-static-gtfs tools (no protobuf needed)
 #   make clean      # remove all binaries built by this Makefile
 
 CXX    ?= g++
@@ -18,6 +19,7 @@ WEBSERVER_TOOLS_DIR  := webserver/tools
 RT_DIR                := gtfs-rt/proto-conversion/webserver-implementation
 RT_PROTO_SRC          := gtfs-rt/proto-conversion/transit-files/gtfs-realtime.pb.cc
 PROTOBUF_FLAGS        := $(shell pkg-config --cflags --libs protobuf 2>/dev/null)
+EXP_DIR               := fast-static-gtfs
 
 STATIC_GTFS_BINS := $(STATIC_GTFS_DIR)/gtfs_cli
 
@@ -27,7 +29,9 @@ WEBSERVER_BINS   := $(addprefix $(WEBSERVER_TOOLS_DIR)/,$(WEBSERVER_TOOLS))
 RT_TOOLS := decodeTrip decodeStop decodeAlerts
 RT_BINS  := $(addprefix $(RT_DIR)/,$(RT_TOOLS))
 
-.PHONY: all static rt static-gtfs webserver-tools clean
+EXP_BINS := $(EXP_DIR)/test
+
+.PHONY: all static rt exp static-gtfs webserver-tools clean
 
 # Default: everything.
 all: static-gtfs webserver-tools rt
@@ -41,6 +45,8 @@ webserver-tools: $(WEBSERVER_BINS)
 
 rt: $(RT_BINS)
 
+exp: $(EXP_BINS)
+
 $(STATIC_GTFS_DIR)/gtfs_cli: $(STATIC_GTFS_DIR)/gtfs_cli.cpp $(STATIC_GTFS_DIR)/gtfs.hpp $(STATIC_GTFS_DIR)/config.hpp
 	$(CXX) $(CXXSTD) $(OPT) -o $@ $<
 
@@ -52,5 +58,8 @@ $(WEBSERVER_TOOLS_DIR)/%: $(WEBSERVER_TOOLS_DIR)/%.cpp $(STATIC_GTFS_DIR)/gtfs.h
 $(RT_DIR)/%: $(RT_DIR)/%.cpp $(RT_PROTO_SRC)
 	$(CXX) $(CXXSTD) -O3 -o $@ $^ $(PROTOBUF_FLAGS)
 
+$(EXP_DIR)/%: $(EXP_DIR)/%.cpp $(EXP_DIR)/fast-gtfs.hpp
+	$(CXX) $(CXXSTD) $(OPT) -o $@ $<
+
 clean:
-	rm -f $(STATIC_GTFS_BINS) $(WEBSERVER_BINS) $(RT_BINS)
+	rm -f $(STATIC_GTFS_BINS) $(WEBSERVER_BINS) $(RT_BINS) $(EXP_BINS)

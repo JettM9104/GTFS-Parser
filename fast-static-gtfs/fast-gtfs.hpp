@@ -22,7 +22,7 @@ namespace fast_gtfs {
 
 namespace bin_search {
 
-void sortFile(const string& path, const string& keyColumn) {
+void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.txt's stop_id or trips.txt's trip_id
     string header;
     std::vector<std::pair<string, string>> keyedLines;
     {
