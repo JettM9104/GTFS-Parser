@@ -15,7 +15,7 @@
 #include <algorithm>
 #include "../static-gtfs/gtfs.hpp"
 
-using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl;
+using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl, std::vector, std::pair;
 
 namespace fast_gtfs {
 //
@@ -48,6 +48,31 @@ void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.t
     for (const auto& kl : keyedLines) out << kl.second << '\n';
 }
 
+inline gtfs::stop getStopInfo(const string& stop_id) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
+    gtfs::stop output;
+
+    ifstream stopFile(gtfs::stopPath);
+    string header;
+    std::getline(stopFile, header);
+    auto refs = gtfs::createMapFromVector(gtfs::parseDataCSV(header));
+
+    vector<pair<string, vector<string>>> lines;
+
+    string currentLine;
+
+    while (getline(stopFile, currentLine)) {
+        if (currentLine.empty()) continue;
+        vector<string> parsedCurrentLine = gtfs::parseDataCSV(currentLine);
+        lines.emplace_back(parsedCurrentLine[refs["stop_id"]], parsedCurrentLine);
+    }
+
+    int length = 
+
+
+
+
+    return output;
+}
 
 
 }
