@@ -4,6 +4,9 @@
 # Editor / tooling
 .vscode/c_cpp_properties.json
 .claude/
+.idea/
+cmake-build-*/
+*.dSYM/
 
 # Python
 .venv/
