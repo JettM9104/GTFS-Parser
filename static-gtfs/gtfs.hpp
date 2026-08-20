@@ -1495,12 +1495,15 @@ std::vector<trip_segment> getAllStops(string trip_id) { // stop_times.txt, route
             continue;
         }
 
-        for (trip_segment& a : output) {
-            if (a.stop.trip_id == parsedCurrentLine[refs["trip_id"]]) {
-                a.route_id = parsedCurrentLine[refs["route_id"]];
+        if (parsedCurrentLine[refs["trip_id"]] == trip_id) {
+            for (trip_segment& a : output) {
+                const string routeID = parsedCurrentLine[refs["route_id"]];
+                a.route_id = routeID;
             }
         }
+
     }
+
 
     tripsFile.close();
 
