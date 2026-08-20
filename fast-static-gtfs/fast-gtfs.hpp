@@ -18,7 +18,9 @@
 using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl, std::vector, std::pair;
 
 namespace fast_gtfs {
-//
+
+string fast_root = "/Users/jettmu/Documents/VSCode/GTFS Parser/fast-static-gtfs/test-data/";
+string fast_stop_path = fast_root + "stops.txt";
 
 namespace bin_search {
 
@@ -48,11 +50,8 @@ void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.t
     for (const auto& kl : keyedLines) out << kl.second << '\n';
 }
 
-inline gtfs::stop getStopInfo(const string& stop_id) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
-    gtfs::stop output;
-    output.stop_id = "-1";
-
-    ifstream stopFile(gtfs::stopPath);
+inline vector<pair<string, vector<string>>> createMap(string& path, string& key) {
+    ifstream stopFile(path);
     string header;
     std::getline(stopFile, header);
     auto refs = gtfs::createMapFromVector(gtfs::parseDataCSV(header));
@@ -64,18 +63,34 @@ inline gtfs::stop getStopInfo(const string& stop_id) { // binary search algorith
     while (getline(stopFile, currentLine)) {
         if (currentLine.empty()) continue;
         vector<string> parsedCurrentLine = gtfs::parseDataCSV(currentLine);
-        lines.emplace_back(parsedCurrentLine[refs["stop_id"]], parsedCurrentLine);
+        lines.emplace_back(parsedCurrentLine[refs[key]], parsedCurrentLine);
     }
 
+    stopFile.close();
+    return lines;
+}
+
+inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, vector<string>>>& lines) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
+    gtfs::stop output;
+    output.stop_id = "-1";
+
+    ifstream stopFile(::fast_gtfs::fast_stop_path);
+    string header;
+    std::getline(stopFile, header);
+    auto refs = gtfs::createMapFromVector(gtfs::parseDataCSV(header));
+
+    stopFile.close();
+    
     auto stop_index = std::lower_bound(lines.begin(), lines.end(), stop_id,
         [](const std::pair<std::string, std::vector<string>>& element, const std::string& key) {
                 return element.first < key;
         });
 
-    if (stop_index == lines.end()) return output;
+    if (stop_index == lines.end() || stop_index->first != stop_id) return output;
 
     // required fields
     output.stop_id = stop_id;
+
 
     // optional/conditionally required/conditionally forbidden fields
     { auto find = refs.find("stop_code");
