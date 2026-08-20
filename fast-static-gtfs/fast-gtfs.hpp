@@ -21,6 +21,7 @@ namespace fast_gtfs {
 
 string fast_root = "/Users/jettmu/Documents/VSCode/GTFS Parser/fast-static-gtfs/test-data/";
 string fast_stop_path = fast_root + "stops.txt";
+string fast_trip_path = fast_root + "trips.txt";
 
 namespace bin_search {
 
@@ -147,6 +148,51 @@ inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, v
     return output;
 }
 
+inline gtfs::trip getTripInfo(const string& trip_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) {
+    gtfs::trip output;
+    output.trip_id = "-1";
+
+
+    auto trip_index = std::lower_bound(lines.begin(), lines.end(), trip_id,
+        [](const std::pair<std::string, std::vector<string>>& element, const std::string& key) {
+                return element.first < key;
+        });
+
+    if (trip_index == lines.end() || trip_index->first != trip_id) return output;
+
+    output.route_id = trip_index->second[refs.at("route_id")];
+    output.service_id = trip_index->second[refs.at("service_id")];
+    output.trip_id = trip_id;
+
+    // optional/conditionally required/conditionally forbidden fields
+    { auto find = refs.find("trip_headsign");
+        if (find != refs.end()) output.trip_headsign = trip_index->second[find->second]; }
+
+    { auto find = refs.find("trip_short_name");
+        if (find != refs.end()) output.trip_short_name = trip_index->second[find->second]; }
+
+    { auto find = refs.find("block_id");
+        if (find != refs.end()) output.block_id = trip_index->second[find->second]; }
+
+    { auto find = refs.find("shape_id");
+        if (find != refs.end()) output.shape_id = trip_index->second[find->second]; }
+
+    // bool field
+    { auto find = refs.find("direction_id");
+        if (find != refs.end()) output.direction_id = static_cast<bool>(stoi(trip_index->second[find->second])); }
+
+    // allowable fields
+    { auto find = refs.find("wheelchair_accessible");
+        if (find != refs.end()) output.wheelchair_accessible = static_cast<gtfs::trip::allowable>(stoi(trip_index->second[find->second])); }
+
+    { auto find = refs.find("bikes_allowed");
+        if (find != refs.end()) output.bikes_allowed = static_cast<gtfs::trip::allowable>(stoi(trip_index->second[find->second])); }
+
+    { auto find = refs.find("cars_allowed");
+        if (find != refs.end()) output.cars_allowed = static_cast<gtfs::trip::allowable>(stoi(trip_index->second[find->second])); }
+
+    return output;
+}
 
 }
 
