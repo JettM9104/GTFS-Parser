@@ -50,6 +50,7 @@ void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.t
 
 inline gtfs::stop getStopInfo(const string& stop_id) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
     gtfs::stop output;
+    output.stop_id = "-1";
 
     ifstream stopFile(gtfs::stopPath);
     string header;
@@ -66,9 +67,61 @@ inline gtfs::stop getStopInfo(const string& stop_id) { // binary search algorith
         lines.emplace_back(parsedCurrentLine[refs["stop_id"]], parsedCurrentLine);
     }
 
-    int length = 
+    auto stop_index = std::lower_bound(lines.begin(), lines.end(), stop_id,
+        [](const std::pair<std::string, std::vector<string>>& element, const std::string& key) {
+                return element.first < key;
+        });
 
+    if (stop_index == lines.end()) return output;
 
+    // required fields
+    output.stop_id = stop_id;
+
+    // optional/conditionally required/conditionally forbidden fields
+    { auto find = refs.find("stop_code");
+    if (find != refs.end()) output.stop_code = stop_index->second[find->second]; }
+
+    { auto find = refs.find("stop_name");
+    if (find != refs.end()) output.stop_name = stop_index->second[find->second]; }
+
+    { auto find = refs.find("tts_stop_name");
+    if (find != refs.end()) output.tts_stop_name = stop_index->second[find->second]; }
+
+    { auto find = refs.find("stop_desc");
+    if (find != refs.end()) output.stop_desc = stop_index->second[find->second]; }
+
+    { auto find = refs.find("stop_lat");
+    if (find != refs.end()) output.stop_lat = gtfs::to_double(stop_index->second[find->second]); }
+
+    { auto find = refs.find("stop_lon");
+    if (find != refs.end()) output.stop_lon = gtfs::to_double(stop_index->second[find->second]); }
+
+    { auto find = refs.find("zone_id");
+    if (find != refs.end()) output.zone_id = stop_index->second[find->second]; }
+
+    { auto find = refs.find("stop_url");
+    if (find != refs.end()) output.stop_url = stop_index->second[find->second]; }
+
+    { auto find = refs.find("location_type");
+    if (find != refs.end()) output.location_type = static_cast<gtfs::stop::location>(gtfs::to_integer(stop_index->second[find->second])); }
+
+    { auto find = refs.find("parent_station");
+    if (find != refs.end()) output.parent_station = stop_index->second[find->second]; }
+
+    { auto find = refs.find("stop_timezone");
+    if (find != refs.end()) output.stop_timezone = stop_index->second[find->second]; }
+
+    { auto find = refs.find("wheelchair_boarding");
+    if (find != refs.end()) output.wheelchair_boarding = static_cast<gtfs::stop::wheelchair>(gtfs::to_integer(stop_index->second[find->second])); }
+
+    { auto find = refs.find("level_id");
+    if (find != refs.end()) output.level_id = stop_index->second[find->second]; }
+
+    { auto find = refs.find("platform_code");
+    if (find != refs.end()) output.platform_code = stop_index->second[find->second]; }
+
+    { auto find = refs.find("stop_access");
+    if (find != refs.end()) output.stop_access = static_cast<gtfs::stop::access>(gtfs::to_integer(stop_index->second[find->second])); }
 
 
     return output;
