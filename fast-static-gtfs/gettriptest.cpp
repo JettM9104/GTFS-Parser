@@ -78,17 +78,7 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 
 
 }
-std::string getGreeting() {
-    return "Hello from the server!";
-}
 
-int addNumbers(int a, int b) {
-    return a + b;
-}
-
-std::string getStatus() {
-    return "Server is running fine.";
-}
 
 int main() {
     triplines = fast_gtfs::bin_search::createMap(fast_gtfs::fast_trip_path, "trip_id");
@@ -99,28 +89,12 @@ int main() {
 
     cout << "done init\n";
 
-    Server svr;
+    while (1) {
+        string a;
+        std::cin >> a;
 
-    // GET /hello -> calls getGreeting()
-    svr.Get("/hello", [](const Request& req, Response& res) {
-        res.set_content(getGreeting(), "text/plain");
-    });
-
-    // GET /status -> calls getStatus()
-    svr.Get("/status", [](const Request& req, Response& res) {
-        res.set_content(getStatus(), "text/plain");
-    });
-
-    // GET /add?a=3&b=5 -> calls addNumbers(a, b), returns as string
-    svr.Get("/trip", [](const Request& req, Response& res) {
-        int a = req.has_param("trip_id") ? std::stoi(req.get_param_value("trip_id")) : 0;
-        int b = req.has_param("b") ? std::stoi(req.get_param_value("b")) : 0;
-        int result = addNumbers(a, b);
-        res.set_content(std::to_string(result), "text/plain");
-    });
-
-    std::cout << "Server listening on http://0.0.0.0:8080" << std::endl;
-    svr.listen("0.0.0.0", 8080);
-
+        getTrip(a);
+        std::cout << "done\n";
+    }
     return 0;
 }
