@@ -25,7 +25,7 @@ string fast_trip_path = fast_root + "trips.txt";
 
 namespace bin_search {
 
-void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.txt's stop_id or trips.txt's trip_id
+inline void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.txt's stop_id or trips.txt's trip_id
     string header;
     std::vector<std::pair<string, string>> keyedLines;
     {
