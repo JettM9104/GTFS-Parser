@@ -60,6 +60,8 @@ fast-static-gtfs/webserver
 data-collection/decoded_gtfs.json
 data-collection/downloaded_tripUpdates.pb
 data-collection/table.csv
+data-collection/table1.csv
+data-collection/combined.csv
 gtfs-rt/proto-conversion/decoded_gtfs.json
 gtfs-rt/testing/data/
 webserver/tiles/
