@@ -50,7 +50,7 @@ void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.t
     for (const auto& kl : keyedLines) out << kl.second << '\n';
 }
 
-inline vector<pair<string, vector<string>>> createMap(string& path, string& key) {
+inline vector<pair<string, vector<string>>> createMap(const string& path, const string& key) {
     ifstream stopFile(path);
     string header;
     std::getline(stopFile, header);
@@ -70,17 +70,22 @@ inline vector<pair<string, vector<string>>> createMap(string& path, string& key)
     return lines;
 }
 
-inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, vector<string>>>& lines) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
-    gtfs::stop output;
-    output.stop_id = "-1";
-
-    ifstream stopFile(::fast_gtfs::fast_stop_path);
+inline std::unordered_map<string, int> generateHeaderMap(const string& path) {
+    ifstream stopFile(path);
     string header;
     std::getline(stopFile, header);
     auto refs = gtfs::createMapFromVector(gtfs::parseDataCSV(header));
 
     stopFile.close();
-    
+
+    return refs;
+}
+
+inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
+    gtfs::stop output;
+    output.stop_id = "-1";
+
+
     auto stop_index = std::lower_bound(lines.begin(), lines.end(), stop_id,
         [](const std::pair<std::string, std::vector<string>>& element, const std::string& key) {
                 return element.first < key;
