@@ -14,18 +14,15 @@
 #include <vector>
 #include <algorithm>
 #include "../static-gtfs/gtfs.hpp"
+#include "fast-config.hpp"
 
 using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl, std::vector, std::pair;
 
 namespace fast_gtfs {
 
-string fast_root = "/Users/jettmu/Documents/VSCode/GTFS Parser/fast-static-gtfs/test-data/";
-string fast_stop_path = fast_root + "stops.txt";
-string fast_trip_path = fast_root + "trips.txt";
-
 namespace bin_search {
 
-inline void sortFile(const string& path, const string& keyColumn) { // e.g. for stops.txt's stop_id or trips.txt's trip_id
+inline void sortFile(const string& path, const string& keyColumn, const string& outputpath) { // e.g. for stops.txt's stop_id or trips.txt's trip_id
     string header;
     std::vector<std::pair<string, string>> keyedLines;
     {
@@ -46,11 +43,10 @@ inline void sortFile(const string& path, const string& keyColumn) { // e.g. for 
         [](const std::pair<string, string>& a,
            const std::pair<string, string>& b) { return a.first < b.first; });
 
-    ofstream out(path, std::ios::trunc);
+    ofstream out(outputpath, std::ios::trunc);
     out << header << '\n';
     for (const auto& kl : keyedLines) out << kl.second << '\n';
 }
-
 inline vector<pair<string, vector<string>>> createMap(const string& path, const string& key) {
     ifstream stopFile(path);
     string header;
@@ -70,7 +66,6 @@ inline vector<pair<string, vector<string>>> createMap(const string& path, const 
     stopFile.close();
     return lines;
 }
-
 inline std::unordered_map<string, int> generateHeaderMap(const string& path) {
     ifstream stopFile(path);
     string header;
@@ -81,7 +76,6 @@ inline std::unordered_map<string, int> generateHeaderMap(const string& path) {
 
     return refs;
 }
-
 inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
     gtfs::stop output;
     output.stop_id = "-1";
@@ -147,7 +141,6 @@ inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, v
 
     return output;
 }
-
 inline gtfs::trip getTripInfo(const string& trip_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) {
     gtfs::trip output;
     output.trip_id = "-1";
@@ -190,6 +183,13 @@ inline gtfs::trip getTripInfo(const string& trip_id, const vector<pair<string, v
 
     { auto find = refs.find("cars_allowed");
         if (find != refs.end()) output.cars_allowed = static_cast<gtfs::trip::allowable>(stoi(trip_index->second[find->second])); }
+
+    return output;
+}
+inline vector<gtfs::trip_segment>(const string& trip_id, const vector<string>& lines, const std::unordered_map<string, int>& refs) {
+    vector<gtfs::trip_segment> output;
+
+    
 
     return output;
 }

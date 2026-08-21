@@ -81,11 +81,12 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 
 
 int main() {
-    triplines = fast_gtfs::bin_search::createMap(fast_gtfs::fast_trip_path, "trip_id");
-    triprefs =  fast_gtfs::bin_search::generateHeaderMap(fast_gtfs::fast_trip_path);
+    fast_gtfs::bin_search::sortFile(fast_config::fast_stop_path, "stop_id", fast_config::fast_stop_stop_id);
+    triplines = fast_gtfs::bin_search::createMap(fast_config::fast_trip_path, "trip_id");
+    triprefs =  fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_trip_path);
 
-    stoplines = fast_gtfs::bin_search::createMap(fast_gtfs::fast_stop_path, "stop_id");
-    stoprefs = fast_gtfs::bin_search::generateHeaderMap(fast_gtfs::fast_stop_path);
+    stoplines = fast_gtfs::bin_search::createMap(fast_config::fast_stop_stop_id, "stop_id");
+    stoprefs = fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_stop_stop_id);
 
     cout << "done init\n";
 
