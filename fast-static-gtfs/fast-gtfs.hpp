@@ -268,6 +268,45 @@ inline vector<gtfs::trip_segment> getAllStops(const string& trip_id, const vecto
     }
     return output;
 }
+inline vector<gtfs::shape> getShapeInfo(const string& shape_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // shapes.txt must be sorted by shape_id
+    vector<gtfs::shape> output;
+    // get all shape points with shape_id matching,
+
+    auto shape_index_lower = std::lower_bound(lines.begin(), lines.end(), shape_id,
+        [](const std::pair<std::string, std::vector<string>>& element, const std::string& key) {
+            return element.first < key;
+        });
+
+    if (shape_index_lower == lines.end() || shape_index_lower->first != shape_id) return output;
+
+    auto shape_index_upper = std::upper_bound(lines.begin(), lines.end(), shape_id,
+        [](const std::string& key, const std::pair<std::string, std::vector<string>>& element) {
+            return key < element.first;
+        });
+
+    for (auto k = shape_index_lower; k != shape_index_upper; ++k) {
+            gtfs::shape x;
+
+            // required fields
+            x.shape_id = shape_id;
+            x.shape_pt_lat = gtfs::to_double(k->second[refs.at("shape_pt_lat")]);
+            x.shape_pt_lon = gtfs::to_double(k->second[refs.at("shape_pt_lon")]);
+            x.shape_pt_sequence = gtfs::to_integer(k->second[refs.at("shape_pt_sequence")]);
+
+            // optional field
+            { auto find = refs.find("shape_dist_traveled");
+            if (find != refs.end()) x.shape_dist_traveled = gtfs::to_float(k->second[find->second]); }
+
+            output.push_back(x);
+    }
+
+    // sortFile only guarantees ordering by shape_id (std::sort is not stable),
+    // so restore shape_pt_sequence order within the matched group.
+    std::sort(output.begin(), output.end(),
+        [](const gtfs::shape& a, const gtfs::shape& b) { return a.shape_pt_sequence < b.shape_pt_sequence; });
+
+    return output;
+}
 
 
 }

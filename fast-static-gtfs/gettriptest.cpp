@@ -21,6 +21,9 @@ std::unordered_map<string, int> stoprefs;
 vector<pair<string, vector<string>>> stoptimesstoplines;
 std::unordered_map<string, int> stoptimesstoprefs;
 
+vector<pair<string, vector<string>>> shapelines;
+std::unordered_map<string, int> shaperefs;
+
 
 using std::cout;
 
@@ -32,7 +35,7 @@ void getTrip(const string& trip_id, const int& precision = 6) {
     std::vector<gtfs::trip_segment> tripSegments = fast_gtfs::bin_search::getAllStops(trip_id, stoptimesstoplines, stoptimesstoprefs);
     gtfs::trip tx = fast_gtfs::bin_search::getTripInfo(trip_id, triplines, triprefs);
     gtfs::route bx = gtfs::getRouteInfo(tx.route_id);
-    std::vector<gtfs::shape> tsx = gtfs::getShapeInfo(tx.shape_id);
+    std::vector<gtfs::shape> tsx = fast_gtfs::bin_search::getShapeInfo(tx.shape_id, shapelines, shaperefs);
 
     std::vector<gtfs::stop> stops;
 
@@ -86,6 +89,7 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 int main() {
     fast_gtfs::bin_search::sortFile(fast_config::fast_stop_path, "stop_id", fast_config::fast_stop_stop_id);
     fast_gtfs::bin_search::sortFile(fast_config::fast_stop_times_path, "trip_id", fast_config::fast_stop_times_trip_id);
+    fast_gtfs::bin_search::sortFile(fast_config::fast_shape_path, "shape_id", fast_config::fast_shape_shape_id);
 
     triplines = fast_gtfs::bin_search::createMap(fast_config::fast_trip_path, "trip_id");
     triprefs =  fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_trip_path);
@@ -96,14 +100,26 @@ int main() {
     stoptimesstoplines = fast_gtfs::bin_search::createMap(fast_config::fast_stop_times_trip_id, "trip_id");
     stoptimesstoprefs = fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_stop_times_trip_id);
 
+    shapelines = fast_gtfs::bin_search::createMap(fast_config::fast_shape_shape_id, "shape_id");
+    shaperefs = fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_shape_shape_id);
+
     cout << "done init\n";
 
-    while (1) {
+    while (true) {
         string a;
         std::cin >> a;
 
+        auto start = std::chrono::steady_clock::now();
         getTrip(a);
         std::cout << "done\n";
+
+        auto end = std::chrono::steady_clock::now();
+
+        auto elapsed = end - start;
+        // 4. Convert and print the duration in various units
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+        << " ms\n" << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()
+        << " µs\n";
     }
     return 0;
 }
