@@ -75,7 +75,16 @@ static void getTrip(const string& trip_id, const int& precision = 6) {
 
 
 int main() {
+    auto inits = std::chrono::steady_clock::now();
     cout << "done init\n";
+
+    auto ends = std::chrono::steady_clock::now();
+
+    auto elapsed = ends - inits;
+    // 4. Convert and print the duration in various units
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+    << " ms\n" << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()
+    << " µs\n";
 
     while (true) {
         string a;

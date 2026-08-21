@@ -87,6 +87,7 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 
 
 int main() {
+    auto inits = std::chrono::steady_clock::now();
     fast_gtfs::bin_search::sortFile(fast_config::fast_stop_path, "stop_id", fast_config::fast_stop_stop_id);
     fast_gtfs::bin_search::sortFile(fast_config::fast_stop_times_path, "trip_id", fast_config::fast_stop_times_trip_id);
     fast_gtfs::bin_search::sortFile(fast_config::fast_shape_path, "shape_id", fast_config::fast_shape_shape_id);
@@ -104,6 +105,14 @@ int main() {
     shaperefs = fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_shape_shape_id);
 
     cout << "done init\n";
+
+    auto ends = std::chrono::steady_clock::now();
+
+    auto elapsed = ends - inits;
+    // 4. Convert and print the duration in various units
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+    << " ms\n" << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()
+    << " µs\n";
 
     while (true) {
         string a;

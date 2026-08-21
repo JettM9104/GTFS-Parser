@@ -51,8 +51,8 @@ string feedInfoFile = config::root + "feed_info.txt";
 string frequencyPath = config::root + "frequencies.txt";
 string fareAttributesPath = config::root + "fare_attributes.txt";
 
-const int precision = 8;
-const int defPrecision = 6;
+constexpr int precision = 8;
+constexpr int defPrecision = 6;
 
 #pragma endregion ENUMS AND VARIABLES
 #pragma region CLASSES AND STRUCTS
@@ -73,7 +73,7 @@ public:
     string leadingRoundedTime() const {
         return (std::to_string(h).length() < 2 ? "0" + std::to_string(h) : std::to_string(h)) + ":" + 
                (std::to_string(m).length() < 2 ? "0" + std::to_string(m) : std::to_string(m)) + ":" + 
-               (std::to_string((int)std::round(s)).length() < 2 ? "0" + std::to_string((int)std::round(s)) : std::to_string((int)std::round(s)));
+               (std::to_string(static_cast<int>(std::round(s))).length() < 2 ? "0" + std::to_string(static_cast<int>(std::round(s))) : std::to_string(static_cast<int>(std::round(s))));
     }
 
     time() = default;
@@ -182,9 +182,6 @@ public:
     calendar_day operator+ (const calendar_day& other) const {
         calendar_day output(-1, -1, -1);
 
-        const int regularDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        const int leapDays[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
         output.year = this->year + other.year;
         output.month = this->month + other.month;
         output.day = this->day + other.day;
@@ -195,11 +192,13 @@ public:
         }
 
         if ((output.year % 4 == 0 && output.year % 100 != 0 )|| output.year % 400 == 0) {
+            const int leapDays[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
             if (output.day > leapDays[output.month - 1]) {
                 output.day -= leapDays[output.month - 1];
                 output.month++;
             }
         } else {
+            const int regularDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
             if (output.day > regularDays[output.month - 1]) {
                 output.day -= regularDays[output.month - 1];
                 output.month++;
@@ -328,7 +327,7 @@ struct shape {
     double shape_pt_lat = 0.0;
     double shape_pt_lon = 0.0;
     unsigned int shape_pt_sequence = 0;
-    unsigned int shape_dist_traveled = 0;
+    float shape_dist_traveled = 0.0;
 };
 struct trip {
     enum allowable {al_undef = -1, no_info = 0, allowed = 1, not_allowed = 2};
@@ -416,7 +415,7 @@ inline float to_float(const string& input) {
 }
 
 inline double getDistanceKM(const double& lat1, const double& lon1, const double& lat2, const double& lon2) {
-    const double earth_radius = 6371.0;
+    constexpr double earth_radius = 6371.0;
 
     const double lat1_rad = lat1 * 3.1415 / 180.0;
     const double lon1_rad = lon1 * 3.1415 / 180.0;
@@ -434,11 +433,11 @@ inline double getDistanceKM(const double& lat1, const double& lon1, const double
 
     return earth_radius * c;
 }
-double dist(double a, double b, double c, double d) {
+inline double dist(const double& a, const double& b, const double& c, const double& d) {
     return sqrt((a-c) * (a-c) + (b-d) * (b-d));
 }
-int levenshtein(const string &a, const string &b) {
-    int m = a.size(), n = b.size();
+inline int levenshtein(const string &a, const string &b) {
+    size_t m = a.size(), n = b.size();
     std::vector<std::vector<int>> dp(m+1, std::vector<int>(n+1));
 
     for (int i = 0; i <= m; i++) dp[i][0] = i;
@@ -457,7 +456,7 @@ int levenshtein(const string &a, const string &b) {
 
     return dp[m][n];
 }
-calendar_day parseFormattedDate(string input) {
+inline calendar_day parseFormattedDate(const string& input) {
     calendar_day output;
 
     output.year = stoi(input.substr(0, 4));
@@ -466,9 +465,9 @@ calendar_day parseFormattedDate(string input) {
 
     return output;
 }
-calendar_day getToday() {
+inline calendar_day getToday() {
     calendar_day output;
-    std::time_t rn = std::time(0);
+    std::time_t rn = std::time(nullptr);
     std::tm* ltm = std::localtime(&rn);
 
     output.year = 1900 + ltm->tm_year;
@@ -477,7 +476,7 @@ calendar_day getToday() {
 
     return output;
 }
-time getCurrentTime() {
+inline time getCurrentTime() {
     time output;
     std::time_t currentTime = std::time(nullptr);
 
@@ -485,36 +484,26 @@ time getCurrentTime() {
 
     output.h = localTime->tm_hour;   // Hour (0-23)
     output.m = localTime->tm_min; // Minute (0-59)
-    output.s = localTime->tm_sec; // Second (0-59)
+    output.s = static_cast<float>(localTime->tm_sec); // Second (0-59), will always result in .0
 
     return output;
 }
-week convertDateToWeek(int year, int month, int day) {
+inline week convertDateToWeek(int year, int month, int day) {
     if (month < 3) {
         month += 12;
         year -= 1;
     }
 
-    int K = year % 100;
-    int J = year / 100;
+    const int K = year % 100;
+    const int J = year / 100;
 
     int h = (day + 13*(month + 1)/5 + K + K/4 + J/4 + 5*J) % 7;
 
-    int dayIndex;
-    switch(h) {
-        case 0: dayIndex = sat; break;
-        case 1: dayIndex = sun; break;
-        case 2: dayIndex = mon; break;
-        case 3: dayIndex = tue; break;
-        case 4: dayIndex = wed; break;
-        case 5: dayIndex = thu; break;
-        case 6: dayIndex = fri; break;
-        default: cout << "exit conditino"; break;
-    }
-    return static_cast<week>(dayIndex);
+
+    return static_cast<week>((h - 2 + 7) % 7);
 }
-time parseFormattedTime(string input) {
-    if (input == "" || input == " ") return time(-1, -1, -1);
+inline time parseFormattedTime(const string& input) {
+    if (input.empty() || input == " ") return {-1, -1, -1};
 
     time output;
     string h, m, s;
@@ -535,17 +524,20 @@ time parseFormattedTime(string input) {
             case 3:
                 s += character;
                 break;
+
+            default:
+                cout << "impossible\n";
         }
 
     }
 
     output.h = stoi(h);
     output.m = stoi(m);
-    output.s = stoi(s);
+    output.s = static_cast<float>(stoi(s)); // always .0 resultant
 
     return output;
 }
-std::vector<string> parseDataCSV(const string& input) {
+inline std::vector<string> parseDataCSV(const string& input) {
     std::vector<string> output;
     string additions;
 
@@ -562,37 +554,37 @@ std::vector<string> parseDataCSV(const string& input) {
 
     return output;
 }
-std::unordered_map<string, int> createMapFromVector(std::vector<string> param) {
-    int length = param.size();
+inline std::unordered_map<string, int> createMapFromVector(const std::vector<string>& param) {
+    size_t length = param.size();
     std::unordered_map<string, int> output;
     for (int i = 0; i < length; i++) {
-        if (param[i] == "" || param[i] == " ") {
+        if (param[i].empty() || param[i] == " ") {
             continue;
         } else { output[param[i]] = i; }
     }    
     return output;
 }
-double getScore(string input) {
+inline double getScore(string input) {
     std::vector<int> weights = {1};
     double total = 0;
 
     for (int i = 0; i < input.length(); i++) {
         if (input[i] >= 'A' && input[i] <= 'Z') {
-            input[i] = input[i] + 32;
+            input[i] += 32;
         }
     }
     for (int i = 0; i < input.length(); i++) {
         total += static_cast<double>(input[i]) * static_cast<double>(weights[i % weights.size()]) - 48.0;
     }
 
-    total /= input.length();
+    total /= static_cast<float>(input.length());
     return total;
 }
 
 #pragma endregion HELPER FUNCTIONS
 #pragma region FUNCTIONS
 
-trip getTripInfo(string trip_id) { // requirements: trips.txt
+inline trip getTripInfo(const string& trip_id) { // requirements: trips.txt
     trip output;
 
     ifstream tripFile(tripPath);
@@ -652,7 +644,7 @@ trip getTripInfo(string trip_id) { // requirements: trips.txt
     tripFile.close();
     return output;
 }
-bool isTripValid(string trip_id, int year, int month, int day, bool noException = false) { // requirements: trips.txt and calendar.txt, and if noException is false, calendar_dates.txt
+inline bool isTripValid(const string& trip_id, const int& year, const int& month, const int& day, const bool noException = false) { // requirements: trips.txt and calendar.txt, and if noException is false, calendar_dates.txt
     bool output = false;
 
     string constructedDate = to_string(year) + 
@@ -662,13 +654,14 @@ bool isTripValid(string trip_id, int year, int month, int day, bool noException 
     week dayOfWeek = convertDateToWeek(year, month, day);
     string service_id = getTripInfo(trip_id).service_id;
 
-    ifstream calendarFile = ifstream(calendarPath);
+    auto calendarFile = ifstream(calendarPath);
+
     string currentLine;
     std::vector<string> parsedCurrentLine;
     bool firstLine = true;
     std::unordered_map<string, int> refs;
 
-    while (getline(calendarFile, currentLine)) { // to refrence calendar.txt
+    while (getline(calendarFile, currentLine)) { // to reference calendar.txt
         parsedCurrentLine = parseDataCSV(currentLine);
         if (firstLine) {
             for (int i = 0; i < parsedCurrentLine.size(); i++) {
@@ -710,8 +703,8 @@ bool isTripValid(string trip_id, int year, int month, int day, bool noException 
                     break;
                 
                 default:
-                    cerr << "dayOfWeek is invalid or unintalized\n";
-                    return 0;
+                    cerr << "dayOfWeek is invalid or uninitialized\n";
+                    return false;
             }
             if (parseFormattedDate(parsedCurrentLine[refs["start_date"]]) > calendar_day(year, month, day) 
                 || parseFormattedDate(parsedCurrentLine[refs["end_date"]]) < calendar_day(year, month, day)) {
@@ -727,7 +720,7 @@ bool isTripValid(string trip_id, int year, int month, int day, bool noException 
     }
     calendarFile.close();
 
-    ifstream calendarDatesFile = ifstream(calendarDatesPath);
+    auto calendarDatesFile = ifstream(calendarDatesPath);
 
     if (noException) return output;
 
@@ -759,10 +752,10 @@ bool isTripValid(string trip_id, int year, int month, int day, bool noException 
     
     return output;
 }
-bool isTripValid(string trip_id, calendar_day date, bool noException = false) { // requirements: trips.txt and calendar.txt, and if noException is false, calendar_dates.txt
+inline bool isTripValid(const string& trip_id, const calendar_day& date, const bool noException = false) { // requirements: trips.txt and calendar.txt, and if noException is false, calendar_dates.txt
     return isTripValid(trip_id, date.year, date.month, date.day, noException);
 }
-feedStatus verifyGTFS(int year, int month, int day) { // requirements: feed_info.txt
+inline feedStatus verifyGTFS(const int& year, const int& month, const int& day) { // requirements: feed_info.txt
     ifstream feedInfo(feedInfoFile);
     string currentLine;
     std::vector<string> parsedCurrentLine;
@@ -804,10 +797,10 @@ feedStatus verifyGTFS(int year, int month, int day) { // requirements: feed_info
     }
     return no_result;
 }
-feedStatus verifyGTFS(calendar_day date) { // requirements: feed_info.txt
+inline feedStatus verifyGTFS(const calendar_day& date) { // requirements: feed_info.txt
     return verifyGTFS(date.year, date.month, date.day);
 }
-route getRouteInfo(string route_id) { // requirements: routes.txt
+inline route getRouteInfo(const string& route_id) { // requirements: routes.txt
     route output;
     ifstream routeFile = ifstream(routePath);
 
@@ -855,7 +848,7 @@ route getRouteInfo(string route_id) { // requirements: routes.txt
             if (find != refs.end()) output.route_text_color = parsedCurrentLine[find->second]; }
 
             { auto find = refs.find("route_sort_order");
-            if (find != refs.end()) output.route_sort_order = (parsedCurrentLine[find->second] == "" || parsedCurrentLine[find->second] == " ") ? 25565 : to_integer(parsedCurrentLine[find->second]); }
+            if (find != refs.end()) output.route_sort_order = (parsedCurrentLine[find->second].empty() || parsedCurrentLine[find->second] == " ") ? 25565 : to_integer(parsedCurrentLine[find->second]); }
 
             { auto find = refs.find("continuous_pickup");
             if (find != refs.end()) output.continuous_pickup = static_cast<route::continuous_pickup_dropoff>(to_integer(parsedCurrentLine[find->second])); }
@@ -876,8 +869,8 @@ route getRouteInfo(string route_id) { // requirements: routes.txt
     routeFile.close();
     return output;
 }
-stop getStopInfo(string stop_id) { // requirements: stops.txt
-    ifstream stopFile = ifstream(stopPath);
+inline stop getStopInfo(const string& stop_id) { // requirements: stops.txt
+    auto stopFile = ifstream(stopPath);
 
     stop output;
 
@@ -951,8 +944,8 @@ stop getStopInfo(string stop_id) { // requirements: stops.txt
     stopFile.close();
     return output;
 }
-std::vector<trip_segment> getDayTimesAtStop(string stop_id, int year, int month, int day) { // requirements: stop_times.txt, routes.txt
-    ifstream stopTimesFile = ifstream(stopTimesPath);
+inline std::vector<trip_segment> getDayTimesAtStop(const string& stop_id, const int& year, const int& month, const int& day) { // requirements: stop_times.txt, routes.txt
+    auto stopTimesFile = ifstream(stopTimesPath);
     std::vector<trip_segment> output;
 
     string currentLine;
@@ -1054,13 +1047,13 @@ std::vector<trip_segment> getDayTimesAtStop(string stop_id, int year, int month,
     }
 
     tripsFile.close();
-    output.erase(std::remove_if(output.begin(), output.end(), [year, month, day](trip_segment x){ return (!isTripValid(x.stop.trip_id, year, month, day)); }), output.end());
+    output.erase(std::remove_if(output.begin(), output.end(), [year, month, day](const trip_segment& x){ return (!isTripValid(x.stop.trip_id, year, month, day)); }), output.end());
     return output;
 }
-std::vector<trip_segment> getDayTimesAtStop(string stop_id, calendar_day date) { // requirements: stop_times.txt, routes.txt
+inline std::vector<trip_segment> getDayTimesAtStop(const string& stop_id, const calendar_day& date) { // requirements: stop_times.txt, routes.txt
     return getDayTimesAtStop(stop_id, date.year, date.month, date.day);
 }
-std::vector<high_trip_segment> getDayTripsAtStop(string stop_id, int year, int month, int day) { // requirements: stop_times.txt, routes.txt
+inline std::vector<high_trip_segment> getDayTripsAtStop(const string& stop_id, const int& year, const int& month, const int& day) { // requirements: stop_times.txt, routes.txt
     std::vector<trip_segment> segments = getDayTimesAtStop(stop_id, year, month, day);
     std::vector<high_trip_segment> output;
     output.reserve(segments.size());
@@ -1075,10 +1068,10 @@ std::vector<high_trip_segment> getDayTripsAtStop(string stop_id, int year, int m
 
     return output;
 }
-std::vector<high_trip_segment> getDayTripsAtStop(string stop_id, calendar_day date) { // requirements: stop_times.txt, routes.txt
+inline std::vector<high_trip_segment> getDayTripsAtStop(const string& stop_id, const calendar_day& date) { // requirements: stop_times.txt, routes.txt
     return getDayTripsAtStop(stop_id, date.year, date.month, date.day);
 }
-std::vector<agency> getAgencyInfo() { // requiremnts: agency.txt
+inline std::vector<agency> getAgencyInfo() { // requirements: agency.txt
     std::vector<agency> output;
     ifstream agencyFile = ifstream(agencyPath);
     string currentLine;
@@ -1089,7 +1082,7 @@ std::vector<agency> getAgencyInfo() { // requiremnts: agency.txt
     while (getline(agencyFile, currentLine)) {
         lineNo++;
         parsedCurrentLine = parseDataCSV(currentLine);
-        if (parsedCurrentLine.empty() || (parsedCurrentLine.size() == 0 && parsedCurrentLine[0].empty())) continue;
+        if (parsedCurrentLine.empty() || (parsedCurrentLine.empty() && parsedCurrentLine[0].empty())) continue;
 
         if (lineNo == 1) {
             refs = createMapFromVector(parsedCurrentLine);
@@ -1126,7 +1119,7 @@ std::vector<agency> getAgencyInfo() { // requiremnts: agency.txt
     agencyFile.close();
     return output;
 }
-std::vector<shape> getShapeInfo(string shape_id) { // requirements: shape.txt
+inline std::vector<shape> getShapeInfo(const string& shape_id) { // requirements: shape.txt
     std::vector<shape> output;
     ifstream shapeFile = ifstream(shapePath);
 
@@ -1147,7 +1140,7 @@ std::vector<shape> getShapeInfo(string shape_id) { // requirements: shape.txt
         if (parsedCurrentLine[refs["shape_id"]] == shape_id) {
             shape temp;
 
-            // requried fields
+            // required fields
             temp.shape_id = shape_id;
             temp.shape_pt_lat = to_double(parsedCurrentLine[refs["shape_pt_lat"]]);
             temp.shape_pt_lon = to_double(parsedCurrentLine[refs["shape_pt_lon"]]);
@@ -1164,16 +1157,16 @@ std::vector<shape> getShapeInfo(string shape_id) { // requirements: shape.txt
     shapeFile.close();
     return output;
 }
-std::vector<trip_segment> getRemainingDayStops(string stop_id, time intime, int year, int month, int day) { // stop_times.txt, routes.txt
+inline std::vector<trip_segment> getRemainingDayStops(const string& stop_id, const time& intime, const int& year, const int& month, const int& day) { // stop_times.txt, routes.txt
     std::vector<trip_segment> out = getDayTimesAtStop(stop_id, year, month, day);
     
-    out.erase(std::remove_if(out.begin(), out.end(), [intime](trip_segment x){ return (x.stop.departure_time < intime); }), out.end());
+    out.erase(std::remove_if(out.begin(), out.end(), [intime](const trip_segment& x){ return (x.stop.departure_time < intime); }), out.end());
     return out;
 }
-std::vector<trip_segment> getRemainingDayStops(string stop_id, time intime, calendar_day date) { // stop_times.txt, routes.txt
+inline std::vector<trip_segment> getRemainingDayStops(const string& stop_id, const time& intime, const calendar_day& date) { // stop_times.txt, routes.txt
     return getRemainingDayStops(stop_id, intime, date.year, date.month, date.day);
 }
-std::vector<matchsearch> searchStop(const string& name) { // stops.txt
+inline std::vector<matchsearch> searchStop(const string& name) { // stops.txt
     ifstream stopFile(stopPath);
 
     string currentLine;
@@ -1186,7 +1179,7 @@ std::vector<matchsearch> searchStop(const string& name) { // stops.txt
         ++lineNumber;
 
         if (lineNumber == 1) [[unlikely]] {
-            for (int i = 0; i < (int)parsedCurrentLine.size(); i++) {
+            for (int i = 0; i < static_cast<int>(parsedCurrentLine.size()); i++) {
                 refs[parsedCurrentLine[i]] = i;
             }
         } else {
@@ -1210,7 +1203,7 @@ std::vector<matchsearch> searchStop(const string& name) { // stops.txt
 
     for (const auto& item : stopNames) {
         int dist   = levenshtein(toLower(item.str), nameLower);
-        int maxLen = (int)std::max(item.str.size(), name.size());
+        int maxLen = static_cast<int>(std::max(item.str.size(), name.size()));
         int score  = (maxLen > 0) ? (100 - (dist * 100 / maxLen)) : 100;
 
         results.push_back({ item, score });
@@ -1223,7 +1216,7 @@ std::vector<matchsearch> searchStop(const string& name) { // stops.txt
 
     return results;
 }
-std::vector<routematch> searchRoute(const string& name) { // routes.txt
+inline std::vector<routematch> searchRoute(const string& name) { // routes.txt
     ifstream routeFile(routePath);
 
     string currentLine;
@@ -1236,7 +1229,7 @@ std::vector<routematch> searchRoute(const string& name) { // routes.txt
         ++lineNumber;
 
         if (lineNumber == 1) [[unlikely]] {
-            for (int i = 0; i < (int)parsedCurrentLine.size(); i++) {
+            for (int i = 0; i < static_cast<int>(parsedCurrentLine.size()); i++) {
                 refs[parsedCurrentLine[i]] = i;
             }
         } else {
@@ -1271,7 +1264,7 @@ std::vector<routematch> searchRoute(const string& name) { // routes.txt
             if (field.empty()) continue;
 
             int dist   = levenshtein(toLower(field), nameLower);
-            int maxLen = (int)std::max(field.size(), name.size());
+            int maxLen = static_cast<int>(std::max(field.size(), name.size()));
             int score  = (maxLen > 0) ? (100 - (dist * 100 / maxLen)) : 100;
 
             bestScore = std::max(bestScore, score);
@@ -1289,7 +1282,7 @@ std::vector<routematch> searchRoute(const string& name) { // routes.txt
 
     return results;
 }
-std::vector<trip_segment> getAllStops(string trip_id) { // stop_times.txt, routes.txt
+inline std::vector<trip_segment> getAllStops(const string& trip_id) { // stop_times.txt, routes.txt
     std::vector<trip_segment> output;
     ifstream stopTimesFile = ifstream(stopTimesPath);
 
@@ -1398,7 +1391,7 @@ std::vector<trip_segment> getAllStops(string trip_id) { // stop_times.txt, route
 
     return output;
 }
-std::vector<stop> getNearestStops(double lat, double lon, int maxResults = -1, double maxDistanceKM = -1) {
+inline std::vector<stop> getNearestStops(const double& lat, const double& lon, const int maxResults = -1, double maxDistanceKM = -1) {
     std::vector<std::pair<double, stop>> candidates;
     ifstream stopFile = ifstream(stopPath);
 
@@ -1482,7 +1475,7 @@ std::vector<stop> getNearestStops(double lat, double lon, int maxResults = -1, d
         });
 
     std::vector<stop> output;
-    int limit = maxResults == -1 ? (int)candidates.size() : std::min((int)candidates.size(), maxResults);
+    int limit = maxResults == -1 ? static_cast<int>(candidates.size()) : std::min(static_cast<int>(candidates.size()), maxResults);
     output.reserve(limit);
     for (int i = 0; i < limit; i++) {
         output.push_back(std::move(candidates[i].second));
@@ -1490,7 +1483,7 @@ std::vector<stop> getNearestStops(double lat, double lon, int maxResults = -1, d
 
     return output;
 }
-std::vector<trip> getAllTrips(string route_id) {
+inline std::vector<trip> getAllTrips(const string& route_id) {
     std::vector<trip> output;
 
     string currentLine;
@@ -1521,7 +1514,7 @@ std::vector<trip> getAllTrips(string route_id) {
     tripFile.close();
     return output;
 }
-service getServiceInfo(string service_id) {
+inline service getServiceInfo(const string& service_id) {
     service output;
     output.schedule.service_id = service_id;
 
@@ -1554,7 +1547,7 @@ service getServiceInfo(string service_id) {
             output.schedule.friday = static_cast<bool>(stoi(parsedCurrentLine[refs["friday"]]));
             output.schedule.saturday = static_cast<bool>(stoi(parsedCurrentLine[refs["saturday"]]));
             output.schedule.sunday = static_cast<bool>(stoi(parsedCurrentLine[refs["sunday"]]));
-            break; // accoring to google the service id SHOULD show up only once in calendar.txt
+            break; // according to google the service id SHOULD show up only once in calendar.txt
         }
     }
 
@@ -1591,7 +1584,7 @@ service getServiceInfo(string service_id) {
     calendarDatesFile.close();
     return output;
 }
-std::vector<trip> getAllBlockId(string block_id) { // requirements: trips.txt with optional field block_id
+inline std::vector<trip> getAllBlockId(const string& block_id) { // requirements: trips.txt with optional field block_id
     std::vector<trip> output;
     ifstream tripFile = ifstream(tripPath);
 
@@ -1619,7 +1612,7 @@ std::vector<trip> getAllBlockId(string block_id) { // requirements: trips.txt wi
     tripFile.close();
     return output;
 }
-std::vector<trip_segment> getStopTimeInfo(string trip_id) { // requiremtns: stop_time.txt
+inline std::vector<trip_segment> getStopTimeInfo(const string& trip_id) { // requirements: stop_time.txt
     std::vector<trip_segment> output; // assume a trip only appears once in
     ifstream stopTimesFile = ifstream(stopTimesPath);
 
@@ -1705,7 +1698,7 @@ std::vector<trip_segment> getStopTimeInfo(string trip_id) { // requiremtns: stop
     stopTimesFile.close();
     return output;
 }
-std::vector<frequency> getFrequencies(string trip_id) { // requiements: frequencies.txt
+inline std::vector<frequency> getFrequencies(const string& trip_id) { // requirements: frequencies.txt
     std::vector<frequency> output;
     ifstream frequencyFile = ifstream(frequencyPath);
 
@@ -1740,7 +1733,7 @@ std::vector<frequency> getFrequencies(string trip_id) { // requiements: frequenc
     frequencyFile.close();
     return output;
 }
-fare getFareInfo(string fare_id) {
+inline fare getFareInfo(const string& fare_id) {
     fare output;
     ifstream fareAttributesFile = ifstream(fareAttributesPath);
 
@@ -1762,7 +1755,7 @@ fare getFareInfo(string fare_id) {
         if (parsedCurrentLine[refs["fare_id"]] == fare_id) {
             output.fare_id = fare_id;
 
-            output.price = to_double(parsedCurrentLine[refs["price"]]);
+            output.price = static_cast<float>(to_double(parsedCurrentLine[refs["price"]]));
             output.currency_type = parsedCurrentLine[refs["currency_type"]];
             output.payment_method = static_cast<fare::payment_methods>(to_integer(parsedCurrentLine[refs["payment_method"]]));
             output.transfers = static_cast<fare::transfer>(to_integer(parsedCurrentLine[refs["transfers"]]));
