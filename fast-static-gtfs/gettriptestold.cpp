@@ -14,7 +14,7 @@ using namespace httplib;
 
 using std::cout;
 
-void getTrip(const string& trip_id, const int& precision = 6) {
+static void getTrip(const string& trip_id, const int& precision = 6) {
 
     std::cout << std::fixed << std::setprecision(precision);
 
@@ -26,10 +26,11 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 
     std::vector<gtfs::stop> stops;
 
+    stops.reserve(tripSegments.size());
     for (gtfs::trip_segment& x : tripSegments) {
         stops.push_back(gtfs::getStopInfo(x.stop.stop_id));
     }
-    int length = stops.size();
+    const size_t length = stops.size();
 
     std::cout << "{\n";
     std::cout << "\t\"total\": " << length << ",\n";
@@ -56,11 +57,11 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 
     cout << "\t],\n";
 
-    int tx_length = tsx.size();
+    const unsigned int tx_length = tsx.size();
 
     std::cout << "\t\"pos_markers\": [\n";
     for (int i = 0; i < tx_length; i++) {
-        gtfs::shape x = tsx[i];
+        const gtfs::shape& x = tsx[i];
         std::cout << "\t\t{ \"lat\": " << x.shape_pt_lat <<
                 ", \"lng\": " << x.shape_pt_lon <<
                 ", \"sequence\": " << x.shape_pt_sequence <<
