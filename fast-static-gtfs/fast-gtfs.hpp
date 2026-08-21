@@ -37,6 +37,7 @@ inline void sortFile(const string& path, const string& keyColumn, const string& 
             string key = gtfs::parseDataCSV(line)[keyIdx];
             keyedLines.emplace_back(std::move(key), std::move(line));
         }
+        in.close();
     }
 
     std::sort(keyedLines.begin(), keyedLines.end(),
@@ -46,6 +47,7 @@ inline void sortFile(const string& path, const string& keyColumn, const string& 
     ofstream out(outputpath, std::ios::trunc);
     out << header << '\n';
     for (const auto& kl : keyedLines) out << kl.second << '\n';
+    out.close();
 }
 inline vector<pair<string, vector<string>>> createMap(const string& path, const string& key) {
     ifstream stopFile(path);
@@ -76,7 +78,7 @@ inline std::unordered_map<string, int> generateHeaderMap(const string& path) {
 
     return refs;
 }
-inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // binary search algorithm (MUST BE SORTED LEXOGRAPHICALLT first)
+inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // stops.txt must be sorted by stop_id
     gtfs::stop output;
     output.stop_id = "-1";
 
@@ -141,7 +143,7 @@ inline gtfs::stop getStopInfo(const string& stop_id, const vector<pair<string, v
 
     return output;
 }
-inline gtfs::trip getTripInfo(const string& trip_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) {
+inline gtfs::trip getTripInfo(const string& trip_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // trips.txt must be sorted by trip_id
     gtfs::trip output;
     output.trip_id = "-1";
 
@@ -186,13 +188,87 @@ inline gtfs::trip getTripInfo(const string& trip_id, const vector<pair<string, v
 
     return output;
 }
-inline vector<gtfs::trip_segment>(const string& trip_id, const vector<string>& lines, const std::unordered_map<string, int>& refs) {
+inline vector<gtfs::trip_segment> getAllStops(const string& trip_id, const vector<pair<string, vector<string>>>& lines, const std::unordered_map<string, int>& refs) { // stop_times must be sorted by trip_id
     vector<gtfs::trip_segment> output;
+    // get all stops with trip_id matching,
 
-    
+    auto trip_index_lower = std::lower_bound(lines.begin(), lines.end(), trip_id,
+        [](const std::pair<std::string, std::vector<string>>& element, const std::string& key) {
+            return element.first < key;
+        });
 
+    if (trip_index_lower == lines.end() || trip_index_lower->first != trip_id) return output;
+
+    auto trip_index_upper = std::upper_bound(lines.begin(), lines.end(), trip_id,
+        [](const std::string& key, const std::pair<std::string, std::vector<string>>& element) {
+            return key < element.first;
+        });
+
+
+    for (auto k = trip_index_lower; k != trip_index_upper; ++k) {
+            gtfs::trip_segment x;
+
+            // required fields
+            x.stop.trip_id = trip_id;
+            x.stop.stop_sequence = gtfs::to_integer(k->second[refs.at("stop_sequence")]);
+
+            // optional/conditionally required/conditionally forbidden fields
+            { auto find = refs.find("stop_id");
+            if (find != refs.end()) x.stop.stop_id = k->second[refs.at("stop_id")]; }
+
+            { auto find = refs.find("arrival_time");
+            if (find != refs.end()) x.stop.arrival_time = gtfs::parseFormattedTime(k->second[find->second]); }
+
+            { auto find = refs.find("departure_time");
+            if (find != refs.end()) x.stop.departure_time = gtfs::parseFormattedTime(k->second[find->second]); }
+
+            { auto find = refs.find("location_group_id");
+            if (find != refs.end()) x.stop.location_group_id = k->second[find->second]; }
+
+            { auto find = refs.find("location_id");
+            if (find != refs.end()) x.stop.location_id = k->second[find->second]; }
+
+            { auto find = refs.find("stop_sequence");
+            if (find != refs.end()) x.stop.stop_sequence = gtfs::to_integer(k->second[find->second]); }
+
+            { auto find = refs.find("stop_headsign");
+            if (find != refs.end()) x.stop.stop_headsign = k->second[find->second]; }
+
+            { auto find = refs.find("start_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.start_pickup_drop_off_window = gtfs::parseFormattedTime(k->second[find->second]); }
+
+            { auto find = refs.find("end_pickup_drop_off_window");
+            if (find != refs.end()) x.stop.end_pickup_drop_off_window = gtfs::parseFormattedTime(k->second[find->second]); }
+
+            { auto find = refs.find("pickup_type");
+            if (find != refs.end()) x.stop.pickup_type = static_cast<gtfs::stop_time::pickup_dropoff>(gtfs::to_integer(k->second[find->second])); }
+
+            { auto find = refs.find("drop_off_type");
+            if (find != refs.end()) x.stop.drop_off_type = static_cast<gtfs::stop_time::pickup_dropoff>(gtfs::to_integer(k->second[find->second])); }
+
+            { auto find = refs.find("continuous_pickup");
+            if (find != refs.end()) x.stop.continuous_pickup = static_cast<gtfs::stop_time::continuous_pickup_dropoff>(gtfs::to_integer(k->second[find->second])); }
+
+            { auto find = refs.find("continuous_drop_off");
+            if (find != refs.end()) x.stop.continuous_drop_off = static_cast<gtfs::stop_time::continuous_pickup_dropoff>(gtfs::to_integer(k->second[find->second])); }
+
+            { auto find = refs.find("shape_dist_traveled");
+            if (find != refs.end()) x.stop.shape_dist_traveled = gtfs::to_float(k->second[find->second]); }
+
+            { auto find = refs.find("timepoint");
+            if (find != refs.end()) x.stop.timepoint = static_cast<gtfs::stop_time::timepoint_type>(gtfs::to_integer(k->second[find->second])); }
+
+            { auto find = refs.find("pickup_booking_rule_id");
+            if (find != refs.end()) x.stop.pickup_booking_rule_id = k->second[find->second]; }
+
+            { auto find = refs.find("drop_off_booking_rule_id");
+            if (find != refs.end()) x.stop.drop_off_booking_rule_id = k->second[find->second]; }
+
+            output.push_back(x);
+    }
     return output;
 }
+
 
 }
 

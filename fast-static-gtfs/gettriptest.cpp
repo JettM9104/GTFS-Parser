@@ -18,6 +18,9 @@ std::unordered_map<string, int> triprefs;
 vector<pair<string, vector<string>>> stoplines;
 std::unordered_map<string, int> stoprefs;
 
+vector<pair<string, vector<string>>> stoptimesstoplines;
+std::unordered_map<string, int> stoptimesstoprefs;
+
 
 using std::cout;
 
@@ -26,7 +29,7 @@ void getTrip(const string& trip_id, const int& precision = 6) {
     std::cout << std::fixed << std::setprecision(precision);
 
 
-    std::vector<gtfs::trip_segment> tripSegments = gtfs::getAllStops(trip_id);
+    std::vector<gtfs::trip_segment> tripSegments = fast_gtfs::bin_search::getAllStops(trip_id, stoptimesstoplines, stoptimesstoprefs);
     gtfs::trip tx = fast_gtfs::bin_search::getTripInfo(trip_id, triplines, triprefs);
     gtfs::route bx = gtfs::getRouteInfo(tx.route_id);
     std::vector<gtfs::shape> tsx = gtfs::getShapeInfo(tx.shape_id);
@@ -82,11 +85,16 @@ void getTrip(const string& trip_id, const int& precision = 6) {
 
 int main() {
     fast_gtfs::bin_search::sortFile(fast_config::fast_stop_path, "stop_id", fast_config::fast_stop_stop_id);
+    fast_gtfs::bin_search::sortFile(fast_config::fast_stop_times_path, "trip_id", fast_config::fast_stop_times_trip_id);
+
     triplines = fast_gtfs::bin_search::createMap(fast_config::fast_trip_path, "trip_id");
     triprefs =  fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_trip_path);
 
     stoplines = fast_gtfs::bin_search::createMap(fast_config::fast_stop_stop_id, "stop_id");
     stoprefs = fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_stop_stop_id);
+
+    stoptimesstoplines = fast_gtfs::bin_search::createMap(fast_config::fast_stop_times_trip_id, "trip_id");
+    stoptimesstoprefs = fast_gtfs::bin_search::generateHeaderMap(fast_config::fast_stop_times_trip_id);
 
     cout << "done init\n";
 
