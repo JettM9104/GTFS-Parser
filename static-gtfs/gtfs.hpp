@@ -10,17 +10,19 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include <ctime>
-#include <array>
 #include <algorithm>
 #include <cctype>
-#include <stdlib.h>
 #include <iomanip>
 #include <cmath>
 #include "config.hpp"
 
-
-using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl;
+using std::cout;
+using std::string;
+using std::ifstream;
+using std::ofstream;
+using std::cerr;
+using std::to_string;
+using std::endl;
 
 #pragma endregion
 
@@ -57,111 +59,61 @@ const int defPrecision = 6;
 
 class time {
 public:
-    int h, m;
-    float s;
+    int h = 0, m = 0;
+    float s = 0.0;
 
-    string formattedTime() {
+    string formattedTime() const {
         return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(s);
     }
 
-    string roundedTime() {
+    string roundedTime() const {
         return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(static_cast<int>(round(s)));
     }
 
-    string leadingRoundedTime() {
+    string leadingRoundedTime() const {
         return (std::to_string(h).length() < 2 ? "0" + std::to_string(h) : std::to_string(h)) + ":" + 
                (std::to_string(m).length() < 2 ? "0" + std::to_string(m) : std::to_string(m)) + ":" + 
                (std::to_string((int)std::round(s)).length() < 2 ? "0" + std::to_string((int)std::round(s)) : std::to_string((int)std::round(s)));
     }
 
     time() = default;
-    time(int h, int m, int s) {
-        this->h = h;
-        this->m = m;
-        this->s = s;
-    }
+    time(const int h, const int m, const float s) : h(h), m(m), s(s) { }
 
-    virtual bool operator>(time other) {
-        if (this->h < other.h) {
-            return false;
-        } else if (this->h > other.h) {
-            return true;
-        } else if (this->m < other.m) {
-            return false;
-        } else if (this->m > other.m) {
-            return true;
-        } else if (this->s < other.s) {
-            return false;
-        } else if (this->s > other.s) {
-            return true;
-        } else {
-            return false;
-        }
+    ~time() = default;
+
+    bool operator>(const time& other) const {
+        if (this->h != other.h) return this->h > other.h;
+        if (this->m != other.m) return this->m > other.m;
+        return this->s > other.s;
     }
     
-    virtual bool operator<(time other) {
-        if (this->h > other.h) {
-            return false;
-        } else if (this->h < other.h) {
-            return true;
-        } else if (this->m > other.m) {
-            return false;
-        } else if (this->m < other.m) {
-            return true;
-        } else if (this->s > other.s) {
-            return false;
-        } else if (this->s < other.s) {
-            return true;
-        } else {
-            return false;
-        }
+    bool operator<(const time& other) const {
+        if (this->h != other.h) return this->h < other.h;
+        if (this->m != other.m) return this->m < other.m;
+        return this->s < other.s;
     }
 
-    virtual bool operator<=(time other) {
-        if (this->h > other.h) {
-            return false;
-        } else if (this->h < other.h) {
-            return true;
-        } else if (this->m > other.m) {
-            return false;
-        } else if (this->m < other.m) {
-            return true;
-        } else if (this->s > other.s) {
-            return false;
-        } else if (this->s < other.s) {
-            return true;
-        } else {
-            return true;
-        }
+    bool operator<=(const time& other) const {
+        if (this->h != other.h) return this->h < other.h;
+        if (this->m != other.m) return this->m < other.m;
+        return this->s <= other.s;
     }
 
-    virtual bool operator>=(time other) {
-        if (this->h < other.h) {
-            return false;
-        } else if (this->h > other.h) {
-            return true;
-        } else if (this->m < other.m) {
-            return false;
-        } else if (this->m > other.m) {
-            return true;
-        } else if (this->s < other.s) {
-            return false;
-        } else if (this->s > other.s) {
-            return true;
-        } else {
-            return true;
-        }
+    bool operator>=(const time& other) const {
+        if (this->h != other.h) return this->h > other.h;
+        if (this->m != other.m) return this->m > other.m;
+        return this->s >= other.s;
     }
 
-    virtual bool operator==(time other) {
+    bool operator==(const time& other) const {
         return (other.h == this->h && other.m == this->m && other.s == this->s);
     }
 
-    virtual bool operator!=(time other) {
+    bool operator!=(const time& other) const {
         return !(other.h == this->h && other.m == this->m && other.s == this->s);
     }
 
-    virtual time operator+(time other) { // cannot overlap, note that during calling
+    time operator+(const time& other) const { // cannot overlap, note that during calling
         time output;
 
         output.h = this->h + other.h;
@@ -173,7 +125,7 @@ public:
         }
         if (output.m >= 60) {
             output.h += 1;
-            output.m -= 1;
+            output.m -= 60;
         }
         if (output.h >= 24) output.h -= 24;
 
@@ -182,9 +134,9 @@ public:
 };
 class calendar_day { // to only be used in structs and functions that truly need it, or, in suitable overloads
 public:
-    int year;
-    int month;
-    int day;
+    int year = -1;
+    int month = -1;
+    int day = -1;
 
     calendar_day() = default;
     calendar_day(int year, int month, int day) {
@@ -193,109 +145,45 @@ public:
         this->day = day;
     }
 
-    void printInfo() {
+    void printInfo() const {
         cout << "year: " << year << std::endl;
         cout << "month: " << month << std::endl;
         cout << "day: " << day << std::endl;
     }
 
-    bool operator< (const calendar_day& other) {
-        if (other.year > this->year) {
-            return true;
-        } else if (other.year < this->year) {
-            return false;
-        } else { // year is equal
-            if (other.month > this->month) {
-                return true;
-            } else if (other.month < this->month) {
-                return false;
-            } else { // months are equal
-                if (other.day > this->day) {
-                    return true;
-                } else if (other.day > this->day) {
-                    return false;
-                } else { // days are equal
-                    return false;
-                }
-            }
-        }
+    bool operator< (const calendar_day& other) const {
+        if (this->year != other.year)   return this->year < other.year;
+        if (this->month != other.month) return this->month < other.month;
+        return this->day < other.day;
     }
 
-    bool operator> (const calendar_day& other) {
-        if (other.year < this->year) {
-            return true;
-        } else if (other.year > this->year) {
-            return false;
-        } else { // year is equal
-            if (other.month < this->month) {
-                return true;
-            } else if (other.month > this->month) {
-                return false;
-            } else { // months are equal
-                if (other.day < this->day) {
-                    return true;
-                } else if (other.day > this->day) {
-                    return false;
-                } else { // days are equal
-                    return false;
-                }
-            }
-        }
+    bool operator> (const calendar_day& other) const {
+        if (this->year != other.year)   return this->year > other.year;
+        if (this->month != other.month) return this->month > other.month;
+        return this->day > other.day;
     }
 
-    bool operator<= (const calendar_day& other) {
-        if (other.year > this->year) {
-            return true;
-        } else if (other.year < this->year) {
-            return false;
-        } else { // year is equal
-            if (other.month > this->month) {
-                return true;
-            } else if (other.month < this->month) {
-                return false;
-            } else { // months are equal
-                if (other.day > this->day) {
-                    return true;
-                } else if (other.day > this->day) {
-                    return false;
-                } else { // days are equal
-                    return true;
-                }
-            }
-        }
+    bool operator<= (const calendar_day& other) const {
+        if (this->year != other.year)   return this->year < other.year;
+        if (this->month != other.month) return this->month < other.month;
+        return this->day <= other.day;
     }
 
-    bool operator>= (const calendar_day& other) {
-        if (other.year < this->year) {
-            return true;
-        } else if (other.year > this->year) {
-            return false;
-        } else { // year is equal
-            if (other.month < this->month) {
-                return true;
-            } else if (other.month > this->month) {
-                return false;
-            } else { // months are equal
-                if (other.day < this->day) {
-                    return true;
-                } else if (other.day > this->day) {
-                    return false;
-                } else { // days are equal
-                    return true;
-                }
-            }
-        }
+    bool operator>= (const calendar_day& other) const {
+        if (this->year != other.year)   return this->year > other.year;
+        if (this->month != other.month) return this->month > other.month;
+        return this->day >= other.day;
     }
 
-    bool operator== (const calendar_day& other) {
+    bool operator== (const calendar_day& other) const {
         return (other.year == this->year && other.month == this->month && other.day == this->day);
     }
 
-    calendar_day operator+ (const calendar_day& other) {
-        calendar_day output;
+    calendar_day operator+ (const calendar_day& other) const {
+        calendar_day output(-1, -1, -1);
 
-        int regularDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        int leapDays[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        const int regularDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        const int leapDays[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
         output.year = this->year + other.year;
         output.month = this->month + other.month;
@@ -322,7 +210,7 @@ public:
 };
 
 struct intstr {
-    int num;
+    int num = 0;
     string str;
 
     intstr() = default;
@@ -343,31 +231,31 @@ struct routematch {
 };
 
 struct route {
-    enum continuous_pickup_dropoff {continuous = 0, no_continuous = 1, phone_agency = 2, driver_coordinate = 3};
-    enum cemv {no_info = 0, with_cemv = 1, no_cemv = 2}; // cemv support in route will take precedence
-    enum type {light_rail = 0, underground = 1, rail = 2, bus = 3, ferry = 4, cable_tram = 5, aerial_lift = 6, funicular = 7, trolleybus = 11, monorail = 12};
+    enum continuous_pickup_dropoff {cpd_undef = -1, continuous = 0, no_continuous = 1, phone_agency = 2, driver_coordinate = 3};
+    enum cemv {cemv_undef = -1, no_info = 0, with_cemv = 1, no_cemv = 2}; // cemv support in route will take precedence
+    enum type {t_undef = -1, light_rail = 0, underground = 1, rail = 2, bus = 3, ferry = 4, cable_tram = 5, aerial_lift = 6, funicular = 7, trolleybus = 11, monorail = 12};
 
     string route_id;
     string agency_id;
     string route_short_name;
     string route_long_name;
     string route_desc;
-    type route_type;
+    type route_type = t_undef;
     string route_url;
     string route_color;
     string route_text_color;
 
-    unsigned int route_sort_order;
-    continuous_pickup_dropoff continuous_pickup;
-    continuous_pickup_dropoff continuous_drop_off;
+    unsigned int route_sort_order = 0;
+    continuous_pickup_dropoff continuous_pickup = cpd_undef;
+    continuous_pickup_dropoff continuous_drop_off = cpd_undef;
 
     string network_id;
-    cemv cemv_support;
+    cemv cemv_support = cemv_undef;
 };
 struct stop {
-    enum location {stop_platform = 0, station = 1, entrance_exit = 2, generic_node = 3, boarding_area = 4};
-    enum wheelchair {no_info = 0, wheelcahir_boarding = 1, no_wheelchair_boarding = 2}; // 0 can also represent "inheret from parent station"
-    enum access {no_street_access = 0, direct_access = 1};
+    enum location {loc_undef = -1, stop_platform = 0, station = 1, entrance_exit = 2, generic_node = 3, boarding_area = 4};
+    enum wheelchair {wc_undef = -1, no_info = 0, wheelchair_boarding_supported = 1, no_wheelchair_boarding = 2}; // 0 can also represent "inherit from parent station"
+    enum access {ac_undef = -1, no_street_access = 0, direct_access = 1};
 
     string stop_id;
     string stop_code;
@@ -375,25 +263,25 @@ struct stop {
     string tts_stop_name;
     string stop_desc;
 
-    double stop_lat;
-    double stop_lon;
+    double stop_lat = 0.0;
+    double stop_lon = 0.0;
 
     string zone_id;
     string stop_url;
     
-    location location_type;
-    string parent_station; // refrences antoher stop.stop_id
+    location location_type = loc_undef;
+    string parent_station; // references another stop.stop_id
     string stop_timezone;
-    wheelchair wheelchair_boarding;
+    wheelchair wheelchair_boarding = wc_undef;
     string level_id;
     string platform_code;
 
-    access stop_access;
+    access stop_access = ac_undef;
 };
 struct stop_time {
-    enum pickup_dropoff {regular = 0, not_avaliable = 1, phone_agency = 2, driver_coordinate = 3};
-    enum continuous_pickup_dropoff {continuous = 0, no_continuous = 1, phone_agency_continuous = 2, driver_coordiante_continuous = 3};
-    enum timepoint_type {approximate = 0, exact = 1};
+    enum pickup_dropoff {pd_undef = -1, regular = 0, not_available = 1, phone_agency = 2, driver_coordinate = 3};
+    enum continuous_pickup_dropoff {cpd_undef = -1, continuous = 0, no_continuous = 1, phone_agency_continuous = 2, driver_coordinate_continuous = 3};
+    enum timepoint_type {tpt_undef = -1, approximate = 0, exact = 1};
 
     string trip_id;
     time arrival_time;
@@ -402,28 +290,28 @@ struct stop_time {
     string location_group_id;
     string location_id;
 
-    unsigned int stop_sequence;
+    unsigned int stop_sequence = 0;
 
     string stop_headsign;
 
     time start_pickup_drop_off_window;
     time end_pickup_drop_off_window;
 
-    pickup_dropoff pickup_type;
-    pickup_dropoff drop_off_type;
+    pickup_dropoff pickup_type = pd_undef;
+    pickup_dropoff drop_off_type = pd_undef;
 
-    continuous_pickup_dropoff continuous_pickup;
-    continuous_pickup_dropoff continuous_drop_off;
+    continuous_pickup_dropoff continuous_pickup = cpd_undef;
+    continuous_pickup_dropoff continuous_drop_off = cpd_undef;
 
-    float shape_dist_traveled;
+    float shape_dist_traveled = 0.0;
 
-    timepoint_type timepoint;
+    timepoint_type timepoint = tpt_undef;
 
     string pickup_booking_rule_id;
     string drop_off_booking_rule_id;
 };
 struct agency {
-    enum cemv {no_info = 0, with_cemv = 1, no_cemv = 2}; // cemv support in route will take precedence
+    enum cemv {cemv_undef = -1, no_info = 0, with_cemv = 1, no_cemv = 2}; // cemv support in route will take precedence
 
     string agency_id;
     string agency_name;
@@ -433,66 +321,68 @@ struct agency {
     string agency_phone;
     string agency_fare_url;
     string agency_email;
-    cemv cemv_support;
+    cemv cemv_support = cemv_undef;
 };
 struct shape {
     string shape_id;
-    double shape_pt_lat;
-    double shape_pt_lon;
-    unsigned int shape_pt_sequence;
-    unsigned int shape_dist_traveled;
+    double shape_pt_lat = 0.0;
+    double shape_pt_lon = 0.0;
+    unsigned int shape_pt_sequence = 0;
+    unsigned int shape_dist_traveled = 0;
 };
 struct trip {
-    enum allowable {no_info = 0, allowed = 1, not_allowed = 2};
+    enum allowable {al_undef = -1, no_info = 0, allowed = 1, not_allowed = 2};
 
     string route_id;
     string service_id;
     string trip_id;
     string trip_headsign;
     string trip_short_name;
-    bool direction_id;
+    bool direction_id = false;
     string block_id;
     string shape_id;
 
-    allowable wheelchair_accessible;
-    allowable bikes_allowed;
-    allowable cars_allowed;
+    allowable wheelchair_accessible = al_undef;
+    allowable bikes_allowed = al_undef;
+    allowable cars_allowed = al_undef;
 };
 struct calendar {
     string service_id;
 
-    bool monday, tuesday, wednesday, thursday, friday, saturday, sunday;
+    bool monday = false, tuesday = false, wednesday = false,
+            thursday = false, friday = false, saturday = false,
+            sunday = false;
 
     calendar_day start_date;
     calendar_day end_date;
 };
 struct calendar_date {
-    enum exception {added = 1, removed = 2};
+    enum exception {exp_undef = -1, added = 1, removed = 2};
     string service_id;
     calendar_day date;
-    exception exception_type;
+    exception exception_type = exp_undef;
 };
 struct frequency {
-    enum exact_time { frequency_based = 0, schedule_based = 1 };
+    enum exact_time { freq_undef = -1, frequency_based = 0, schedule_based = 1 };
     string trip_id;
     time start_time;
     time end_time;
-    unsigned int headway_secs;
+    unsigned int headway_secs = 0;
 
-    exact_time exact_times;
+    exact_time exact_times = freq_undef;
 };
 struct fare { // fare_attributes.txt parameters
-    enum payment_methods { paid_on_board = 0, paid_before_boarding = 1 };
-    enum transfer { unlimited = -1, no_transfers = 0, one_transfer = 1, two_transfers = 2 }; 
+    enum payment_methods { pm_undef = -1, paid_on_board = 0, paid_before_boarding = 1 };
+    enum transfer { transfer_undef = -1, unlimited = -1, no_transfers = 0, one_transfer = 1, two_transfers = 2 };
 
     string fare_id;
-    float price;
+    float price = -1.0;
     string currency_type;
-    payment_methods payment_method;
-    transfer transfers;
+    payment_methods payment_method = pm_undef;
+    transfer transfers = transfer_undef;
     string agency_id;
 
-    unsigned int transfer_duration;
+    unsigned int transfer_duration = 0;
 };
 
 struct trip_segment {
@@ -510,38 +400,37 @@ struct service {
 #pragma endregion CLASSES AND STRUCTS
 #pragma region HELPER FUNCTIONS
 
-int to_integer(string input) {
-    if (input == "" || input == " ") return 0;
-
+inline int to_integer(const string& input) {
+    if (input.empty() || input == " ") return 0;
     return std::stoi(input);
 }
-double to_double(string input) {
-    if (input == "" || input == " ") return 0;
+inline double to_double(const string& input) {
+    if (input.empty() || input == " ") return 0;
 
     return std::stod(input);
 }
-float to_float(string input) {
-    if (input == "" || input == " ") return 0;
+inline float to_float(const string& input) {
+    if (input.empty() || input == " ") return 0;
 
     return std::stof(input);
 }
 
-double getDistanceKM(double lat1, double lon1, double lat2, double lon2) {
+inline double getDistanceKM(const double& lat1, const double& lon1, const double& lat2, const double& lon2) {
     const double earth_radius = 6371.0;
 
-    double lat1_rad = lat1 * 3.1415 / 180.0;
-    double lon1_rad = lon1 * 3.1415 / 180.0;
-    double lat2_rad = lat2 * 3.1415 / 180.0;
-    double lon2_rad = lon2 * 3.1415 / 180.0;
+    const double lat1_rad = lat1 * 3.1415 / 180.0;
+    const double lon1_rad = lon1 * 3.1415 / 180.0;
+    const double lat2_rad = lat2 * 3.1415 / 180.0;
+    const double lon2_rad = lon2 * 3.1415 / 180.0;
 
-    double delta_lat = lat2_rad - lat1_rad;
-    double delta_lon = lon2_rad - lon1_rad;
+    const double delta_lat = lat2_rad - lat1_rad;
+    const double delta_lon = lon2_rad - lon1_rad;
 
-    double a = sin(delta_lat / 2) * sin(delta_lat / 2) + 
+    const double a = sin(delta_lat / 2) * sin(delta_lat / 2) +
                 cos(lat1_rad) * cos(lat2_rad) *
                 sin(delta_lon / 2) * sin(delta_lon / 2);
 
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    const double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return earth_radius * c;
 }
