@@ -16,7 +16,15 @@
 #include "../static-gtfs/gtfs.hpp"
 #include "fast-config.hpp"
 
-using std::cout, std::string, std::ifstream, std::ofstream, std::cerr, std::to_string, std::endl, std::vector, std::pair;
+using std::cout;
+using std::string;
+using std::ifstream;
+using std::ofstream;
+using std::cerr;
+using std::to_string;
+using std::endl;
+using std::vector;
+using std::pair;
 
 namespace fast_gtfs {
 
